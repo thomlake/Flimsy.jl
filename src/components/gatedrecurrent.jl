@@ -12,21 +12,21 @@ GatedRecurrent(m::Int, n::Int) = GatedRecurrent(
     Zeros(m)
 )
 
-@Nimble.component function Base.step(theta::GatedRecurrent, x::Var)
+@Flimsy.component function Base.step(theta::GatedRecurrent, x::Var)
     r = sigmoid(affine(theta.wr, x, theta.h0))
     z = sigmoid(affine(theta.wz, x, theta.h0))
     c = tanh(affine(theta.wc, x, prod(r, theta.h0)))
     return sum(prod(z, theta.h0), prod(minus(1.0, z), c))
 end
 
-@Nimble.component function Base.step(theta::GatedRecurrent, x::Var, htm1)
+@Flimsy.component function Base.step(theta::GatedRecurrent, x::Var, htm1)
     r = sigmoid(sum(linear(theta.wr, x), linear(theta.ur, htm1), theta.br))
     z = sigmoid(sum(linear(theta.wz, x), linear(theta.uz, htm1), theta.bz))
     c = tanh(sum(linear(theta.wc, x), prod(r, linear(theta.uc, htm1)), theta.bc))
     return sum(prod(z, htm1), prod(minus(1.0, z), c))
 end
 
-@Nimble.component function unfold(theta::GatedRecurrent, x::Vector)
+@Flimsy.component function unfold(theta::GatedRecurrent, x::Vector)
     h = Array(Var, length(x))
     h[1] = step(theta, x[1])
     for t = 2:length(x)

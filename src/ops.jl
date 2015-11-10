@@ -354,48 +354,48 @@ end
 # end
 
 # -- Map (single) -- #
-function Base.map{T<:AbstractVar}(f::Function, xs::Vector{T})
-    ys = Array(T, length(xs))
-    for i = 1:length(xs)
-        ys[i] = f(xs[i])
-    end
-    return ys
-end
-
-function Base.map{T<:AbstractVar}(stack::BPStack, f::Function, xs::Vector{T})
-    ys = Array(T, length(xs))
-    for i = 1:length(xs)
-        ys[i] = f(stack, xs[i])
-    end
-    return ys
-end
+# function Base.map{T<:AbstractVar}(f::Function, xs::Vector{T})
+#     ys = Array(T, length(xs))
+#     for i = 1:length(xs)
+#         ys[i] = f(xs[i])
+#     end
+#     return ys
+# end
+#
+# function Base.map{T<:AbstractVar}(stack::BPStack, f::Function, xs::Vector{T})
+#     ys = Array(T, length(xs))
+#     for i = 1:length(xs)
+#         ys[i] = f(stack, xs[i])
+#     end
+#     return ys
+# end
 
 # -- Map (multiple) -- #
-function Base.map{T<:AbstractVar}(f::Function, xss::Vector{T}...)
-    n = length(xss)
-    len = length(xss[1])
-    for i = 2:n
-        @assert len == length(xss[i])
-    end
-    ys = Array(T, len)
-    for i = 1:len
-        ys[i] = f([xss[k][i] for k = 1:n]...)
-    end
-    return ys
-end
-
-function Base.map{T<:AbstractVar}(stack::BPStack, f::Function, xss::Vector{T}...)
-    n = length(xss)
-    len = length(xss[1])
-    for i = 2:n
-        @assert len == length(xss[i])
-    end
-    ys = Array(T, len)
-    for i = 1:len
-        ys[i] = f(stack, [xss[k][i] for k = 1:n]...)
-    end
-    return ys
-end
+# function Base.map{T<:AbstractVar}(f::Function, xss::Vector{T}...)
+#     n = length(xss)
+#     len = length(xss[1])
+#     for i = 2:n
+#         @assert len == length(xss[i])
+#     end
+#     ys = Array(T, len)
+#     for i = 1:len
+#         ys[i] = f([xss[k][i] for k = 1:n]...)
+#     end
+#     return ys
+# end
+#
+# function Base.map{T<:AbstractVar}(stack::BPStack, f::Function, xss::Vector{T}...)
+#     n = length(xss)
+#     len = length(xss[1])
+#     for i = 2:n
+#         @assert len == length(xss[i])
+#     end
+#     ys = Array(T, len)
+#     for i = 1:len
+#         ys[i] = f(stack, [xss[k][i] for k = 1:n]...)
+#     end
+#     return ys
+# end
 
 # -- Convenience Functions -- #
 affine(w::Var, x::Var, b::Var) = sum(linear(w, x), b)

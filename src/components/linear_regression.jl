@@ -7,10 +7,10 @@ LinearRegression(w::Matrix, b::Vector) = LinearRegression(Var(w), Var(b))
 
 LinearRegression(n_classes, n_features) = LinearRegression(Gaussian(n_classes, n_features), Zeros(n_classes))
 
-@Nimble.component predict(theta::LinearRegression, x::Var) = affine(theta.w, x, theta.b)
+@Flimsy.component predict(theta::LinearRegression, x::Var) = affine(theta.w, x, theta.b)
 
-@Nimble.component function predict(theta::LinearRegression, x, y)
+@Flimsy.component function predict(theta::LinearRegression, x, y)
     p = predict(theta, x)
-    nll = Nimble.Cost.gauss(y, p)
+    nll = Flimsy.Cost.gauss(y, p)
     return nll, p
 end

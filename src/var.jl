@@ -2,18 +2,18 @@ abstract AbstractVar
 
 abstract Var{T,M,N} <: AbstractVar
 
-immutable NativeVar{T<:AbstractFloat,M,N} <: Var{T,M,N}
-    data::Matrix{T}
-    grad::Matrix{T}
+immutable NativeVar{T<:AbstractMatrix,M,N} <: Var{T,M,N}
+    data::T
+    grad::T
 end
 
-NativeVar{T}(d::Matrix{T}, g::Matrix{T}) = NativeVar{T,size(d,1),size(d,2)}(d, g)
-Var(x::Matrix) = NativeVar(x, zero(x))
-Var(x::Vector) = NativeVar(reshape(x, length(x), 1), reshape(zero(x), length(x), 1))
+NativeVar{T<:AbstractMatrix}(d::T, g::T) = NativeVar{T,size(d,1),size(d,2)}(d, g)
+Var(x::AbstractMatrix) = NativeVar(x, zero(x))
+Var(x::AbstractVector) = NativeVar(reshape(x, length(x), 1), reshape(zero(x), length(x), 1))
 
-Base.eltype{T,M,N}(::Type{Var{T,M,N}}) = T
+Base.eltype{T,M,N}(::Type{Var{T,M,N}}) = eltype(T)
 
-Base.eltype{T}(x::Var{T}) = T
+Base.eltype{T<:AbstractVar}(x::T) = eltype(T)
 
 Base.size{T,M,N}(::Type{Var{T,M,N}}) = (M, N)
 

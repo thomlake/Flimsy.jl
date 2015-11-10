@@ -12,7 +12,7 @@ FeedForwardLayer(w::Matrix, b::Vector) = FeedForwardLayer(relu, w, b)
 
 FeedForwardLayer(m::Int, n::Int) = FeedForwardLayer(relu, Orthonormal(sqrt(2), m, n), Zeros(m))
 
-@Nimble.component feedforward(theta::FeedForwardLayer, x::Var) = theta.f(affine(theta.w, x, theta.b))
+@Flimsy.component feedforward(theta::FeedForwardLayer, x::Var) = theta.f(affine(theta.w, x, theta.b))
 
 # -- Homogenous Layer Wrapper -- #
 immutable LayerStack <: Component
@@ -30,7 +30,7 @@ end
 
 Base.length(theta::LayerStack) = length(theta.layers)
 
-@Nimble.component function feedforward(theta::LayerStack, h)
+@Flimsy.component function feedforward(theta::LayerStack, h)
     for layer in theta.layers
         h = feedforward(layer, h)
     end

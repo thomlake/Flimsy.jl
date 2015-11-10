@@ -12,7 +12,7 @@ LSTM(m::Int, n::Int) = LSTM(
     Zeros(m), Zeros(m),
 )
 
-@Nimble.component function Base.step(theta::LSTM, x::Var)
+@Flimsy.component function Base.step(theta::LSTM, x::Var)
     i = sigmoid(sum(linear(theta.wi, x), linear(theta.ui, theta.h0), theta.bi))
     f = sigmoid(sum(linear(theta.wf, x), linear(theta.uf, theta.h0), theta.bf))
     cnew = tanh(sum(linear(theta.wc, x), linear(theta.uc, theta.h0), theta.bc))
@@ -21,7 +21,7 @@ LSTM(m::Int, n::Int) = LSTM(
     return prod(o, tanh(c)), c
 end
 
-@Nimble.component function Base.step(theta::LSTM, x::Var, htm1, ctm1)
+@Flimsy.component function Base.step(theta::LSTM, x::Var, htm1, ctm1)
     i = sigmoid(sum(linear(theta.wi, x), linear(theta.ui, htm1), theta.bi))
     f = sigmoid(sum(linear(theta.wf, x), linear(theta.uf, htm1), theta.bf))
     cnew = tanh(sum(linear(theta.wc, x), linear(theta.uc, htm1), theta.bc))
@@ -30,7 +30,7 @@ end
     return prod(o, tanh(c)), c
 end
 
-@Nimble.component function unfold(theta::LSTM, x::Vector)
+@Flimsy.component function unfold(theta::LSTM, x::Vector)
     h = Array(Var, length(x))
     c = Array(Var, length(x))
     h[1], c[1] = step(theta, x[1])

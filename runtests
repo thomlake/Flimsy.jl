@@ -1,0 +1,2 @@
+cd test
+julia --color=yes runtests.jl

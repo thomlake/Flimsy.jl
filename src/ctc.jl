@@ -30,7 +30,7 @@ function bruteforce(xs::Vector{Int}, lpmat::Matrix, symbols::Vector{Int}, blank:
         for t = 2:T
             lp += lpmat[ys[t], t]
         end
-        lpsum = Nimble.Extras.logsumexp(lpsum, lp)
+        lpsum = Flimsy.Extras.logsumexp(lpsum, lp)
     end
     return lpsum
 end
@@ -67,9 +67,9 @@ function forward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
     for t = 2:T
         for s = 1:S
             a = if xs[s] == blank || (s > 2 && xs[s] == xs[s-2])
-                Nimble.Extras.logsumexp(table[s, t-1], table[s-1, t-1])
+                Flimsy.Extras.logsumexp(table[s, t-1], table[s-1, t-1])
             else
-                Nimble.Extras.logsumexp(table[s, t-1], table[s-1, t-1], table[s-2, t-1])
+                Flimsy.Extras.logsumexp(table[s, t-1], table[s-1, t-1], table[s-2, t-1])
             end
             table[s, t] = lpmat[xs[s], t] + a
         end
@@ -94,9 +94,9 @@ function backward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
             a_sp1_tp1 = s < S ? table[s+1, t+1] + lpmat[xs[s+1], t + 1] : -Inf
             a_sp2_tp1 = s + 1 < S ? table[s+2, t+1] + lpmat[xs[s+2], t + 1] : -Inf
             v = if xs[s] == blank || (s+1 < S && xs[s] == xs[s+2])
-                Nimble.Extras.logsumexp(a_s_tp1, a_sp1_tp1)
+                Flimsy.Extras.logsumexp(a_s_tp1, a_sp1_tp1)
             else
-                Nimble.Extras.logsumexp(a_s_tp1, a_sp1_tp1, a_sp2_tp1)
+                Flimsy.Extras.logsumexp(a_s_tp1, a_sp1_tp1, a_sp2_tp1)
             end
             table[s, t] = v
         end

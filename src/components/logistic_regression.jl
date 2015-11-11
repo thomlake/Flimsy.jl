@@ -3,7 +3,7 @@ immutable LogisticRegression{T,M,N} <: Component
     b::Var{T,M,1}
 end
 
-LogisticRegression(w::Matrix, b::Vector) = LogisticRegression(Var(w), Var(b))
+LogisticRegression(w::AbstractMatrix, b::AbstractVector) = LogisticRegression(Var(w), Var(b))
 
 LogisticRegression(n_classes, n_features) = LogisticRegression(Gaussian(n_classes, n_features), Zeros(n_classes))
 

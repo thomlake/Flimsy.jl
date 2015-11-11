@@ -81,7 +81,7 @@ function ctc{I<:Int,V<:Var}(target::Vector{I}, output::Vector{V}, blank::Int)
     S = size(output[1], 1)
     lpmat = CTC.make_lpmat(output)
     fmat = CTC.forward(ys, lpmat, blank)
-    ll = Nimble.Extras.logsumexp(fmat[end, end], fmat[end-1, end])
+    ll = Flimsy.Extras.logsumexp(fmat[end, end], fmat[end-1, end])
     return -ll
 end
 
@@ -93,14 +93,14 @@ function ctc{I<:Integer,V<:Var}(stack::BPStack, target::Vector{I}, output::Vecto
     fmat = CTC.forward(ys, lpmat, blank)
     bmat = CTC.backward(ys, lpmat, blank)
     fbmat = fmat + bmat
-    ll = Nimble.Extras.logsumexp(fmat[end, end], fmat[end-1, end])
+    ll = Flimsy.Extras.logsumexp(fmat[end, end], fmat[end-1, end])
     p = exp(ll)
 
     for t = 1:T
         for k = 1:S
             total = -Inf
             for s in findin(ys, k)
-                total = Nimble.Extras.logsumexp(total, fbmat[s, t])
+                total = Flimsy.Extras.logsumexp(total, fbmat[s, t])
             end
             output[t].grad[k] = exp(lpmat[k,t]) - exp(total - ll)
         end

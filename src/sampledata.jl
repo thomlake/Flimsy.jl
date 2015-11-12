@@ -8,7 +8,7 @@ XOr(t::Int) = XOr(t:t)
 
 function Base.rand(xor::XOr)
     x_bits = rand(0:1, rand(xor.range))
-    x = [Nimble.Extras.onehot(b + 1, 2) for b in x_bits]
+    x = [Flimsy.Extras.onehot(b + 1, 2) for b in x_bits]
     y = (cumsum(x_bits) % 2) + 1
     return x, y
 end

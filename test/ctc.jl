@@ -31,7 +31,7 @@ xs = rand(SYMBOLS, S)
 ys = Flimsy.Cost.CTC.expand(xs, BLANK)
 @assert T >= length(ys)
 
-outputs = [Var(randn(length(LANGUAGE), 1)) for t = 1:T]
+outputs = [Variable(randn(length(LANGUAGE), 1)) for t = 1:T]
 lpmat = Flimsy.Cost.CTC.make_lpmat(outputs)
 ll_bf = Flimsy.Cost.CTC.bruteforce(xs, lpmat, LANGUAGE, BLANK)
 nll_ctc = Flimsy.Cost.ctc(xs, outputs, BLANK)

@@ -17,12 +17,12 @@ function gradient!(f::Function, theta::Component, args...)
 end
 
 function getparams(theta::Component)
-    params = Var[]
+    params = Variable[]
     for f in fieldnames(theta)
         T = fieldtype(typeof(theta), f)
-        if T <: AbstractVar
+        if T <: AbstractVariable
             push!(params, getfield(theta, f))
-        elseif T <: AbstractArray && eltype(T) <: AbstractVar
+        elseif T <: AbstractArray && eltype(T) <: AbstractVariable
             append!(params, getfield(theta, f)[:])
         elseif T <: Component
             append!(params, getparams(getfield(theta, f)))
@@ -37,12 +37,12 @@ function getparams(theta::Component)
 end
 
 function getnamedparams(theta::Component)
-    params = Tuple{Any,Var}[]
+    params = Tuple{Any,Variable}[]
     for name in fieldnames(theta)
         T = fieldtype(typeof(theta), name)
-        if T <: AbstractVar
+        if T <: AbstractVariable
             push!(params, (name, getfield(theta, name)))
-        elseif T <: AbstractArray && eltype(T) <: AbstractVar
+        elseif T <: AbstractArray && eltype(T) <: AbstractVariable
             field = getfield(theta, name)
             for i = 1:endof(field)
                 push!(params, ((name, i), field[i]))

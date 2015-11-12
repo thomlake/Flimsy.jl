@@ -1,27 +1,26 @@
 using Flimsy
-import Flimsy: Var, AbstractVar
 using Base.Test
 
 immutable C1 <: Component
-    x::AbstractVar
-    y::AbstractVar
-    z::AbstractVar
+    x::AbstractVariable
+    y::AbstractVariable
+    z::AbstractVariable
     blah::Int
 end
-C1() = C1(Var(ones(1)), Var(2 * ones(2, 2)), Var(3 * ones(3, 3)), 13)
+C1() = C1(Variable(ones(1)), Variable(2 * ones(2, 2)), Variable(3 * ones(3, 3)), 13)
 
 immutable C2 <: Component
-    q::AbstractVar
+    q::AbstractVariable
     c1::C1
     blah::ASCIIString
 end
-C2() = C2(Var([1 4; 2 5; 3 6.0]), C1(), "so it goes")
+C2() = C2(Variable([1 4; 2 5; 3 6.0]), C1(), "so it goes")
 
-immutable C3{T<:AbstractVar} <: Component
+immutable C3{T<:AbstractVariable} <: Component
     blah::Float64
     xs::Vector{T}
 end
-C3() = C3(13.3, [Var(ones(1)), Var(2 * ones(2, 2)), Var(3 * ones(3, 3))])
+C3() = C3(13.3, [Variable(ones(1)), Variable(2 * ones(2, 2)), Variable(3 * ones(3, 3))])
 
 immutable C4 <: Component
     blah::Vector{Int}

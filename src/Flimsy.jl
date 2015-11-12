@@ -1,11 +1,15 @@
 module Flimsy
 
-export BPStack,
+export AbstractVariable,
+       Variable,
+       NativeVariable,
+       BPStack,
        Component,
        backprop!,
        gradient!,
        getparams,
-       getnamedparams
+       getnamedparams,
+       @flimsy
 
 export sigmoid,
        relu,
@@ -37,33 +41,30 @@ export gradcheck
 
 include("var.jl")
 include("core.jl")
-include("ops.jl")
 include("macros.jl")
+include("hashmat.jl")
+include("ops.jl")
 include("initialization.jl")
 include("fit.jl")
 include("gradcheck.jl")
 
 module Cost
     using ..Flimsy
-    import ..Flimsy: Var
     include("cost.jl")
     module CTC
         using ....Flimsy
-        import ....Flimsy: Var
         include("ctc.jl")
     end
 end
 
 module Extras
     using ..Flimsy
-    import ..Flimsy: AbstractVar, Var
     include("extras.jl")
     include("progress.jl")
 end
 
 module Components
     using ..Flimsy
-    import ..Flimsy: Var
     import StatsBase: predict
     import Distributions: probs
 
@@ -93,7 +94,6 @@ end
 
 module SampleData
     using ..Flimsy
-    import ..Flimsy: Var
     include("sampledata.jl")
 end
 

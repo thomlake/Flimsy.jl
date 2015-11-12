@@ -1,9 +1,9 @@
 """
-Array of function names that Nimble should not
+Array of function names that Flimsy should not
 try and backpropage through
 """
-NIMBLE_BLACKLIST_SYMBOLS = [
-    :Var,
+BLACKLIST_SYMBOLS = [
+    :Variable,
     :endof,
     :eachindex,
     :enumerate,
@@ -19,16 +19,16 @@ NIMBLE_BLACKLIST_SYMBOLS = [
 ]
 
 """
-Predicate functions to match expressions Nimble
+Predicate functions to match expressions Flimsy
 should ignore and not try and backpropage through.
 Functions should return Bool.
 """
-NIMBLE_BLACKLIST_PATTERNS = Function[]
+BLACKLIST_PATTERNS = Function[]
 
-isblacklisted(sym::Symbol) = sym in NIMBLE_BLACKLIST_SYMBOLS
+isblacklisted(sym::Symbol) = sym in BLACKLIST_SYMBOLS
 
 function isblacklisted(expr::Expr)
-    for f in NIMBLE_BLACKLIST_PATTERNS
+    for f in BLACKLIST_PATTERNS
         try
             result = f(expr)
             if result
@@ -43,36 +43,36 @@ end
 Insert a BPStack as the first argument in a function signature.
 
 *Input:*
-    f(x::Int, y::Var)
+    f(x::Int, y::Variable)
 
 *Output:*
-    f(__nimble_bpstack__::BPStack, x::Int, y::Var)
+    f(__flimsy_bpstack__::BPStack, x::Int, y::Variable)
 """
 function backprop_signature(signature)
     new_signature = deepcopy(signature)
-    insert!(new_signature.args, 2, Expr(:(::), :__nimble_bpstack__, :BPStack))
+    insert!(new_signature.args, 2, Expr(:(::), :__flimsy_bpstack__, :BPStack))
     return new_signature
 end
 
 """
-Rewrite `signature` so that variables with type `Var` are untyped
-and create statments to convert corresponding arg to type `Var`.
+Rewrite `signature` so that variables with type `Variable` are untyped
+and create statments to convert corresponding arg to type `Variable`.
 
 *Input:*
 
-    f(x::Int, y::Var)
+    f(x::Int, y::Variable)
 
 *Output:*
 
-    (f(x::Int, y), [y=Var(y)])
+    (f(x::Int, y), [y=Variable(y)])
 """
 function untyped_signature_and_conversions(signature)
     new_signature = deepcopy(signature)
     convert_stmts = Any[]
     for (i, arg) in enumerate(new_signature.args[1:end])
-        if typeof(arg) <: Expr && length(arg.args) > 1 && arg.args[2] == :Var
+        if typeof(arg) <: Expr && length(arg.args) > 1 && arg.args[2] == :Variable
             new_signature.args[i] = arg.args[1]
-            x = Expr(:(=), arg.args[1], Expr(:call, :Var, arg.args[1]))
+            x = Expr(:(=), arg.args[1], Expr(:call, :Variable, arg.args[1]))
             push!(convert_stmts, x)
         end
     end
@@ -85,7 +85,7 @@ arguments of the same name.
 
 *Input:*
 
-    f(x::Int, y, z::Var)
+    f(x::Int, y, z::Variable)
 
 *Output:*
 
@@ -102,7 +102,7 @@ end
 """
 Rewrite function body so all non-blacklisted functions have a
 BPStack instance as their first argument, i.e., `foo(a, b, c)`
-becomes `foo(__nimble_bpstack__, a, b, c)`.
+becomes `foo(__flimsy_bpstack__, a, b, c)`.
 """
 function backprop_body(expr::Expr)
     head = expr.head
@@ -111,7 +111,7 @@ function backprop_body(expr::Expr)
     if head == :call
         if !isblacklisted(expr.args[1])
             push!(newargs, shift!(args))
-            push!(newargs, Expr(:(::), :__nimble_bpstack__, BPStack))
+            push!(newargs, Expr(:(::), :__flimsy_bpstack__, BPStack))
         end
     end
     for arg in args
@@ -124,10 +124,10 @@ function backprop_body(expr::Expr)
     return Expr(expr.head, newargs...)
 end
 
-function component_parser(f::Expr)
-    f.head == :(=) || f.head == :function || error("[@Nimble.component] expected = or function but got ", f.head)
+function flimsy_parser(f::Expr)
+    f.head == :(=) || f.head == :function || error("[@flimsy] expected = or function but got ", f.head)
     ok = length(f.args) == 2 && f.args[1].head == :call && f.args[2].head == :block
-    ok || error("[@Nimble.component] expected (:call, :block) but got ", map(x->x.head, f.args))
+    ok || error("[@flimsy] expected (:call, :block) but got ", map(x->x.head, f.args))
 
     sig = f.args[1]
     body = f.args[2]
@@ -156,7 +156,7 @@ function component_parser(f::Expr)
     return Expr(:block, retblock...)
 end
 
-macro component(x::Expr)
-    y = component_parser(x)
+macro flimsy(x::Expr)
+    y = flimsy_parser(x)
     return esc(y)
 end

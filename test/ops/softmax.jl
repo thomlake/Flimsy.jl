@@ -1,8 +1,7 @@
 using Flimsy
-import Flimsy: Var
 using Base.Test
 
-x = Var(randn(3))
+x = Variable(randn(3))
 y = softmax(x)
 @test size(y) == (3, 1)
 s = exp(x.data - maximum(x.data))
@@ -11,7 +10,7 @@ s = s ./ sum(s)
 @test_approx_eq(sum(y.data), 1)
 test_op_grad((s)->softmax(s, x), ()->softmax(x), x)
 
-x = Var(randn(3, 5))
+x = Variable(randn(3, 5))
 y = softmax(x)
 @test size(y) == (3, 5)
 for j = 1:5

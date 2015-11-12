@@ -17,35 +17,35 @@ const OPERATORS = Symbol[
 ]
 
 # -- Identity -- #
-Base.identity(x::Var) = x
+Base.identity(x::Variable) = x
 
-Base.identity(stack::BPStack, x::Var) = x
+Base.identity(stack::BPStack, x::Variable) = x
 
 # -- Tanh -- #
-function bwd_tanh{T,M,N}(y::Var{T,M,N}, x::Var{T,M,N})
+function bwd_tanh{T,M,N}(y::Variable{T,M,N}, x::Variable{T,M,N})
     for i in eachindex(x)
         x.grad[i] += (1 - (y.data[i] * y.data[i])) * y.grad[i]
     end
     return nothing
 end
 
-Base.tanh(x::Var) = Var(tanh(x.data))
+Base.tanh(x::Variable) = Variable(tanh(x.data))
 
-function Base.tanh(stack::BPStack, x::Var)
+function Base.tanh(stack::BPStack, x::Variable)
     y = tanh(x)
     push!(stack, () -> bwd_tanh(y, x))
     return y
 end
 
 # -- Sigmoid -- #
-function bwd_sigmoid{T,M,N}(y::Var{T,M,N}, x::Var{T,M,N})
+function bwd_sigmoid{T,M,N}(y::Variable{T,M,N}, x::Variable{T,M,N})
     for i in eachindex(x)
         x.grad[i] += y.data[i] * (1 - y.data[i]) * y.grad[i]
     end
     return nothing
 end
 
-function sigmoid(x::Var)
+function sigmoid(x::Variable)
     y = zero(x)
     for i in eachindex(x)
         y.data[i] = 1 / (1 + exp(-x.data[i]))
@@ -53,14 +53,14 @@ function sigmoid(x::Var)
     return y
  end
 
-function sigmoid(stack::BPStack, x::Var)
+function sigmoid(stack::BPStack, x::Variable)
     y = sigmoid(x)
     push!(stack, () -> bwd_sigmoid(y, x))
     return y
 end
 
 # -- ReLU -- #
-function bwd_relu{T,M,N}(y::Var{T,M,N}, x::Var{T,M,N})
+function bwd_relu{T,M,N}(y::Variable{T,M,N}, x::Variable{T,M,N})
     for i in eachindex(x)
         if x.data[i] > 0
             x.grad[i] += y.grad[i]
@@ -69,16 +69,16 @@ function bwd_relu{T,M,N}(y::Var{T,M,N}, x::Var{T,M,N})
     return nothing
 end
 
-relu(x::Var) = Var(max(0, x.data))
+relu(x::Variable) = Variable(max(0, x.data))
 
-function relu(stack::BPStack, x::Var)
+function relu(stack::BPStack, x::Variable)
     y = relu(x)
     push!(stack, () -> bwd_relu(y, x))
     return y
 end
 
 # -- Max -- #
-# function bwd_max(y::Var, t::Number, x::Var)
+# function bwd_max(y::Variable, t::Number, x::Variable)
 #     for i = 1:endof(x.data)
 #         if x.data[i] > t
 #             x.grad[i] += y.grad[i]
@@ -87,16 +87,16 @@ end
 #     return nothing
 # end
 #
-# Base.max(t::Number, x::Var) = Var(max(t, x.data))
+# Base.max(t::Number, x::Variable) = Variable(max(t, x.data))
 #
-# function Base.max(stack::BPStack, t::Number, x::Var)
+# function Base.max(stack::BPStack, t::Number, x::Variable)
 #     y = max(t, x)
 #     push!(stack, () -> bwd_max(y, t, x))
 #     return y
 # end
 
 # -- Softmax -- #
-function bwd_softmax{T,M,N}(y::Var{T,M,N}, x::Var{T,M,N})
+function bwd_softmax{T,M,N}(y::Variable{T,M,N}, x::Variable{T,M,N})
     for n = 1:size(y, 2)
         for i = 1:size(y, 1)
             for j = 1:size(y, 1)
@@ -111,20 +111,20 @@ function bwd_softmax{T,M,N}(y::Var{T,M,N}, x::Var{T,M,N})
     return nothing
 end
 
-function softmax(x::Var)
+function softmax(x::Variable)
     y = exp(x.data .- maximum(x.data, 1))
     y ./= sum(y, 1)
-    return Var(y)
+    return Variable(y)
 end
 
-function softmax(stack::BPStack, x::Var)
+function softmax(stack::BPStack, x::Variable)
     y = softmax(x)
     push!(stack, () -> bwd_softmax(y, x))
     return y
 end
 
 # -- Winner Takes All -- #
-function bwd_wta{T,M,N}(y::Var{T,M,N}, x::Var{T,M,N})
+function bwd_wta{T,M,N}(y::Variable{T,M,N}, x::Variable{T,M,N})
     _, imax = findmax(x.data, 1)
     for i = 1:endof(imax)
         x.grad[imax[i]] += y.grad[imax[i]]
@@ -132,7 +132,7 @@ function bwd_wta{T,M,N}(y::Var{T,M,N}, x::Var{T,M,N})
     return nothing
 end
 
-function wta(x::Var)
+function wta(x::Variable)
     y = zero(x)
     xmax, imax = findmax(x.data, 1)
     for i = 1:endof(imax)
@@ -141,21 +141,21 @@ function wta(x::Var)
     return y
 end
 
-function wta(stack::BPStack, x::Var)
+function wta(stack::BPStack, x::Variable)
     y = wta(x)
     push!(stack, () -> bwd_wta(y, x))
     return y
 end
 
 # -- Multiply (scalar by array) -- #
-function bwd_prod(y::Var, a::AbstractFloat, x::Var)
+function bwd_prod(y::Variable, a::AbstractFloat, x::Variable)
     for i in eachindex(y.grad)
         x.grad[i] += a * y.grad[i]
     end
     return nothing
 end
 
-function bwd_prod{T,M,N}(y::Var{T,M,N}, x1::Var{T,1,N}, x2::Var{T,M,N})
+function bwd_prod{T,M,N}(y::Variable{T,M,N}, x1::Variable{T,1,N}, x2::Variable{T,M,N})
     for j = 1:size(x1, 2)
         for i = 1:size(y, 1)
             x1.grad[j] += y.grad[i,j] * x2.data[i,j]
@@ -169,7 +169,7 @@ function bwd_prod{T,M,N}(y::Var{T,M,N}, x1::Var{T,1,N}, x2::Var{T,M,N})
     return nothing
 end
 
-function bwd_prod{T}(y::Var{T}, x1::Var{T}, x2::Var{T})
+function bwd_prod{T}(y::Variable{T}, x1::Variable{T}, x2::Variable{T})
     for i in eachindex(x1)
         x1.grad[i] += y.grad[i] * x2.data[i]
         x2.grad[i] += y.grad[i] * x1.data[i]
@@ -177,24 +177,24 @@ function bwd_prod{T}(y::Var{T}, x1::Var{T}, x2::Var{T})
     return nothing
 end
 
-Base.prod(a::AbstractFloat, x::Var) = Var(a .* x.data)
+Base.prod(a::AbstractFloat, x::Variable) = Variable(a .* x.data)
 
-function Base.prod(stack::BPStack, a::AbstractFloat, x::Var)
+function Base.prod(stack::BPStack, a::AbstractFloat, x::Variable)
     y = prod(a, x)
     push!(stack, () -> bwd_prod(y, a, x))
     return y
 end
 
-Base.prod(x1::Var, x2::Var) = Var(x1.data .* x2.data)
+Base.prod(x1::Variable, x2::Variable) = Variable(x1.data .* x2.data)
 
-function Base.prod(stack::BPStack, x1::Var, x2::Var)
+function Base.prod(stack::BPStack, x1::Variable, x2::Variable)
     y = prod(x1, x2)
     push!(stack, () -> bwd_prod(y, x1, x2))
     return y
 end
 
 # -- Linear -- #
-function bwd_linear{T,M,K,N}(y::Var{T,M,N}, w::Var{T,M,K}, x::Var{T,K,N})
+function bwd_linear{T,M,K,N}(y::Variable{T,M,N}, w::Variable{T,M,K}, x::Variable{T,K,N})
     dx = At_mul_B(w.data, y.grad)
     dw = A_mul_Bt(y.grad, x.data)
     for i in eachindex(x)
@@ -208,10 +208,10 @@ function bwd_linear{T,M,K,N}(y::Var{T,M,N}, w::Var{T,M,K}, x::Var{T,K,N})
     return nothing
 end
 
-function linear{T,M,K,N}(w::Var{T,M,K}, x::Var{T,K,N})
+function linear{T,M,K,N}(w::Variable{T,M,K}, x::Variable{T,K,N})
     y = zeros(eltype(w), M, N)
     A_mul_B!(y, w.data, x.data)
-    return Var(y)
+    return Variable(y)
 end
 
 function linear(stack::BPStack, w, x)
@@ -221,7 +221,7 @@ function linear(stack::BPStack, w, x)
 end
 
 # -- Sum -- #
-function bwd_sum{T,M,N}(y::Var{T,M,N}, x1::Var{T,M,N}, x2::Var{T,M,N})
+function bwd_sum{T,M,N}(y::Variable{T,M,N}, x1::Variable{T,M,N}, x2::Variable{T,M,N})
     for i in eachindex(y)
         x1.grad[i] += y.grad[i]
         x2.grad[i] += y.grad[i]
@@ -229,7 +229,7 @@ function bwd_sum{T,M,N}(y::Var{T,M,N}, x1::Var{T,M,N}, x2::Var{T,M,N})
     return nothing
 end
 
-function bwd_sum{T,M,N}(y::Var{T,M,N}, x1::Var{T,M,N}, x2::Var{T,M,1})
+function bwd_sum{T,M,N}(y::Variable{T,M,N}, x1::Variable{T,M,N}, x2::Variable{T,M,1})
     for i in eachindex(x1)
         x1.grad[i] += y.grad[i]
     end
@@ -241,16 +241,16 @@ function bwd_sum{T,M,N}(y::Var{T,M,N}, x1::Var{T,M,N}, x2::Var{T,M,1})
     return nothing
 end
 
-Base.sum{T,M,N1,N2}(x1::Var{T,M,N1}, x2::Var{T,M,N2}) = Var(x1.data .+ x2.data)
+Base.sum{T,M,N1,N2}(x1::Variable{T,M,N1}, x2::Variable{T,M,N2}) = Variable(x1.data .+ x2.data)
 
-function Base.sum{T,M,N1,N2}(stack::BPStack, x1::Var{T,M,N1}, x2::Var{T,M,N2})
+function Base.sum{T,M,N1,N2}(stack::BPStack, x1::Variable{T,M,N1}, x2::Variable{T,M,N2})
     y = sum(x1, x2)
     push!(stack, () -> bwd_sum(y, x1, x2))
     return y
 end
 
 # -- Sum (arbitrary number of blocks) -- #
-function Base.sum{T<:AbstractVar}(xs::Vector{T})
+function Base.sum{T<:AbstractVariable}(xs::Vector{T})
     y = sum(xs[1], xs[2])
     for i = 3:length(xs)
         y = sum(y, xs[i])
@@ -258,7 +258,7 @@ function Base.sum{T<:AbstractVar}(xs::Vector{T})
     return y
 end
 
-function Base.sum{T<:AbstractVar}(stack::BPStack, xs::Vector{T})
+function Base.sum{T<:AbstractVariable}(stack::BPStack, xs::Vector{T})
     y = sum(stack, xs[1], xs[2])
     for i = 3:length(xs)
         y = sum(stack, y, xs[i])
@@ -266,19 +266,19 @@ function Base.sum{T<:AbstractVar}(stack::BPStack, xs::Vector{T})
     return y
 end
 
-Base.sum(x1::Var, x2::Var, x3::Var, xrest::Var...) = sum([x1, x2, x3, xrest...])
+Base.sum(x1::Variable, x2::Variable, x3::Variable, xrest::Variable...) = sum([x1, x2, x3, xrest...])
 
-Base.sum(stack::BPStack, x1::Var, x2::Var, x3::Var, xrest::Var...) = sum(stack, [x1, x2, x3, xrest...])
+Base.sum(stack::BPStack, x1::Variable, x2::Variable, x3::Variable, xrest::Variable...) = sum(stack, [x1, x2, x3, xrest...])
 
 # -- Minus -- #
-function bwd_minus{T,M,N}(y::Var{T,M,N}, a::AbstractFloat, x::Var{T,M,N})
+function bwd_minus{T,M,N}(y::Variable{T,M,N}, a::AbstractFloat, x::Variable{T,M,N})
     for i in eachindex(y)
         x.grad[i] -= y.grad[i]
     end
     return nothing
 end
 
-function bwd_minus{T,M,N}(y::Var{T,M,N}, x1::Var{T,M,N}, x2::Var{T,M,N})
+function bwd_minus{T,M,N}(y::Variable{T,M,N}, x1::Variable{T,M,N}, x2::Variable{T,M,N})
     for i in eachindex(y)
         x1.grad[i] += y.grad[i]
         x2.grad[i] -= y.grad[i]
@@ -286,24 +286,24 @@ function bwd_minus{T,M,N}(y::Var{T,M,N}, x1::Var{T,M,N}, x2::Var{T,M,N})
     return nothing
 end
 
-minus(a::AbstractFloat, x::Var) = Var(a .- x.data)
+minus(a::AbstractFloat, x::Variable) = Variable(a .- x.data)
 
-function minus(stack::BPStack, a::AbstractFloat, x::Var)
+function minus(stack::BPStack, a::AbstractFloat, x::Variable)
     y = minus(a, x)
     push!(stack, () -> bwd_minus(y, a, x))
     return y
 end
 
-minus{T,M,N}(x1::Var{T,M,N}, x2::Var{T,M,N}) = Var(x1.data .- x2.data)
+minus{T,M,N}(x1::Variable{T,M,N}, x2::Variable{T,M,N}) = Variable(x1.data .- x2.data)
 
-function minus{T,M,N}(stack::BPStack, x1::Var{T,M,N}, x2::Var{T,M,N})
+function minus{T,M,N}(stack::BPStack, x1::Variable{T,M,N}, x2::Variable{T,M,N})
     y = minus(x1, x2)
     push!(stack, () -> bwd_minus(y, x1, x2))
     return y
 end
 
 # -- Concatenation --#
-function bwd_concat{T<:AbstractVar}(y::Var, xs::Vector{T})
+function bwd_concat{T<:AbstractVariable}(y::Variable, xs::Vector{T})
     offset = 0
     for k = 1:length(xs)
         for j = 1:size(xs[k], 2)
@@ -319,15 +319,15 @@ function bwd_concat{T<:AbstractVar}(y::Var, xs::Vector{T})
     return nothing
 end
 
-function concat{T<:AbstractVar}(xs::Vector{T})
+function concat{T<:AbstractVariable}(xs::Vector{T})
     n2 = size(xs[1], 2)
     for i = 2:length(xs)
         @assert n2 == size(xs[i], 2)
     end
-    return Var(vcat([x.data for x in xs]...))
+    return Variable(vcat([x.data for x in xs]...))
 end
 
-function concat{T<:AbstractVar}(stack::BPStack, xs::Vector{T})
+function concat{T<:AbstractVariable}(stack::BPStack, xs::Vector{T})
     y = concat(xs)
     push!(stack, () -> bwd_concat(y, xs))
     return y
@@ -335,7 +335,7 @@ end
 
 
 # -- Deconcatentation -- #
-# function bwd_decat(outmats::Vector{Var}, inmat::Var)
+# function bwd_decat(outmats::Vector{Variable}, inmat::Variable)
 #     @assert length(outmats) == size(inmat, 1)
 #     for i = 1:size(inmat, 1)
 #         inmat.grad[i,:] += outmats[i].dx
@@ -343,18 +343,18 @@ end
 #     return nothing
 # end
 #
-# function decat(mat::Var)
-#     return [Var(mat.data[i,:]) for i = 1:size(mat, 1)]
+# function decat(mat::Variable)
+#     return [Variable(mat.data[i,:]) for i = 1:size(mat, 1)]
 # end
 #
-# function decat(stack::BPStack, inmat::Var)
+# function decat(stack::BPStack, inmat::Variable)
 #     outmats = decat(inmat)
 #     push!(stack, () -> bwd_decat(outmats, inmat))
 #     return outmats
 # end
 
 # -- Map (single) -- #
-# function Base.map{T<:AbstractVar}(f::Function, xs::Vector{T})
+# function Base.map{T<:AbstractVariable}(f::Function, xs::Vector{T})
 #     ys = Array(T, length(xs))
 #     for i = 1:length(xs)
 #         ys[i] = f(xs[i])
@@ -362,7 +362,7 @@ end
 #     return ys
 # end
 #
-# function Base.map{T<:AbstractVar}(stack::BPStack, f::Function, xs::Vector{T})
+# function Base.map{T<:AbstractVariable}(stack::BPStack, f::Function, xs::Vector{T})
 #     ys = Array(T, length(xs))
 #     for i = 1:length(xs)
 #         ys[i] = f(stack, xs[i])
@@ -371,7 +371,7 @@ end
 # end
 
 # -- Map (multiple) -- #
-# function Base.map{T<:AbstractVar}(f::Function, xss::Vector{T}...)
+# function Base.map{T<:AbstractVariable}(f::Function, xss::Vector{T}...)
 #     n = length(xss)
 #     len = length(xss[1])
 #     for i = 2:n
@@ -384,7 +384,7 @@ end
 #     return ys
 # end
 #
-# function Base.map{T<:AbstractVar}(stack::BPStack, f::Function, xss::Vector{T}...)
+# function Base.map{T<:AbstractVariable}(stack::BPStack, f::Function, xss::Vector{T}...)
 #     n = length(xss)
 #     len = length(xss[1])
 #     for i = 2:n
@@ -398,11 +398,12 @@ end
 # end
 
 # -- Convenience Functions -- #
-affine(w::Var, x::Var, b::Var) = sum(linear(w, x), b)
-affine(stack::BPStack, w::Var, x::Var, b::Var) = sum(stack, linear(stack, w, x), b)
+affine(w::Variable, x::Variable, b::Variable) = sum(linear(w, x), b)
+
+affine(stack::BPStack, w::Variable, x::Variable, b::Variable) = sum(stack, linear(stack, w, x), b)
 
 # -- Special Ops --#
-function dropout!(x::Var, dp::AbstractFloat)
+function dropout!(x::Variable, dp::AbstractFloat)
     data = x.data
     for i in eachindex(x)
         if rand() < dp
@@ -412,7 +413,7 @@ function dropout!(x::Var, dp::AbstractFloat)
     return x
 end
 
-function dropout!(stack::BPStack, x::Var, dp::AbstractFloat)
+function dropout!(stack::BPStack, x::Variable, dp::AbstractFloat)
     data = x.data
     for i in eachindex(x)
         if rand() < dp

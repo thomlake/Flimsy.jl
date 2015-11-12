@@ -1,20 +1,20 @@
 immutable Recurrent{T,M,N} <: Component
     f::Function
-    w::Var{T,M,N}
-    u::Var{T,M,M}
-    b::Var{T,M,1}
-    h0::Var{T,M,1}
+    w::Variable{T,M,N}
+    u::Variable{T,M,M}
+    b::Variable{T,M,1}
+    h0::Variable{T,M,1}
 end
 
 Recurrent(f::Function, m::Int, n::Int) = Recurrent(f, Orthonormal(m, n), Orthonormal(m, m), Zeros(m), Zeros(m))
 Recurrent(m::Int, n::Int) = Recurrent(tanh, m, n)
 
-@Flimsy.component Base.step(theta::Recurrent, x::Var) = theta.f(affine(theta.w, x, theta.h0))
+@flimsy Base.step(theta::Recurrent, x::Variable) = theta.f(affine(theta.w, x, theta.h0))
 
-@Flimsy.component Base.step(theta::Recurrent, x::Var, htm1) = theta.f(sum(linear(theta.w, x), linear(theta.u, htm1), theta.b))
+@flimsy Base.step(theta::Recurrent, x::Variable, htm1) = theta.f(sum(linear(theta.w, x), linear(theta.u, htm1), theta.b))
 
-@Flimsy.component function unfold(theta::Recurrent, x::Vector)
-    h = Array(Var, length(x))
+@flimsy function unfold(theta::Recurrent, x::Vector)
+    h = Array(Variable, length(x))
     h[1] = step(theta, x[1])
     for t = 2:length(x)
         h[t] = step(theta, x[t], h[t-1])

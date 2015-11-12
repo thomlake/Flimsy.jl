@@ -1,16 +1,16 @@
 
 #-- Normal --#
 function Gaussian(n_out::Int, n_in::Int)
-    Var(randn(n_out, n_in))
+    Variable(randn(n_out, n_in))
 end
 
 function Gaussian(sigma::Real, n_out::Int, n_in::Int)
-    Var(sigma * randn(n_out, n_in))
+    Variable(sigma * randn(n_out, n_in))
 end
 
 #-- Uniform --#
 function Uniform(lower::Real, upper::Real, n_out::Int, n_in::Int)
-    Var((upper - lower) .* rand(n_out, n_in) .+ lower)
+    Variable((upper - lower) .* rand(n_out, n_in) .+ lower)
 end
 
 #-- Glorot --#
@@ -23,13 +23,13 @@ end
 function Orthonormal(g::Real, n_out::Int, n_in::Int)
     n = max(n_out, n_in)
     w = g .* svd(randn(n, n))[1]
-    Var(w[1:n_out,1:n_in])
+    Variable(w[1:n_out,1:n_in])
 end
 
 function Orthonormal(n_out::Int, n_in::Int)
     n = max(n_out, n_in)
     w = svd(randn(n, n))[1]
-    Var(w[1:n_out,1:n_in])
+    Variable(w[1:n_out,1:n_in])
 end
 
 #-- Sparse -- #
@@ -43,11 +43,11 @@ function Sparse(n::Int, n_out::Int, n_in::Int)
             w[i,jz[j]] = 0
         end
     end
-    Var(w)
+    Variable(w)
 end
 
 # -- Identity -- #
-Identity(n::Int) = Var(eye(n))
+Identity(n::Int) = Variable(eye(n))
 
 # -- Zeros -- #
-Zeros(args...) = Var(zeros(args))
+Zeros(args...) = Variable(zeros(args))

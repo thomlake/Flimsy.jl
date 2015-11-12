@@ -21,7 +21,7 @@ tests = [
     "ctc",
 ]
 
-srand(sum(map(Int, collect("NeuralNet"))))
+srand(sum(map(Int, collect("Flimsy"))))
 
 global failed = false
 
@@ -51,7 +51,7 @@ end
 const eps = 1e-6
 const tol = 1e-6
 
-function test_op_grad(f1::Function, f2::Function, x::Flimsy.Var)
+function test_op_grad(f1::Function, f2::Function, x::Flimsy.Variable)
     stack = BPStack()
     y = f1(stack)
     t = randn(size(y))
@@ -81,16 +81,3 @@ for t in tests
         print_with_color(:green, " ok\n")
     end
 end
-
-# for t in readdir("ops/")
-#     global failed
-#     failed = false
-#     f = joinpath("ops", t)
-#     print("* test $f...")
-#     Test.with_handler(test_handler) do
-#         include(f)
-#     end
-#     if !failed
-#         print_with_color(:green, " ok\n")
-#     end
-# end

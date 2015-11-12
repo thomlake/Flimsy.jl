@@ -1,8 +1,8 @@
 immutable LSTM{T,M,N} <: Component
-    wi::Var{T,M,N}; wf::Var{T,M,N}; wc::Var{T,M,N}; wo::Var{T,M,N};
-    ui::Var{T,M,M}; uf::Var{T,M,M}; uc::Var{T,M,M}; uo::Var{T,M,M}; vo::Var{T,M,M};
-    bi::Var{T,M,1}; bf::Var{T,M,1}; bc::Var{T,M,1}; bo::Var{T,M,1};
-    h0::Var{T,M,1}; c0::Var{T,M,1}
+    wi::Variable{T,M,N}; wf::Variable{T,M,N}; wc::Variable{T,M,N}; wo::Variable{T,M,N};
+    ui::Variable{T,M,M}; uf::Variable{T,M,M}; uc::Variable{T,M,M}; uo::Variable{T,M,M}; vo::Variable{T,M,M};
+    bi::Variable{T,M,1}; bf::Variable{T,M,1}; bc::Variable{T,M,1}; bo::Variable{T,M,1};
+    h0::Variable{T,M,1}; c0::Variable{T,M,1}
 end
 
 LSTM(m::Int, n::Int) = LSTM(
@@ -12,7 +12,7 @@ LSTM(m::Int, n::Int) = LSTM(
     Zeros(m), Zeros(m),
 )
 
-@Flimsy.component function Base.step(theta::LSTM, x::Var)
+@flimsy function Base.step(theta::LSTM, x::Variable)
     i = sigmoid(sum(linear(theta.wi, x), linear(theta.ui, theta.h0), theta.bi))
     f = sigmoid(sum(linear(theta.wf, x), linear(theta.uf, theta.h0), theta.bf))
     cnew = tanh(sum(linear(theta.wc, x), linear(theta.uc, theta.h0), theta.bc))
@@ -21,7 +21,7 @@ LSTM(m::Int, n::Int) = LSTM(
     return prod(o, tanh(c)), c
 end
 
-@Flimsy.component function Base.step(theta::LSTM, x::Var, htm1, ctm1)
+@flimsy function Base.step(theta::LSTM, x::Variable, htm1, ctm1)
     i = sigmoid(sum(linear(theta.wi, x), linear(theta.ui, htm1), theta.bi))
     f = sigmoid(sum(linear(theta.wf, x), linear(theta.uf, htm1), theta.bf))
     cnew = tanh(sum(linear(theta.wc, x), linear(theta.uc, htm1), theta.bc))
@@ -30,9 +30,9 @@ end
     return prod(o, tanh(c)), c
 end
 
-@Flimsy.component function unfold(theta::LSTM, x::Vector)
-    h = Array(Var, length(x))
-    c = Array(Var, length(x))
+@flimsy function unfold(theta::LSTM, x::Vector)
+    h = Array(Variable, length(x))
+    c = Array(Variable, length(x))
     h[1], c[1] = step(theta, x[1])
     for t = 2:length(x)
         h[t], c[t] = step(theta, x[t], h[t-1], c[t-1])

@@ -1,16 +1,16 @@
 # Gaussian negative log likelihood loss function
-function gauss{T}(target::AbstractFloat, output::Var{T,1,1})
+function gauss{T}(target::AbstractFloat, output::Variable{T,1,1})
     delta = output.data[1] - target
     return 0.5 * delta * delta
 end
 
-function gauss{T}(stack::BPStack, target::AbstractFloat, output::Var{T,1,1})
+function gauss{T}(stack::BPStack, target::AbstractFloat, output::Variable{T,1,1})
     delta = output.data[1] - target
     output.grad[1] += delta
     return 0.5 * delta * delta
 end
 
-function gauss{T<:AbstractFloat}(target::Array{T}, output::Var)
+function gauss{T<:AbstractFloat}(target::Array{T}, output::Variable)
     @assert size(target) == size(output)
 
     sse = 0.0
@@ -22,7 +22,7 @@ function gauss{T<:AbstractFloat}(target::Array{T}, output::Var)
 end
 
 
-function gauss{T<:AbstractFloat}(stack::BPStack, target::Array{T}, output::Var)
+function gauss{T<:AbstractFloat}(stack::BPStack, target::Array{T}, output::Variable)
     @assert size(target) == size(output)
 
     sse = 0.0
@@ -35,14 +35,14 @@ function gauss{T<:AbstractFloat}(stack::BPStack, target::Array{T}, output::Var)
 end
 
 # Categorical negative log likelihood loss function
-function cat{T,M}(target::Integer, output::Var{T,M,1}, eps::Float64=1e-20)
+function cat{T,M}(target::Integer, output::Variable{T,M,1}, eps::Float64=1e-20)
     pr_target = output.data[target] + eps
     nll = -log(pr_target)
     isfinite(nll) || error("nll: $nll not finite")
     return nll
 end
 
-function cat{T,M}(stack::BPStack, target::Integer, output::Var{T,M,1}, eps::Float64=1e-20)
+function cat{T,M}(stack::BPStack, target::Integer, output::Variable{T,M,1}, eps::Float64=1e-20)
     pr_target = output.data[target] + eps
     output.grad[target] -= 1 / pr_target
     nll = -log(pr_target)
@@ -50,7 +50,7 @@ function cat{T,M}(stack::BPStack, target::Integer, output::Var{T,M,1}, eps::Floa
     return nll
 end
 
-function cat{I<:Integer}(target::Vector{I}, output::Var, eps::Float64=1e-20)
+function cat{I<:Integer}(target::Vector{I}, output::Variable, eps::Float64=1e-20)
     @assert size(output, 2) == length(target)
 
     nll = 0.0
@@ -62,7 +62,7 @@ function cat{I<:Integer}(target::Vector{I}, output::Var, eps::Float64=1e-20)
     return nll
 end
 
-function cat{I<:Integer}(stack::BPStack, target::Vector{I}, output::Var, eps::Float64=1e-20)
+function cat{I<:Integer}(stack::BPStack, target::Vector{I}, output::Variable, eps::Float64=1e-20)
     @assert size(output, 2) == length(target)
 
     nll = 0.0
@@ -75,7 +75,7 @@ function cat{I<:Integer}(stack::BPStack, target::Vector{I}, output::Var, eps::Fl
     return nll
 end
 
-function ctc{I<:Int,V<:Var}(target::Vector{I}, output::Vector{V}, blank::Int)
+function ctc{I<:Int,V<:Variable}(target::Vector{I}, output::Vector{V}, blank::Int)
     ys = CTC.expand(target, blank)
     T = length(output)
     S = size(output[1], 1)
@@ -85,7 +85,7 @@ function ctc{I<:Int,V<:Var}(target::Vector{I}, output::Vector{V}, blank::Int)
     return -ll
 end
 
-function ctc{I<:Integer,V<:Var}(stack::BPStack, target::Vector{I}, output::Vector{V}, blank::Int)
+function ctc{I<:Integer,V<:Variable}(stack::BPStack, target::Vector{I}, output::Vector{V}, blank::Int)
     ys = CTC.expand(target, blank)
     T = length(output)
     S = size(output[1], 1)

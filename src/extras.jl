@@ -18,7 +18,7 @@ function argmax(x::Matrix)
     return imax
 end
 
-argmax(x::AbstractVar) = argmax(x.data)
+argmax(x::AbstractVariable) = argmax(x.data)
 
 zscore(x, mu, sigma, sigma_min::AbstractFloat=1e-6) = (x .- mu) ./ max(sigma, sigma_min)
 

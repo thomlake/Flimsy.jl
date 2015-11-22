@@ -1,4 +1,5 @@
-immutable LSTM{T,M,N} <: Component
+
+immutable LSTM{T,M,N} <: RecurrentComponent{T,M,N}
     wi::Variable{T,M,N}; wf::Variable{T,M,N}; wc::Variable{T,M,N}; wo::Variable{T,M,N};
     ui::Variable{T,M,M}; uf::Variable{T,M,M}; uc::Variable{T,M,M}; uo::Variable{T,M,M}; vo::Variable{T,M,M};
     bi::Variable{T,M,1}; bf::Variable{T,M,1}; bc::Variable{T,M,1}; bo::Variable{T,M,1};

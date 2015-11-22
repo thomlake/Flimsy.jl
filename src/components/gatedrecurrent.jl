@@ -1,4 +1,4 @@
-immutable GatedRecurrent{T,M,N} <: Component
+immutable GatedRecurrent{T,M,N} <: RecurrentComponent{T,M,N}
     wr::Variable{T,M,N}; wz::Variable{T,M,N}; wc::Variable{T,M,N};
     ur::Variable{T,M,M}; uz::Variable{T,M,M}; uc::Variable{T,M,M};
     br::Variable{T,M,1}; bz::Variable{T,M,1}; bc::Variable{T,M,1};

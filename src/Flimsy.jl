@@ -18,8 +18,10 @@ export sigmoid,
        linear,
        minus,
        concat,
+       decat,
        affine,
-       dropout!
+       dropout!,
+       threshold
 
 export Gaussian,
        Uniform,
@@ -68,8 +70,12 @@ module Components
     import StatsBase: predict
     import Distributions: probs
 
+    abstract RecurrentComponent{T,M,N}
+
     export LogisticRegression,
            LinearRegression,
+           MultilabelClassifier,
+           LinearSVM,
            CTCOutput,
            FeedForwardLayer,
            LayerStack,
@@ -85,9 +91,11 @@ module Components
 
     include("components/logistic_regression.jl")
     include("components/linear_regression.jl")
+    include("components/multilabel.jl")
+    include("components/linear_svm.jl")
     include("components/ctcoutput.jl")
     include("components/feedforwardlayer.jl")
-    include("components/recurrent.jl")
+    include("components/simple_recurrent.jl")
     include("components/gatedrecurrent.jl")
     include("components/lstm.jl")
 end

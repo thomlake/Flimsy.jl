@@ -20,6 +20,38 @@ end
 
 argmax(x::AbstractVariable) = argmax(x.data)
 
+# argmax_i {x_i in X : i != k}
+function argmaxneq(x::Vector, k::Integer)
+    m = -Inf
+    imax = 0
+    for i in eachindex(x)
+        if i != k && x[i] > m
+            m = x[i]
+            imax = i
+        end
+    end
+    return imax
+end
+
+function argmaxneq{I<:Integer}(x::Matrix, ks::Vector{I})
+    n_rows, n_cols = size(x)
+    @assert n_cols == length(ks)
+    imax = zeros(Int, n_cols)
+    for j = 1:n_cols
+        m = -Inf
+        for i = 1:n_rows
+            if i != ks[j] && x[i,j] > m
+                m = x[i,j]
+                imax[j] = i
+            end
+        end
+    end
+    return imax
+end
+
+argmaxneq{I<:Integer}(x::AbstractVariable, ks::Vector{I}) = argmaxneq(x.data, ks)
+
+
 zscore(x, mu, sigma, sigma_min::AbstractFloat=1e-6) = (x .- mu) ./ max(sigma, sigma_min)
 
 function zscore(x::Matrix, sigma_min::AbstractFloat=1e-6)

@@ -10,12 +10,15 @@ BLACKLIST_SYMBOLS = [
     :zip,
     :length,
     :println,
+    :size,
+    :eltype,
     :typeof,
     :push!,
     :append!,
     :Array,
     :-,
     :reverse,
+    :map,
 ]
 
 """

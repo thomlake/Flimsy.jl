@@ -45,6 +45,10 @@ function bwd_sigmoid{T,M,N}(y::Variable{T,M,N}, x::Variable{T,M,N})
     return nothing
 end
 
+# x * (1 - x) * g = (i - x)
+# x * (1 - x) / (i - x) = 1 / g
+# (i - x) / x * (1 - x) = g
+
 function sigmoid(x::Variable)
     y = zero(x)
     for i in eachindex(x)
@@ -302,6 +306,31 @@ function minus{T,M,N}(stack::BPStack, x1::Variable{T,M,N}, x2::Variable{T,M,N})
     return y
 end
 
+# -- Threshold -- #
+function bwd_threshold{T,M,N}(y::Variable{T,M,N}, x::Variable{T,M,N})
+    for i = 1:size(x, 1)
+        if y.data[i] > 0
+            x.grad[i] += y.grad[i]
+        end
+    end
+    return nothing
+end
+
+function threshold(x::Variable, t::AbstractFloat)
+    data = x.data
+    y = similar(data)
+    for i in eachindex(x)
+        y[i] = data[i] < t ? 0 : 1
+    end
+    return Variable(y)
+end
+
+function threshold(stack::BPStack, x::Variable, t::AbstractFloat)
+    y = threshold(x, t)
+    push!(stack, () -> bwd_threshold(y, x))
+    return y
+end
+
 # -- Concatenation --#
 function bwd_concat{T<:AbstractVariable}(y::Variable, xs::Vector{T})
     offset = 0
@@ -335,23 +364,23 @@ end
 
 
 # -- Deconcatentation -- #
-# function bwd_decat(outmats::Vector{Variable}, inmat::Variable)
-#     @assert length(outmats) == size(inmat, 1)
-#     for i = 1:size(inmat, 1)
-#         inmat.grad[i,:] += outmats[i].dx
-#     end
-#     return nothing
-# end
-#
-# function decat(mat::Variable)
-#     return [Variable(mat.data[i,:]) for i = 1:size(mat, 1)]
-# end
-#
-# function decat(stack::BPStack, inmat::Variable)
-#     outmats = decat(inmat)
-#     push!(stack, () -> bwd_decat(outmats, inmat))
-#     return outmats
-# end
+function bwd_decat{T<:AbstractVariable}(y::Vector{T}, x::Variable)
+    @assert length(y) == size(x, 1)
+    for i = 1:size(x, 1)
+        x.grad[i,:] += y[i].grad
+    end
+    return nothing
+end
+
+function decat(x::Variable)
+    return Variable[Variable(x.data[i,:]) for i = 1:size(x, 1)]
+end
+
+function decat(stack::BPStack, x::Variable)
+    y = decat(x)
+    push!(stack, () -> bwd_decat(y, x))
+    return y
+end
 
 # -- Map (single) -- #
 # function Base.map{T<:AbstractVariable}(f::Function, xs::Vector{T})
@@ -413,12 +442,4 @@ function dropout!(x::Variable, dp::AbstractFloat)
     return x
 end
 
-function dropout!(stack::BPStack, x::Variable, dp::AbstractFloat)
-    data = x.data
-    for i in eachindex(x)
-        if rand() < dp
-            data[i] = 0
-        end
-    end
-    return x
-end
+dropout!(stack::BPStack, x::Variable, dp::AbstractFloat) = dropout!(x, dp)

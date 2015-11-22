@@ -1,4 +1,5 @@
-immutable LogisticRegression{T,M,N} <: Component
+
+immutable LogisticRegression{T,M,N} <: Component{T,M,N}
     w::Variable{T,M,N}
     b::Variable{T,M,1}
 end

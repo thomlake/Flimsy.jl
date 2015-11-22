@@ -2,23 +2,25 @@ using Flimsy
 using Base.Test
 
 tests = [
-    "var",
-    "getparams",
-    "ops/identity",
-    "ops/tanh",
-    "ops/sigmoid",
-    "ops/relu",
-    "ops/softmax",
-    "ops/wta",
-    "ops/linear",
-    "ops/prod",
-    "ops/sum",
-    "ops/minus",
-    "ops/concat",
-    "ops/affine",
-    "ops/dropout",
-    "logisticregression",
-    "ctc",
+    "var.jl",
+    "getparams.jl",
+    "ops/identity.jl",
+    "ops/tanh.jl",
+    "ops/sigmoid.jl",
+    "ops/relu.jl",
+    "ops/softmax.jl",
+    "ops/wta.jl",
+    "ops/linear.jl",
+    "ops/prod.jl",
+    "ops/sum.jl",
+    "ops/minus.jl",
+    "ops/concat.jl",
+    "ops/decat.jl",
+    "ops/affine.jl",
+    "ops/dropout.jl",
+    "logistic_regression.jl",
+    "multilabel_regression.jl",
+    "ctc.jl",
 ]
 
 srand(sum(map(Int, collect("Flimsy"))))
@@ -69,13 +71,12 @@ function test_op_grad(f1::Function, f2::Function, x::Flimsy.Variable)
     end
 end
 
-for t in tests
+for tf in tests
     global failed
     failed = false
-    f = "$t.jl"
-    print("* test $f...")
+    print("* test $tf...")
     Test.with_handler(test_handler) do
-        include(f)
+        include(tf)
     end
     if !failed
         print_with_color(:green, " ok\n")

@@ -1,4 +1,4 @@
-immutable FeedForwardLayer{T,M,N} <: Component
+immutable FeedForwardLayer{T,M,N} <: Component{T,M,N}
     f::Function
     w::Variable{T,M,N}
     b::Variable{T,M,1}

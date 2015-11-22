@@ -53,15 +53,22 @@ end
 
 function DifferentiableFilter(n_hid::Int)
     output = LinearRegression(1, n_hid)
+    # scorer = FeedForwardLayer(relu, Orthonormal(2, 1, n_hid), Zeros(1))
     scorer = FeedForwardLayer(identity, Orthonormal(2, 1, n_hid), Zeros(1))
     hidden = FeedForwardLayer(relu, Orthonormal(sqrt(2), n_hid, 2), Zeros(n_hid))
     return DifferentiableFilter(output, scorer, hidden)
 end
 
 @flimsy function feedforward(nnet::DifferentiableFilter, xs::Vector)
-    hs = [feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
-    as = [feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)]
+    # traditional attention
+    hs = Variable[feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
+    as = decat(softmax(concat(Variable[feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)])))
     return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
+    
+    # additive attention
+    # hs = [feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
+    # as = [feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)]
+    # return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
 end
 
 @flimsy predict(nnet::DifferentiableFilter, xs::Vector) = predict(nnet.output, feedforward(nnet, xs))

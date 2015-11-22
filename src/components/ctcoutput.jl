@@ -1,4 +1,4 @@
-immutable CTCOutput{T,M,N} <: Component
+immutable CTCOutput{T,M,N} <: Component{T,M,N}
     w::Variable{T,M,N}
     b::Variable{T,M,1}
     blank::Int

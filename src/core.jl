@@ -1,6 +1,6 @@
 typealias BPStack Vector{Function}
 
-abstract Component
+abstract Component{T,M,N}
 
 function backprop!(stack::BPStack)
     for i = endof(stack):-1:1

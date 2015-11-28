@@ -74,7 +74,6 @@ function forward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
             table[s, t] = lpmat[xs[s], t] + a
         end
     end
-    # return sum(LogSpace, table[end, end], table[end-1, end]), table.matrix
     return table.matrix
 end
 
@@ -104,10 +103,12 @@ function backward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
     return table.matrix
 end
 
-function make_lpmat{V<:Variable}(output::Vector{V})
+function make_lpmat{V<:Variable}(output::Vector{V}, epsilon::Float64=1e-10)
     T = length(output)
     Pr = [softmax(output[t]) for t=1:T]
     pmat = hcat([Pr[t].data for t=1:T]...)
     lpmat = log(pmat)
+    # lpmat = log(pmat .+ epsilon)
+    # lpmat = log(max(pmat, epsilon))
     return lpmat
 end

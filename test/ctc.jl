@@ -1,9 +1,9 @@
 using Flimsy
 using Base.Test
 
-const BLANK = 1
-const SYMBOLS = [2, 3, 4]
-const LANGUAGE = vcat(BLANK, SYMBOLS)
+BLANK = 1
+SYMBOLS = [2, 3, 4]
+LANGUAGE = vcat(BLANK, SYMBOLS)
 
 # expand
 @test Flimsy.Cost.CTC.expand([2], BLANK) == [1, 2, 1]
@@ -31,8 +31,11 @@ xs = rand(SYMBOLS, S)
 ys = Flimsy.Cost.CTC.expand(xs, BLANK)
 @assert T >= length(ys)
 
-outputs = [Variable(randn(length(LANGUAGE), 1)) for t = 1:T]
+scale = 10
+outputs = [Variable(scale .* randn(length(LANGUAGE), 1)) for t = 1:T]
 lpmat = Flimsy.Cost.CTC.make_lpmat(outputs)
+println("\n", lpmat)
+
 ll_bf = Flimsy.Cost.CTC.bruteforce(xs, lpmat, LANGUAGE, BLANK)
 nll_ctc = Flimsy.Cost.ctc(xs, outputs, BLANK)
 @test_approx_eq ll_bf -nll_ctc
@@ -45,6 +48,12 @@ for t = 1:T
 end
 
 # gradients
+SYMBOLS = collect(2:20)
+LANGUAGE = vcat(BLANK, SYMBOLS)
+S = 40
+T = 120
+xs = rand(SYMBOLS, S)
+outputs = [Variable(10 .* randn(length(LANGUAGE), 1)) for t = 1:T]
 const eps = 1e-6
 const tol = 1e-6
 Flimsy.Cost.ctc(BPStack(), xs, outputs, BLANK)
@@ -62,7 +71,7 @@ for t = 1:T
             errmsg = "Finite difference gradient check failed!"
             errelm = "  time => $t, index => $i, ratio => $(dxi / param.grad[i])"
             errdsc = "  |$(dxi) - $(param.grad[i])| > $tol"
-            println("$errmsg\n$errelm\n$errdsc")
+            error("$errmsg\n$errelm\n$errdsc")
         end
     end
 end

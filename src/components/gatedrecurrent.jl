@@ -13,9 +13,9 @@ GatedRecurrent(m::Int, n::Int) = GatedRecurrent(
 )
 
 @flimsy function Base.step(theta::GatedRecurrent, x::Variable)
-    r = sigmoid(affine(theta.wr, x, theta.h0))
-    z = sigmoid(affine(theta.wz, x, theta.h0))
-    c = tanh(affine(theta.wc, x, prod(r, theta.h0)))
+    r = sigmoid(sum(linear(theta.wr, x), linear(theta.ur, theta.h0), theta.br))
+    z = sigmoid(sum(linear(theta.wz, x), linear(theta.uz, theta.h0), theta.bz))
+    c = tanh(sum(linear(theta.wc, x), prod(r, linear(theta.uc, theta.h0)), theta.bc))
     return sum(prod(z, theta.h0), prod(minus(1.0, z), c))
 end
 

@@ -15,12 +15,14 @@ abstract Optimizer
 #######################################
 # --- Stochastic Gradient Descent --- #
 #######################################
-type SGD{T<:AbstractFloat} <: Optimizer
+abstract GradientDescent <: Optimizer
+
+type PlainGradientDescent{T<:AbstractFloat} <: GradientDescent
     learning_rate::T
 end
 
-function update!(sgd::SGD, theta::Component)
-    lr = sgd.learning_rate
+function update!(opt::GradientDescent, theta::Component)
+    lr = opt.learning_rate
     for param in getparams(theta)
         for i in eachindex(param)
             param.data[i] -= lr * param.grad[i]
@@ -29,16 +31,16 @@ function update!(sgd::SGD, theta::Component)
     end
 end
 
-type ScaledSGD{T<:AbstractFloat} <: Optimizer
+type ScaledGradientDescent{T<:AbstractFloat} <: GradientDescent
     learning_rate::T
     max_norm::T
 end
 
-function update!(sgd::ScaledSGD, theta::Component)
-    lr = sgd.learning_rate
+function update!(opt::ScaledGradientDescent, theta::Component)
+    lr = opt.learning_rate
     gnorm = gradnorm(theta)
-    if gnorm > sgd.max_norm
-        lr *= sgd.max_norm / gnorm
+    if gnorm > opt.max_norm
+        lr *= opt.max_norm / gnorm
     end
     for param in getparams(theta)
         for i in eachindex(param)
@@ -48,15 +50,15 @@ function update!(sgd::ScaledSGD, theta::Component)
     end
 end
 
-type ClippedSGD{T<:AbstractFloat} <: Optimizer
+type ClippedGradientDescent{T<:AbstractFloat} <: GradientDescent
     learning_rate::T
     clip::T
 end
 
-function update!(sgd::ClippedSGD, theta::Component)
-    lr = sgd.learning_rate
-    ub = sgd.clip
-    lb = -sgd.clip
+function update!(opt::ClippedGradientDescent, theta::Component)
+    lr = opt.learning_rate
+    ub = opt.clip
+    lb = -opt.clip
     for param in getparams(theta)
         for i in eachindex(param)
             param.data[i] -= lr * max(min(param.grad[i], ub), lb)
@@ -69,17 +71,19 @@ end
 ####################
 # --- Momentum --- #
 ####################
-type Momentum{T<:AbstractFloat} <: Optimizer
+abstract Momentum <: Optimizer
+
+type PlainMomentum{T<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
     cache::Dict
 end
 
-function update!(m::Momentum, theta::Component)
-    lr = m.learning_rate
-    mu = m.momentum
+function update!(opt::Momentum, theta::Component)
+    lr = opt.learning_rate
+    mu = opt.momentum
     for (name, param) in getnamedparams(theta)
-        cache = m.cache[name]
+        cache = opt.cache[name]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             cache[i] = mu * cache[i] - lr * param.grad[i]
@@ -89,22 +93,22 @@ function update!(m::Momentum, theta::Component)
     end
 end
 
-type ScaledMomentum{T<:AbstractFloat} <: Optimizer
+type ScaledMomentum{T<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
     max_norm::T
     cache::Dict
 end
 
-function update!(m::ScaledMomentum, theta::Component)
-    lr = m.learning_rate
-    mu = m.momentum
+function update!(opt::ScaledMomentum, theta::Component)
+    lr = opt.learning_rate
+    mu = opt.momentum
     gnorm = gradnorm(theta)
-    if gnorm > m.max_norm
-        lr *= m.max_norm / gnorm
+    if gnorm > opt.max_norm
+        lr *= opt.max_norm / gnorm
     end
     for (name, param) in getnamedparams(theta)
-        cache = m.cache[name]
+        cache = opt.cache[name]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             cache[i] = mu * cache[i] - lr * param.grad[i]
@@ -114,20 +118,20 @@ function update!(m::ScaledMomentum, theta::Component)
     end
 end
 
-type ClippedMomentum{T<:AbstractFloat} <: Optimizer
+type ClippedMomentum{T<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
     clip::T
     cache::Dict
 end
 
-function update!(m::ClippedMomentum, theta::Component)
-    lr = m.learning_rate
-    mu = m.momentum
-    ub = m.clip
-    lb = -m.clip
+function update!(opt::ClippedMomentum, theta::Component)
+    lr = opt.learning_rate
+    mu = opt.momentum
+    ub = opt.clip
+    lb = -opt.clip
     for (name, param) in getnamedparams(theta)
-        cache = m.cache[name]
+        cache = opt.cache[name]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             cache[i] = mu * cache[i] - lr * max(min(param.grad[i], ub), lb)
@@ -141,18 +145,20 @@ end
 #############################
 # --- Nesterov Momentum --- #
 #############################
-type Nesterov{T<:AbstractFloat} <: Optimizer
+abstract Nesterov <: Optimizer
+
+type PlainNesterov{T<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
     cache::Dict
 end
 
-function update!(m::Nesterov, theta::Component)
-    lr = m.learning_rate
-    mu = m.momentum
+function update!(opt::Nesterov, theta::Component)
+    lr = opt.learning_rate
+    mu = opt.momentum
     upmu = 1 + mu
     for (name, param) in getnamedparams(theta)
-        cache = m.cache[name]
+        cache = opt.cache[name]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             prev = cache[i]
@@ -163,23 +169,23 @@ function update!(m::Nesterov, theta::Component)
     end
 end
 
-type ScaledNesterov{T<:AbstractFloat} <: Optimizer
+type ScaledNesterov{T<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
     max_norm::T
     cache::Dict
 end
 
-function update!(m::ScaledNesterov, theta::Component)
-    lr = m.learning_rate
-    mu = m.momentum
+function update!(opt::ScaledNesterov, theta::Component)
+    lr = opt.learning_rate
+    mu = opt.momentum
     upmu = 1 + mu
     gnorm = gradnorm(theta)
-    if gnorm > m.max_norm
-        lr *= m.max_norm / gnorm
+    if gnorm > opt.max_norm
+        lr *= opt.max_norm / gnorm
     end
     for (name, param) in getnamedparams(theta)
-        cache = m.cache[name]
+        cache = opt.cache[name]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             prev = cache[i]
@@ -190,21 +196,21 @@ function update!(m::ScaledNesterov, theta::Component)
     end
 end
 
-type ClippedNesterov{T<:AbstractFloat} <: Optimizer
+type ClippedNesterov{T<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
     clip::T
     cache::Dict
 end
 
-function update!(m::ClippedNesterov, theta::Component)
-    lr = m.learning_rate
-    mu = m.momentum
+function update!(opt::ClippedNesterov, theta::Component)
+    lr = opt.learning_rate
+    mu = opt.momentum
     upmu = 1 + mu
-    ub = m.clip
-    lb = -m.clip
+    ub = opt.clip
+    lb = -opt.clip
     for (name, param) in getnamedparams(theta)
-        cache = m.cache[name]
+        cache = opt.cache[name]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             prev = cache[i]
@@ -219,18 +225,20 @@ end
 ####################
 # --- RMS Prop --- #
 ####################
-type RMSProp{T<:AbstractFloat} <: Optimizer
+abstract RMSProp <: Optimizer
+
+type PlainRMSProp{T<:AbstractFloat} <: RMSProp
     learning_rate::T
     decay::T
     cache::Dict
 end
 
-function update!(r::RMSProp, theta::Component)
-    lr = r.learning_rate
-    decay = r.decay
+function update!(opt::RMSProp, theta::Component)
+    lr = opt.learning_rate
+    decay = opt.decay
     umdecay = 1 - decay
     for (name, param) in getnamedparams(theta)
-        cache = r.cache[name]
+        cache = opt.cache[name]
         @assert size(param) == size(cache)
         for i in eachindex(cache)
             cache[i] = decay * cache[i] + umdecay * param.grad[i] * param.grad[i]
@@ -241,24 +249,23 @@ function update!(r::RMSProp, theta::Component)
     end
 end
 
-type ScaledRMSProp{T<:AbstractFloat} <: Optimizer
+type ScaledRMSProp{T<:AbstractFloat} <: RMSProp
     learning_rate::T
     decay::T
     max_norm::T
     cache::Dict
 end
 
-function update!(r::ScaledRMSProp, theta::Component)
-    lr = r.learning_rate
-    decay = r.decay
+function update!(opt::ScaledRMSProp, theta::Component)
+    lr = opt.learning_rate
+    decay = opt.decay
     umdecay = 1 - decay
     gnorm = gradnorm(theta)
-    scale = gnorm > r.max_norm ? r.max_norm / gnorm : 1.0
+    scale = gnorm > opt.max_norm ? opt.max_norm / gnorm : 1.0
     for (name, param) in getnamedparams(theta)
-        cache = r.cache[name]
+        cache = opt.cache[name]
         @assert size(param) == size(cache)
         for i in eachindex(cache)
-            # scale norm
             grad = scale * param.grad[i]
             cache[i] = decay * cache[i] + umdecay * grad * grad
             delta = grad / sqrt(cache[i] + 1e-8)
@@ -268,24 +275,23 @@ function update!(r::ScaledRMSProp, theta::Component)
     end
 end
 
-type ClippedRMSProp{T<:AbstractFloat} <: Optimizer
+type ClippedRMSProp{T<:AbstractFloat} <: RMSProp
     learning_rate::T
     decay::T
     clip::T
     cache::Dict
 end
 
-function update!(r::ClippedRMSProp, theta::Component)
-    lr = r.learning_rate
-    decay = r.decay
+function update!(opt::ClippedRMSProp, theta::Component)
+    lr = opt.learning_rate
+    decay = opt.decay
     umdecay = 1 - decay
-    ub = r.clip
-    lb = -r.clip
+    ub = opt.clip
+    lb = -opt.clip
     for (name, param) in getnamedparams(theta)
-        cache = r.cache[name]
+        cache = opt.cache[name]
         @assert size(param) == size(cache)
         for i in eachindex(cache)
-            # clip grad
             grad = max(min(param.grad[i], ub), lb)
             cache[i] = decay * cache[i] + umdecay * grad * grad
             delta = grad / sqrt(cache[i] + 1e-8)
@@ -299,18 +305,20 @@ end
 ####################
 # --- AdaDelta --- #
 ####################
-type AdaDelta{T<:AbstractFloat} <: Optimizer
+abstract AdaDelta <: Optimizer
+
+type PlainAdaDelta{T<:AbstractFloat} <: AdaDelta
     decay::T
     grad_cache::Dict
     delta_cache::Dict
 end
 
-function update!(a::AdaDelta, theta::Component)
-    decay = a.decay
+function update!(opt::AdaDelta, theta::Component)
+    decay = opt.decay
     umdecay = 1 - decay
     for (name, param) in getnamedparams(theta)
-        g2_tm1 = a.grad_cache[name]
-        d2_tm1 = a.delta_cache[name]
+        g2_tm1 = opt.grad_cache[name]
+        d2_tm1 = opt.delta_cache[name]
         @assert size(param) == size(g2_tm1) == size(d2_tm1)
         for i in eachindex(param)
             g = param.grad[i]
@@ -325,18 +333,18 @@ function update!(a::AdaDelta, theta::Component)
     end
 end
 
-type ScaledAdaDelta{T<:AbstractFloat} <: Optimizer
+type ScaledAdaDelta{T<:AbstractFloat} <: AdaDelta
     decay::T
     max_norm::T
     grad_cache::Dict
     delta_cache::Dict
 end
 
-function update!(a::ScaledAdaDelta, theta::Component)
-    decay = a.decay
+function update!(opt::ScaledAdaDelta, theta::Component)
+    decay = opt.decay
     umdecay = 1 - decay
     gnorm = gradnorm(theta)
-    scale = gnorm > r.max_norm ? r.max_norm / gnorm : 1.0
+    scale = gnorm > opt.max_norm ? opt.max_norm / gnorm : 1.0
     for (name, param) in getnamedparams(theta)
         g2_tm1 = a.grad_cache[name]
         d2_tm1 = a.delta_cache[name]
@@ -354,21 +362,21 @@ function update!(a::ScaledAdaDelta, theta::Component)
     end
 end
 
-type ClippedAdaDelta{T<:AbstractFloat} <: Optimizer
+type ClippedAdaDelta{T<:AbstractFloat} <: AdaDelta
     decay::T
     clip::T
     grad_cache::Dict
     delta_cache::Dict
 end
 
-function update!(a::ClippedAdaDelta, theta::Component)
-    decay = a.decay
+function update!(opt::ClippedAdaDelta, theta::Component)
+    decay = opt.decay
     umdecay = 1 - decay
-    ub = a.clip
-    lb = -a.clip
+    ub = opt.clip
+    lb = -opt.clip
     for (name, param) in getnamedparams(theta)
-        g2_tm1 = a.grad_cache[name]
-        d2_tm1 = a.delta_cache[name]
+        g2_tm1 = opt.grad_cache[name]
+        d2_tm1 = opt.delta_cache[name]
         @assert size(param) == size(g2_tm1) == size(d2_tm1)
         for i in eachindex(param)
             g = max(min(param.grad[i], ub), lb)
@@ -383,28 +391,155 @@ function update!(a::ClippedAdaDelta, theta::Component)
     end
 end
 
+################
+# --- Adam --- #
+################
+abstract Adam <: Optimizer
 
-# -- convenience function for creating optimizers -- #
+type PlainAdam{T<:AbstractFloat} <: Adam
+    learning_rate::T
+    moment1_decay::T
+    moment2_decay::T
+    epsilon::T
+    timestep::Int
+    moment1_cache::Dict
+    moment2_cache::Dict
+end
+
+function update!(opt::Adam, theta::Component)
+    opt.timestep += 1
+    lr = opt.learning_rate
+    b1 = opt.moment1_decay
+    b2 = opt.moment2_decay
+    e = opt.epsilon
+    t = opt.timestep
+    umb1 = 1 - b1
+    umb2 = 1 - b2
+    umb1sqr = 1 - (b1 * b1)
+    umb2sqr = 1 - (b2 * b2)
+
+    for (name, param) in getnamedparams(theta)
+        m1 = opt.moment1_cache[name]
+        m2 = opt.moment2_cache[name]
+        @assert size(param) == size(m1) == size(m2)
+        for i in eachindex(param)
+            g = param.grad[i]
+            m1[i] = b1 * m1[i] + umb1 * g
+            m2[i] = b2 * m2[i] + umb2 * g * g
+            m1hat = m1[i] / umb1sqr
+            m2hat = m2[i] / umb2sqr
+            param.data[i] -= lr * m1hat / sqrt(m2hat + e)
+        end
+        fill!(param.grad, 0)
+    end
+end
+
+type ScaledAdam{T<:AbstractFloat} <: Adam
+    learning_rate::T
+    moment1_decay::T
+    moment2_decay::T
+    epsilon::T
+    max_norm::T
+    timestep::Int
+    moment1_cache::Dict
+    moment2_cache::Dict
+end
+
+function update!(opt::ScaledAdam, theta::Component)
+    opt.timestep += 1
+    lr = opt.learning_rate
+    b1 = opt.moment1_decay
+    b2 = opt.moment2_decay
+    e = opt.epsilon
+    t = opt.timestep
+    umb1 = 1 - b1
+    umb2 = 1 - b2
+    umb1sqr = 1 - (b1 * b1)
+    umb2sqr = 1 - (b2 * b2)
+    gnorm = gradnorm(theta)
+    scale = gnorm > opt.max_norm ? opt.max_norm / gnorm : 1.0
+    for (name, param) in getnamedparams(theta)
+        m1 = opt.moment1_cache[name]
+        m2 = opt.moment2_cache[name]
+        @assert size(param) == size(m1) == size(m2)
+        for i in eachindex(param)
+            g = scale * param.grad[i]
+            m1[i] = b1 * m1[i] + umb1 * g
+            m2[i] = b2 * m2[i] + umb2 * g * g
+            m1hat = m1[i] / umb1sqr
+            m2hat = m2[i] / umb2sqr
+            param.data[i] -= lr * m1hat / sqrt(m2hat + e)
+        end
+        fill!(param.grad, 0)
+    end
+end
+
+type ClippedAdam{T<:AbstractFloat} <: Adam
+    learning_rate::T
+    moment1_decay::T
+    moment2_decay::T
+    epsilon::T
+    clip::T
+    timestep::Int
+    moment1_cache::Dict
+    moment2_cache::Dict
+end
+
+function update!(opt::ClippedAdaDelta, theta::Component)
+    opt.timestep += 1
+    lr = opt.learning_rate
+    b1 = opt.moment1_decay
+    b2 = opt.moment2_decay
+    e = opt.epsilon
+    t = opt.timestep
+    umb1 = 1 - b1
+    umb2 = 1 - b2
+    umb1sqr = 1 - (b1 * b1)
+    umb2sqr = 1 - (b2 * b2)
+    ub = opt.clip
+    lb = -opt.clip
+    for (name, param) in getnamedparams(theta)
+        m1 = opt.moment1_cache[name]
+        m2 = opt.moment2_cache[name]
+        @assert size(param) == size(m1) == size(m2)
+        for i in eachindex(param)
+            g = max(min(param.grad[i], ub), lb)
+            m1[i] = b1 * m1[i] + umb1 * g
+            m2[i] = b2 * m2[i] + umb2 * g * g
+            m1hat = m1[i] / umb1sqr
+            m2hat = m2[i] / umb2sqr
+            param.data[i] -= lr * m1hat / sqrt(m2hat + e)
+        end
+        fill!(param.grad, 0)
+    end
+end
+
+########################################################
+# --- Convenience function for creating optimizers --- #
+########################################################
 function optimizer{O<:Optimizer}(::Type{O}, theta::Component;
     learning_rate::Real=0.1,
     clipping_type::Symbol=:none,
     clip::Real=5.0,
     decay::Real=0.9,
+    moment1_decay::Real=0.9,
+    moment2_decay::Real=0.999,
+    epsilon::Real=1e-9,
     momentum::Real=0.87,
     )
-    if O <: SGD
+    if O <: GradientDescent
         if clipping_type == :none
-            return SGD(learning_rate)
+            return PlainGradientDescent(learning_rate)
         elseif clipping_type == :scale
-            return ScaledSGD(learning_rate, clip)
+            return ScaledGradientDescent(learning_rate, clip)
         elseif clipping_type == :clip
-            return ClippedSGD(learning_rate, clip)
+            return ClippedGradientDescent(learning_rate, clip)
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end
     elseif O <: Momentum
         if clipping_type == :none
-            return Momentum(learning_rate, momentum, paramdict(theta))
+            return PlainMomentum(learning_rate, momentum, paramdict(theta))
         elseif clipping_type == :scale
             return ScaledMomentum(learning_rate, momentum, clip, paramdict(theta))
         elseif clipping_type == :clip
@@ -414,7 +549,7 @@ function optimizer{O<:Optimizer}(::Type{O}, theta::Component;
         end
     elseif O <: Nesterov
         if clipping_type == :none
-            return Nesterov(learning_rate, momentum, paramdict(theta))
+            return PlainsNesterov(learning_rate, momentum, paramdict(theta))
         elseif clipping_type == :scale
             return ScaledNesterov(learning_rate, momentum, clip, paramdict(theta))
         elseif clipping_type == :clip
@@ -424,7 +559,7 @@ function optimizer{O<:Optimizer}(::Type{O}, theta::Component;
         end
     elseif O <: RMSProp
         if clipping_type == :none
-            return RMSProp(learning_rate, decay, paramdict(theta))
+            return PlainRMSProp(learning_rate, decay, paramdict(theta))
         elseif clipping_type == :scale
             return ScaledRMSProp(learning_rate, decay, clip, paramdict(theta))
         elseif clipping_type == :clip
@@ -434,11 +569,21 @@ function optimizer{O<:Optimizer}(::Type{O}, theta::Component;
         end
     elseif O <: AdaDelta
         if clipping_type == :none
-            return AdaDelta(decay, paramdict(theta), paramdict(theta))
+            return PlainAdaDelta(decay, paramdict(theta), paramdict(theta))
         elseif clipping_type == :scale
             return ScaledAdaDelta(decay, clip, paramdict(theta), paramdict(theta))
         elseif clipping_type == :clip
             return ClippedAdaDelta(decay, clip, paramdict(theta), paramdict(theta))
+        else
+            error("unkown clipping_type: $clipping_type for optimizer: $O")
+        end
+    elseif O <: Adam
+        if clipping_type == :none
+            return PlainAdam(learning_rate, moment1_decay, moment2_decay, epsilon, 0, paramdict(theta), paramdict(theta))
+        elseif clipping_type == :scale
+            return ScaledAdam(learning_rate, moment1_decay, moment2_decay, epsilon, clip, 0, paramdict(theta), paramdict(theta))
+        elseif clipping_type == :clip
+            return ClippedAdam(learning_rate, moment1_decay, moment2_decay, epsilon, clip, 0, paramdict(theta), paramdict(theta))
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end

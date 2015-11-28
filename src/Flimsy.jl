@@ -31,13 +31,16 @@ export Gaussian,
        Identity,
        Zeros
 
-export SGD,
+export GradientDescent,
        Momentum,
        Nesterov,
        RMSProp,
        AdaDelta,
+       Adam,
        update!,
        optimizer
+
+export GradientNoise
 
 export gradcheck
 
@@ -48,6 +51,7 @@ include("hashmat.jl")
 include("ops.jl")
 include("initialization.jl")
 include("fit.jl")
+include("gradientnoise.jl")
 include("gradcheck.jl")
 
 module Cost
@@ -79,7 +83,8 @@ module Components
            CTCOutput,
            FeedForwardLayer,
            LayerStack,
-           Recurrent,
+           RecurrentComponent,
+           SimpleRecurrent,
            GatedRecurrent,
            LSTM,
            score,

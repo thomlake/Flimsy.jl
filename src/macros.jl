@@ -17,6 +17,7 @@ BLACKLIST_SYMBOLS = [
     :append!,
     :Array,
     :-,
+    :+,
     :reverse,
     :map,
 ]

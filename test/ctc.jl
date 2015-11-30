@@ -34,7 +34,6 @@ ys = Flimsy.Cost.CTC.expand(xs, BLANK)
 scale = 10
 outputs = [Variable(scale .* randn(length(LANGUAGE), 1)) for t = 1:T]
 lpmat = Flimsy.Cost.CTC.make_lpmat(outputs)
-println("\n", lpmat)
 
 ll_bf = Flimsy.Cost.CTC.bruteforce(xs, lpmat, LANGUAGE, BLANK)
 nll_ctc = Flimsy.Cost.ctc(xs, outputs, BLANK)
@@ -50,10 +49,10 @@ end
 # gradients
 SYMBOLS = collect(2:20)
 LANGUAGE = vcat(BLANK, SYMBOLS)
-S = 40
-T = 120
+S = 10
+T = 100
 xs = rand(SYMBOLS, S)
-outputs = [Variable(10 .* randn(length(LANGUAGE), 1)) for t = 1:T]
+outputs = [Variable(100 .* randn(length(LANGUAGE), 1)) for t = 1:T]
 const eps = 1e-6
 const tol = 1e-6
 Flimsy.Cost.ctc(BPStack(), xs, outputs, BLANK)

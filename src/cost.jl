@@ -174,6 +174,7 @@ function ctc{I<:Int,V<:Variable}(target::Vector{I}, output::Vector{V}, blank::In
     ys = CTC.expand(target, blank)
     T = length(output)
     S = size(output[1], 1)
+
     lpmat = CTC.make_lpmat(output)
     fmat = CTC.forward(ys, lpmat, blank)
     ll = Flimsy.Extras.logsumexp(fmat[end, end], fmat[end-1, end])
@@ -184,21 +185,21 @@ function ctc{I<:Integer,V<:Variable}(stack::BPStack, target::Vector{I}, output::
     ys = CTC.expand(target, blank)
     T = length(output)
     S = size(output[1], 1)
+
+    length(ys) <= T || throw(CTC.CTCError("INPUT ERROR", "number of expanded outputs > number of timesteps"))
+
     lpmat = CTC.make_lpmat(output)
     fmat = CTC.forward(ys, lpmat, blank)
     bmat = CTC.backward(ys, lpmat, blank)
     fbmat = fmat + bmat
     ll = Flimsy.Extras.logsumexp(fmat[end, end], fmat[end-1, end])
 
-    if isfinite(ll)
-        println("ll is finite ($ll, $(length(target)), $(length(output)))")
-    else
+    if !isfinite(ll)
         msg = [
             "ll not finite ($ll, $(length(target)), $(length(output)))",
-            "fmat: $((fmat[end,end], fmat[end-1, end]))",
-            string(fmat),
+            "forward entries: (fmat[end, end],fmat[end-1, end]) = $((fmat[end,end], fmat[end-1, end]))",
         ]
-        error(join(msg, "\n"))
+        throw(CTC.CTCError("NOT FINITE", join(msg, "\n")))
     end
 
     for t = 1:T
@@ -208,7 +209,7 @@ function ctc{I<:Integer,V<:Variable}(stack::BPStack, target::Vector{I}, output::
                 total = Flimsy.Extras.logsumexp(total, fbmat[s, t])
             end
             g = exp(lpmat[k,t]) - exp(total - ll)
-            @assert isfinite(g)
+            isfinite(g) || throw(CTC.CTCError("NOT FINITE", "gradient not finite: $g"))
             output[t].grad[k] += g 
         end
     end

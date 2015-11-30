@@ -2,24 +2,24 @@ using Flimsy
 using Base.Test
 
 tests = [
-    # "var.jl",
-    # "getparams.jl",
-    # "ops/identity.jl",
-    # "ops/tanh.jl",
-    # "ops/sigmoid.jl",
-    # "ops/relu.jl",
-    # "ops/softmax.jl",
-    # "ops/wta.jl",
-    # "ops/linear.jl",
-    # "ops/prod.jl",
-    # "ops/sum.jl",
-    # "ops/minus.jl",
-    # "ops/concat.jl",
-    # "ops/decat.jl",
-    # "ops/affine.jl",
-    # "ops/dropout.jl",
-    # "logistic_regression.jl",
-    # "multilabel_regression.jl",
+    "var.jl",
+    "getparams.jl",
+    "ops/identity.jl",
+    "ops/tanh.jl",
+    "ops/sigmoid.jl",
+    "ops/relu.jl",
+    "ops/softmax.jl",
+    "ops/wta.jl",
+    "ops/linear.jl",
+    "ops/prod.jl",
+    "ops/sum.jl",
+    "ops/minus.jl",
+    "ops/concat.jl",
+    "ops/decat.jl",
+    "ops/affine.jl",
+    "ops/dropout.jl",
+    "logistic_regression.jl",
+    "multilabel_regression.jl",
     "ctc.jl",
 ]
 
@@ -50,10 +50,8 @@ function test_handler(r::Test.Error)
     println()
 end
 
-const eps = 1e-6
-const tol = 1e-6
 
-function test_op_grad(f1::Function, f2::Function, x::Flimsy.Variable)
+function test_op_grad(f1::Function, f2::Function, x::Flimsy.Variable; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6)
     stack = BPStack()
     y = f1(stack)
     t = randn(size(y))

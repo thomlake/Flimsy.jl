@@ -35,6 +35,13 @@ function bruteforce(xs::Vector{Int}, lpmat::Matrix, symbols::Vector{Int}, blank:
     return lpsum
 end
 
+type CTCError <: Exception
+    dsc::ASCIIString
+    msg::ASCIIString
+end
+
+Base.showerror(io::IO, e::CTCError) = print(io, "CTCError(", e.dsc, "): ", e.msg);
+
 type DPTable
     matrix::Matrix{Float64}
 end
@@ -78,7 +85,7 @@ function forward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
 end
 
 function backward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
-    xs[1] == xs[end] == blank || error("xs must be expanded before running CTC algorithm, try Nimble.CTC.expand(xs)")
+    xs[1] == xs[end] == blank || throw(CTCError("xs must be expanded before running CTC algorithm, try Flimsy.CTC.expand(xs)"))
 
     T = size(lpmat, 2)
     S = length(xs)
@@ -103,12 +110,10 @@ function backward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
     return table.matrix
 end
 
-function make_lpmat{V<:Variable}(output::Vector{V}, epsilon::Float64=1e-10)
+function make_lpmat{V<:Variable}(output::Vector{V})
     T = length(output)
     Pr = [softmax(output[t]) for t=1:T]
     pmat = hcat([Pr[t].data for t=1:T]...)
     lpmat = log(pmat)
-    # lpmat = log(pmat .+ epsilon)
-    # lpmat = log(max(pmat, epsilon))
     return lpmat
 end

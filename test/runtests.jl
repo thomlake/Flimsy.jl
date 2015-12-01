@@ -18,6 +18,7 @@ tests = [
     "ops/decat.jl",
     "ops/affine.jl",
     "ops/dropout.jl",
+    "ndembed.jl",
     "logistic_regression.jl",
     "multilabel_regression.jl",
     "ctc.jl",

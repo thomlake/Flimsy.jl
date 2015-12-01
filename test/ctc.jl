@@ -49,8 +49,8 @@ end
 # gradients
 SYMBOLS = collect(2:20)
 LANGUAGE = vcat(BLANK, SYMBOLS)
-S = 10
-T = 100
+S = 5
+T = 20
 xs = rand(SYMBOLS, S)
 outputs = [Variable(100 .* randn(length(LANGUAGE), 1)) for t = 1:T]
 const eps = 1e-6

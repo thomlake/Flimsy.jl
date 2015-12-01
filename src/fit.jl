@@ -346,8 +346,8 @@ function update!(opt::ScaledAdaDelta, theta::Component)
     gnorm = gradnorm(theta)
     scale = gnorm > opt.max_norm ? opt.max_norm / gnorm : 1.0
     for (name, param) in getnamedparams(theta)
-        g2_tm1 = a.grad_cache[name]
-        d2_tm1 = a.delta_cache[name]
+        g2_tm1 = opt.grad_cache[name]
+        d2_tm1 = opt.delta_cache[name]
         @assert size(param) == size(g2_tm1) == size(d2_tm1)
         for i in eachindex(param)
             g = scale * param.grad[i]

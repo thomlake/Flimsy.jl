@@ -197,6 +197,9 @@ function Base.prod(stack::BPStack, x1::Variable, x2::Variable)
     return y
 end
 
+# -- Division -- #
+# function Base.div(stack::BPStack, x1::Variable, x2::Variable)
+
 # -- Linear -- #
 function bwd_linear{T,M,K,N}(y::Variable{T,M,N}, w::Variable{T,M,K}, x::Variable{T,K,N})
     dx = At_mul_B(w.data, y.grad)

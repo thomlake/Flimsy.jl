@@ -215,3 +215,20 @@ function ctc{I<:Integer,V<:Variable}(stack::BPStack, target::Vector{I}, output::
     end
     return -ll
 end
+
+# Reinforce
+function reinforce{T,M}(stack::BPStack, action::Integer, output::Variable{T,M,1}, reward::AbstractFloat, eps::AbstractFloat=1e-20)
+    pr_target = output.data[action] + eps
+    output.grad[action] -= reward / pr_target
+    return reward
+end
+
+function reinforce{I<:Integer,F<:AbstractFloat}(stack::BPStack, action::Vector{I}, output::Variable, reward::Vector{F}, eps::AbstractFloat=1e-20)
+    @assert size(output, 2) == length(target) == length(reward)
+
+    for i = 1:size(output, 2)
+        pr_target = output.data[action[i],i] + eps
+        output.grad[action[i],i] -= reward[i] / pr_target
+    end
+    return sum(reward)
+end

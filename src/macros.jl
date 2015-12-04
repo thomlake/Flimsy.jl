@@ -18,8 +18,10 @@ BLACKLIST_SYMBOLS = [
     :Array,
     :-,
     :+,
+    :!,
     :reverse,
     :map,
+    :rand,
 ]
 
 """

@@ -1,21 +1,3 @@
-const OPERATORS = Symbol[
-    :identity,
-    :tanh,
-    :sigmoid,
-    :relu,
-    :softmax,
-    :wta,
-    :prod,
-    :linear,
-    :sum,
-    :minus,
-    :concat,
-    # :decat,
-    :map,
-    :affine,
-    :dropout!
-]
-
 # -- Identity -- #
 Base.identity(x::Variable) = x
 

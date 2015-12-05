@@ -78,16 +78,17 @@ function fit()
     theta = MultilabelClassifier(n_classes, sum(n_features))
     rmsprop = optimizer(RMSProp, theta, learning_rate=0.1, decay=0.5)
     nll_prev = Inf
-    for i = 1:50
+    for i = 1:100
         nll_curr = gradient!(probs, theta, X_train, Y_train)[1]
         update!(rmsprop, theta)
-        @test nll_curr < nll_prev
+        @test nll_curr <= nll_prev
         nll_prev = nll_curr
     end
 
-    @test sum(Y_test .!= predict(theta, X_test)) / n_test < 0.3
+    @test sum(Y_test .!= predict(theta, X_test)) / n_test <= 0.3
 end
 
+srand(12345)
 check_single()
 check_batch()
 check_ml_single()

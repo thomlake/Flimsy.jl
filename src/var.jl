@@ -20,6 +20,7 @@ Base.eltype{T<:AbstractVariable}(x::T) = eltype(T)
 Base.size{T,M,N}(::Type{Variable{T,M,N}}) = (M, N)
 
 Base.size(x::Variable) = size(x.data)
+
 Base.size(x::Variable, d::Integer) = size(x.data, d)
 
 Base.zeros{T}(::Type{Variable{T}}, m::Integer, n::Integer) = Variable(zeros(T, m, n))

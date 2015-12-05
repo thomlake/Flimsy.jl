@@ -40,7 +40,7 @@ type CTCError <: Exception
     msg::ASCIIString
 end
 
-Base.showerror(io::IO, e::CTCError) = print(io, "CTCError(", e.dsc, "): ", e.msg);
+Base.showerror(io::IO, e::CTCError) = print(io, "CTCError(", e.dsc, "): ", e.msg)
 
 type DPTable
     matrix::Matrix{Float64}
@@ -64,7 +64,7 @@ end
 Base.setindex!(table::DPTable, x::Float64, i::Int, j::Int) = table.matrix[i, j] = x
 
 function forward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
-    xs[1] == xs[end] == blank || error("xs must be expanded before running CTC algorithm, try Nimble.CTC.expand(xs)")
+    xs[1] == xs[end] == blank || throw(CTCError("NOT EXPANDED", "sequence must be expanded before running CTC algorithm"))
 
     T = size(lpmat, 2)
     S = length(xs)
@@ -85,7 +85,7 @@ function forward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
 end
 
 function backward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
-    xs[1] == xs[end] == blank || throw(CTCError("xs must be expanded before running CTC algorithm, try Flimsy.CTC.expand(xs)"))
+    xs[1] == xs[end] == blank || throw(CTCError("NOT EXPANDED", "sequence must be expanded before running CTC algorithm"))
 
     T = size(lpmat, 2)
     S = length(xs)

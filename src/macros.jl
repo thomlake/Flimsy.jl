@@ -1,49 +1,50 @@
-"""
-Array of function names that Flimsy should not
-try and backpropage through
-"""
-BLACKLIST_SYMBOLS = [
+
+type FlimsyParseError <: Exception
+    msg::ASCIIString
+end
+
+Base.showerror(io::IO, e::FlimsyParseError) = print(io, "FlimsyParseError: ", e.msg)
+
+
+"""Array of function names that Flimsy should not backpropage through"""
+const DEFAULT_BLACKLIST = [
     :Variable,
-    :endof,
+    :Array,
+    :size,
+    :length,
     :eachindex,
+    :endof,
+    :reverse,
     :enumerate,
     :zip,
-    :length,
     :println,
-    :size,
     :eltype,
     :typeof,
     :push!,
     :append!,
-    :Array,
-    :-,
-    :+,
     :!,
-    :reverse,
-    :map,
     :rand,
 ]
 
-"""
-Predicate functions to match expressions Flimsy
-should ignore and not try and backpropage through.
-Functions should return Bool.
-"""
-BLACKLIST_PATTERNS = Function[]
-
-isblacklisted(sym::Symbol) = sym in BLACKLIST_SYMBOLS
-
-function isblacklisted(expr::Expr)
-    for f in BLACKLIST_PATTERNS
-        try
-            result = f(expr)
-            if result
-                return true
-            end
-        end
-    end
-    return false
-end
+"""Array of supported expression head elements"""
+const SUPPORTED_SYNTAX = [
+    :block
+    :tuple
+    :dict
+    :vect
+    :(=)
+    :(:)
+    :(=>)
+    :(.)
+    :quote
+    :ref
+    :comparison
+    :return
+    :for
+    :while
+    :comprehension
+    :typed_comprehension
+]
 
 """
 Insert a BPStack as the first argument in a function signature.
@@ -106,40 +107,61 @@ function signature_as_call(signature::Expr)
 end
 
 """
-Rewrite function body so all non-blacklisted functions have a
-BPStack instance as their first argument, i.e., `foo(a, b, c)`
-becomes `foo(__flimsy_bpstack__, a, b, c)`.
+Recursively rewrite expr so all non-blacklisted function 
+calls have a BPStack instance as their first argument.
+
+For example
+    foo(a, b, c)`
+is transformed to
+    foo(__flimsy_bpstack__, a, b, c)
 """
-function backprop_body(expr::Expr)
+function rewrite_for_backprop(expr::Expr, blacklist::Vector{Symbol})
+    
     head = expr.head
-    args = deepcopy(expr.args)
+    args = expr.args
     newargs = Any[]
+
+    # Special cases: line numbers and directives
+    if head == :line
+        return expr, blacklist
+    elseif head == :macrocall && expr.args[1] == symbol("@blacklist")
+        return nothing, Symbol[blacklist..., expr.args[2:end]...]
+    end
+
     if head == :call
-        if !isblacklisted(expr.args[1])
+        if !in(args[1], blacklist)
             push!(newargs, shift!(args))
             push!(newargs, :__flimsy_bpstack__)
         end
+    elseif !in(head, SUPPORTED_SYNTAX)
+        throw(FlimsyParseError("Unsupported Expr: ($head, $args)"))
     end
+    
+    inner_blacklist = blacklist
+
     for arg in args
-        try
-            push!(newargs, backprop_body(arg))
-        catch
+        if typeof(arg) <: Expr
+            newarg, inner_blacklist = rewrite_for_backprop(arg, inner_blacklist)
+            if newarg != nothing
+                push!(newargs, newarg)
+            end
+        else
             push!(newargs, arg)
         end
     end
-    return Expr(expr.head, newargs...)
+    return Expr(head, newargs...), blacklist
 end
 
-function flimsy_parser(f::Expr)
-    f.head == :(=) || f.head == :function || error("[@flimsy] expected = or function but got ", f.head)
+function flimsy_parse(f::Expr)
+    f.head == :(=) || f.head == :function || throw(FlimsyParseError("expected = or function but got $(f.head)"))
     ok = length(f.args) == 2 && f.args[1].head == :call && f.args[2].head == :block
-    ok || error("[@flimsy] expected (:call, :block) but got ", map(x->x.head, f.args))
+    ok || throw(FlimsyParseError("expected :call or :block but got $(map(x->x.head, f.args))"))
 
     sig = f.args[1]
     body = f.args[2]
 
     bpsig = backprop_signature(sig)
-    bpbody = backprop_body(body)
+    bpbody = rewrite_for_backprop(deepcopy(body), DEFAULT_BLACKLIST)[1]
 
     usig, uconvert_stmts = untyped_signature_and_conversions(sig)
     wrapped_call = signature_as_call(sig)
@@ -163,6 +185,6 @@ function flimsy_parser(f::Expr)
 end
 
 macro flimsy(x::Expr)
-    y = flimsy_parser(x)
+    y = flimsy_parse(x)
     return esc(y)
 end

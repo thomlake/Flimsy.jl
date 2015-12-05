@@ -117,7 +117,7 @@ function backprop_body(expr::Expr)
     if head == :call
         if !isblacklisted(expr.args[1])
             push!(newargs, shift!(args))
-            push!(newargs, Expr(:(::), :__flimsy_bpstack__, BPStack))
+            push!(newargs, :__flimsy_bpstack__)
         end
     end
     for arg in args

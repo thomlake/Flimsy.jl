@@ -19,5 +19,3 @@ LogisticRegression(n_classes, n_features) = LogisticRegression(Gaussian(n_classe
     nll = Flimsy.Cost.cat(y, p)
     return nll, p
 end
-
-# println(macroexpand(:(@flimsy score(theta::LogisticRegression, x::Variable) = affine(theta.w, x, theta.b))))

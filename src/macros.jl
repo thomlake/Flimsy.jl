@@ -6,10 +6,7 @@ end
 Base.showerror(io::IO, e::FlimsyParseError) = print(io, "FlimsyParseError: ", e.msg)
 
 
-"""
-Array of function names that Flimsy should 
-not backpropage through
-"""
+"""Array of function names that Flimsy should not backpropage through"""
 const DEFAULT_BLACKLIST = [
     :Variable,
     :Array,
@@ -27,6 +24,26 @@ const DEFAULT_BLACKLIST = [
     :append!,
     :!,
     :rand,
+]
+
+"""Array of supported expression head elements"""
+const SUPPORTED_SYNTAX = [
+    :block
+    :tuple
+    :dict
+    :vect
+    :(=)
+    :(:)
+    :(=>)
+    :(.)
+    :quote
+    :ref
+    :comparison
+    :return
+    :for
+    :while
+    :comprehension
+    :typed_comprehension
 ]
 
 """
@@ -110,30 +127,13 @@ function rewrite_for_backprop(expr::Expr, blacklist::Vector{Symbol})
     elseif head == :macrocall && expr.args[1] == symbol("@blacklist")
         return nothing, Symbol[blacklist..., expr.args[2:end]...]
     end
-    
+
     if head == :call
-        if !(args[1] in blacklist)
-            push!(newargs, args[1])
+        if !in(args[1], blacklist)
+            push!(newargs, shift!(args))
             push!(newargs, :__flimsy_bpstack__)
         end
-    elseif head == :block
-    elseif head == :tuple
-    elseif head == :dict
-    elseif head == :vect
-    elseif head == :(=)
-    elseif head == :(:)
-    elseif head == :(=>)
-    elseif head == :(.)
-    elseif head == :quote
-    elseif head == :ref
-    elseif head == :comparison
-    elseif head == :return
-    elseif head == :for
-    elseif head == :while
-    elseif head == :comprehension
-    elseif head == :typed_comprehension
-    elseif head == :call
-    else
+    elseif !in(head, SUPPORTED_SYNTAX)
         throw(FlimsyParseError("Unsupported Expr: ($head, $args)"))
     end
     
@@ -161,7 +161,7 @@ function flimsy_parse(f::Expr)
     body = f.args[2]
 
     bpsig = backprop_signature(sig)
-    bpbody = rewrite_for_backprop(body, DEFAULT_BLACKLIST)[1]
+    bpbody = rewrite_for_backprop(deepcopy(body), DEFAULT_BLACKLIST)[1]
 
     usig, uconvert_stmts = untyped_signature_and_conversions(sig)
     wrapped_call = signature_as_call(sig)

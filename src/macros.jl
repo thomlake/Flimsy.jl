@@ -114,7 +114,7 @@ function rewrite_for_backprop(expr::Expr, blacklist::Vector{Symbol})
     if head == :call
         if !(expr.args[1] in blacklist)
             push!(newargs, shift!(args))
-            push!(newargs, Expr(:(::), :__flimsy_bpstack__, BPStack))
+            push!(newargs, :__flimsy_bpstack__)
         end
     elseif head == :block
     elseif head == :tuple

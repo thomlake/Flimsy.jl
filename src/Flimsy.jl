@@ -69,41 +69,41 @@ module Extras
     include("progress.jl")
 end
 
-module Components
-    using ..Flimsy
-    import StatsBase: predict
-    import Distributions: probs
+# module Components
+#     using ..Flimsy
+#     import StatsBase: predict
+#     import Distributions: probs
 
-    abstract RecurrentComponent{T,M,N}
+#     abstract RecurrentComponent{T,M,N}
 
-    export LogisticRegression,
-           LinearRegression,
-           MultilabelClassifier,
-           LinearSVM,
-           CTCOutput,
-           FeedForwardLayer,
-           LayerStack,
-           RecurrentComponent,
-           SimpleRecurrent,
-           GatedRecurrent,
-           LSTM,
-           score,
-           probs,
-           predict,
-           feedforward,
-           step,
-           unfold
+#     export LogisticRegression,
+#            LinearRegression,
+#            MultilabelClassifier,
+#            LinearSVM,
+#            CTCOutput,
+#            FeedForwardLayer,
+#            LayerStack,
+#            RecurrentComponent,
+#            SimpleRecurrent,
+#            GatedRecurrent,
+#            LSTM,
+#            score,
+#            probs,
+#            predict,
+#            feedforward,
+#            step,
+#            unfold
 
-    include("components/logistic_regression.jl")
-    include("components/linear_regression.jl")
-    include("components/multilabel.jl")
-    include("components/linear_svm.jl")
-    include("components/ctcoutput.jl")
-    include("components/feedforwardlayer.jl")
-    include("components/simple_recurrent.jl")
-    include("components/gatedrecurrent.jl")
-    include("components/lstm.jl")
-end
+#     include("components/logistic_regression.jl")
+#     include("components/linear_regression.jl")
+#     include("components/multilabel.jl")
+#     include("components/linear_svm.jl")
+#     include("components/ctcoutput.jl")
+#     include("components/feedforwardlayer.jl")
+#     include("components/simple_recurrent.jl")
+#     include("components/gatedrecurrent.jl")
+#     include("components/lstm.jl")
+# end
 
 module SampleData
     using ..Flimsy

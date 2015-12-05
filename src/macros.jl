@@ -110,10 +110,10 @@ function rewrite_for_backprop(expr::Expr, blacklist::Vector{Symbol})
     elseif head == :macrocall && expr.args[1] == symbol("@blacklist")
         return nothing, Symbol[blacklist..., expr.args[2:end]...]
     end
-        
+    
     if head == :call
-        if !(expr.args[1] in blacklist)
-            push!(newargs, shift!(args))
+        if !(args[1] in blacklist)
+            push!(newargs, args[1])
             push!(newargs, :__flimsy_bpstack__)
         end
     elseif head == :block
@@ -149,8 +149,7 @@ function rewrite_for_backprop(expr::Expr, blacklist::Vector{Symbol})
             push!(newargs, arg)
         end
     end
-
-    return Expr(head, newargs), blacklist
+    return Expr(head, newargs...), blacklist
 end
 
 function flimsy_parse(f::Expr)

@@ -38,6 +38,7 @@ An example implementation Logistic Regression is given below.
 
 ```julia
 using Flimsy
+
 immutable Params{T,M,N} <: Component
     w::Variable{T,M,N}
     b::Variable{T,M,1}

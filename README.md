@@ -34,7 +34,7 @@ julia> Pkg.clone("https://github.com/thomlake/Flimsy.jl.git")
 ```
 
 ## Example
-An example implementation Logistic Regression is given below.
+An example Logistic Regression implementation is given below. This and several other builtin components are available in the `Flimsy.Components` module.
 
 ```julia
 using Flimsy

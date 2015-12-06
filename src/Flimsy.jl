@@ -96,7 +96,7 @@ module Components
 
     include("components/logistic_regression.jl")
     include("components/linear_regression.jl")
-    include("components/multilabel.jl")
+    include("components/multilabel_classifier.jl")
     include("components/linear_svm.jl")
     include("components/ctcoutput.jl")
     include("components/feedforwardlayer.jl")

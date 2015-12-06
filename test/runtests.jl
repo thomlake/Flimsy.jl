@@ -20,7 +20,7 @@ tests = [
     "ops/dropout.jl",
     "ndembed.jl",
     "logistic_regression.jl",
-    "multilabel_regression.jl",
+    "multilabel_classifier.jl",
     "ctc.jl",
 ]
 

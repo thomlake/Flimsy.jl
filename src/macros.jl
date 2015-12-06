@@ -111,7 +111,7 @@ Recursively rewrite expr so all non-blacklisted function
 calls have a BPStack instance as their first argument.
 
 For example
-    foo(a, b, c)`
+    foo(a, b, c)
 is transformed to
     foo(__flimsy_bpstack__, a, b, c)
 """

@@ -14,8 +14,4 @@ LogisticRegression(n_classes, n_features) = LogisticRegression(Gaussian(n_classe
 
 @flimsy probs(theta::LogisticRegression, x) = softmax(score(theta, x))
 
-@flimsy function probs(theta::LogisticRegression, x, y)
-    p = probs(theta, x)
-    nll = Flimsy.Cost.cat(y, p)
-    return nll, p
-end
+@flimsy cost(theta::LogisticRegression, x, y) = Flimsy.Cost.cat(y, probs(theta, x))

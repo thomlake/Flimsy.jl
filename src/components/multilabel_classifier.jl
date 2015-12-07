@@ -12,12 +12,6 @@ MultilabelClassifier(n_classes, n_features) = MultilabelClassifier(Gaussian(n_cl
 
 @flimsy probs(theta::MultilabelClassifier, x) = sigmoid(score(theta, x))
 
-# @flimsy predict(theta::MultilabelClassifier, x, t::AbstractFloat=0.5) = threshold(probs(theta, x), t)
-
 @flimsy predict(theta::MultilabelClassifier, x, t::AbstractFloat=0.5) = map(Bool, threshold(probs(theta, x), t).data)
 
-@flimsy function probs(theta::MultilabelClassifier, x, y)
-    p = probs(theta, x)
-    nll = Flimsy.Cost.bern(y, p)
-    return nll, p
-end
+@flimsy cost(theta::MultilabelClassifier, x, y) = Flimsy.Cost.bern(y, probs(theta, x))

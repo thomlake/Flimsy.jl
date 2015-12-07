@@ -19,8 +19,8 @@ function check()
     X = randn(n_features, n_samples)
     Y = randn(n_outputs, n_samples)
     theta = LinearRegression(n_outputs, n_features)
-    g() = gradient!(predict, theta, X, Y)
-    c() = predict(theta, X, Y)[1]
+    g() = gradient!(cost, theta, X, Y)
+    c() = cost(theta, X, Y)
     gradcheck(g, c, theta)
 end
 
@@ -48,14 +48,14 @@ function demo()
     progress = Flimsy.Extras.Progress(theta, max_epochs=Inf, patience=0, tol=1e-10)
 
     # Update type
-    sgd = optimizer(SGD, theta, learning_rate=0.01 / n_samples)
+    opt = optimizer(GradientDescent, theta, learning_rate=0.01 / n_samples)
 
     # Main training loop.
     start(progress)
     while !quit(progress)
-        cost = gradient!(predict, theta, features, targets)[1]
-        update!(sgd, theta)
-        step(progress, false, cost)
+        nll = gradient!(cost, theta, features, targets)
+        update!(opt, theta)
+        step(progress, nll)
     end
     done(progress)
 
@@ -64,7 +64,7 @@ function demo()
     println("  number of samples: ", n_samples)
     println("  number of features: ", n_features)
     println("  converged after ", progress.epoch, " epochs (", round(time(progress), 2), " seconds)")
-    println("  avg cost: ",  progress.best_value)
+    println("  nll: ",  progress.best_value)
     println("[Coefficients]")
     for (k, v) in zip(expl, theta.w.data)
         println("  ", rpad(k, 7), " => ", sign(v) > 0 ? "+" : "-", round(abs(v), 3))

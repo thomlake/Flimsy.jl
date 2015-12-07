@@ -6,8 +6,8 @@ function check()
     n_classes, n_features, n_samples = 3, 20, 10
     X, Y = rand(Flimsy.SampleData.MoG(n_classes, n_features), n_samples)
     theta = LogisticRegression(n_classes, n_features)
-    g() = gradient!(probs, theta, X, Y)
-    c() = probs(theta, X, Y)[1]
+    g() = gradient!(cost, theta, X, Y)
+    c() = cost(theta, X, Y)
     gradcheck(g, c, theta, verbose=false)
 end
 
@@ -22,7 +22,7 @@ function fit()
     rmsprop = optimizer(RMSProp, theta, learning_rate=0.01, decay=0.9)
     nll_prev = Inf
     for i = 1:50
-        nll_curr = gradient!(probs, theta, X_train, Y_train)[1]
+        nll_curr = gradient!(cost, theta, X_train, Y_train)
         update!(rmsprop, theta)
         @test nll_curr < nll_prev
         nll_prev = nll_curr

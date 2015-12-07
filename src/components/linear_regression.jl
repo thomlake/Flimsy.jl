@@ -9,8 +9,4 @@ LinearRegression(n_classes, n_features) = LinearRegression(Gaussian(n_classes, n
 
 @flimsy predict(theta::LinearRegression, x::Variable) = affine(theta.w, x, theta.b)
 
-@flimsy function predict(theta::LinearRegression, x, y)
-    p = predict(theta, x)
-    nll = Flimsy.Cost.gauss(y, p)
-    return nll, p
-end
+@flimsy cost(theta::LinearRegression, x, y) = Flimsy.Cost.gauss(y, predict(theta, x))

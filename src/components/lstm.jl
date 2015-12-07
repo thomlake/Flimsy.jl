@@ -19,16 +19,17 @@ LSTM(m::Int, n::Int) = LSTM(
     cnew = tanh(sum(linear(theta.wc, x), linear(theta.uc, theta.h0), theta.bc))
     c = sum(prod(i, cnew), prod(f, theta.c0))
     o = sigmoid(sum(linear(theta.wo, x), linear(theta.uo, theta.h0), linear(theta.vo, c), theta.bo))
-    return prod(o, tanh(c)), c
+    return (prod(o, tanh(c)), c)
 end
 
-@flimsy function Base.step(theta::LSTM, x::Variable, htm1, ctm1)
+@flimsy function Base.step{V1<:Variable,V2<:Variable}(theta::LSTM, x::Variable, state::Tuple{V1,V2})
+    htm1, ctm1 = state
     i = sigmoid(sum(linear(theta.wi, x), linear(theta.ui, htm1), theta.bi))
     f = sigmoid(sum(linear(theta.wf, x), linear(theta.uf, htm1), theta.bf))
     cnew = tanh(sum(linear(theta.wc, x), linear(theta.uc, htm1), theta.bc))
     c = sum(prod(i, cnew), prod(f, ctm1))
     o = sigmoid(sum(linear(theta.wo, x), linear(theta.uo, theta.h0), linear(theta.vo, c), theta.bo))
-    return prod(o, tanh(c)), c
+    return (prod(o, tanh(c)), c)
 end
 
 @flimsy function unfold(theta::LSTM, x::Vector)
@@ -36,7 +37,7 @@ end
     c = Array(Variable, length(x))
     h[1], c[1] = step(theta, x[1])
     for t = 2:length(x)
-        h[t], c[t] = step(theta, x[t], h[t-1], c[t-1])
+        h[t], c[t] = step(theta, x[t], (h[t-1], c[t-1]))
     end
     return h
 end

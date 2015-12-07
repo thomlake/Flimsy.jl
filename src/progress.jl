@@ -76,7 +76,7 @@ function Progress(
     )
 end
 
-function Base.step(self::Progress, store_best::Bool, current_value::Number)
+function Base.step(self::Progress, current_value::Number, store_best::Bool=false)
     self.epoch += 1
 
     self.current_value = current_value
@@ -110,7 +110,7 @@ end
 
 function Base.step(self::Progress, store_best::Bool=false)
      self.f == nothing && error("must provide current value if no evaluation function provided")
-     step(self, store_best, self.f())
+     step(self, self.f(), store_best)
      nothing
  end
 

@@ -87,6 +87,7 @@ module Components
            SimpleRecurrent,
            GatedRecurrent,
            LSTM,
+           cost,
            score,
            probs,
            predict,

@@ -12,8 +12,8 @@ function check()
     X = randn(n_feature, n_sample)
     Y = rand(1:n_labels, n_sample)
     theta = LogisticRegression(n_labels, n_feature)
-    g() = gradient!(probs, theta, X, Y)
-    c() = probs(theta, X, Y)[1]
+    g() = gradient!(cost, theta, X, Y)
+    c() = cost(theta, X, Y)
     gradcheck(g, c, theta)
 end
 
@@ -50,18 +50,16 @@ function demo()
 
     theta = LogisticRegression(n_labels, n_feature)
 
-    sgd = optimizer(SGD, theta, learning_rate=0.01)
+    opt = optimizer(GradientDescent, theta, learning_rate=0.01)
 
-    progress = Flimsy.Extras.Progress(theta, patience=1, max_epochs=200) do
-        return probs(theta, X_tr, Y_tr)[1] / n_test
-    end
+    progress = Flimsy.Extras.Progress(theta, patience=1, max_epochs=200)
 
     # Fit parameters
     start(progress)
     while !quit(progress)
-        gradient!(probs, theta, X_tr, Y_tr)
-        update!(sgd, theta)
-        step(progress)
+        nll = gradient!(cost, theta, X_tr, Y_tr)
+        update!(opt, theta)
+        step(progress, nll)
     end
     done(progress)
 
@@ -71,7 +69,7 @@ function demo()
     println("[Results]")
     println("  number of epochs => ", progress.epoch)
     println("  cpu time         => ", round(time(progress), 2), " seconds")
-    println("  final train cost => ", progress.current_value)
+    println("  final train nll  => ", progress.current_value)
     println("  train error      => ", sum(Y_tr .!= Yhat_tr) / n_train)
     println("  test error       => ", sum(Y_te .!= Yhat_te) / n_test)
 end

@@ -4,8 +4,8 @@ function Gaussian(n_out::Int, n_in::Int)
     Variable(randn(n_out, n_in))
 end
 
-function Gaussian(sigma::Real, n_out::Int, n_in::Int)
-    Variable(sigma * randn(n_out, n_in))
+function Gaussian(scale::Real, n_out::Int, n_in::Int)
+    Variable(scale * randn(n_out, n_in))
 end
 
 #-- Uniform --#

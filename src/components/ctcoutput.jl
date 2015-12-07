@@ -14,8 +14,4 @@ CTCOutput(n_classes, n_features, blank::Int=1) = CTCOutput(Orthonormal(n_classes
 
 @flimsy predict(theta::CTCOutput, xs::Vector) = [Flimsy.Extras.argmax(y) for y in score(theta, xs)]
 
-@flimsy function probs(theta::CTCOutput, xs::Vector, ys::Vector{Int})
-    os = score(theta, xs)
-    nll = Flimsy.Cost.ctc(ys, os, theta.blank)
-    return nll
-end
+@flimsy cost(theta::CTCOutput, xs::Vector, ys::Vector{Int}) = Flimsy.Cost.ctc(ys, score(theta, xs), theta.blank)

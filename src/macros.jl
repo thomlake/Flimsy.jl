@@ -23,6 +23,17 @@ const DEFAULT_BLACKLIST = [
     :push!,
     :append!,
     :!,
+    :+,
+    :-,
+    :*,
+    :/,
+    :^,
+    :+=,
+    :-=,
+    :*=,
+    :/=,
+    :&&,
+    :||,
     :rand,
 ]
 
@@ -115,7 +126,7 @@ For example
 is transformed to
     foo(__flimsy_bpstack__, a, b, c)
 """
-function rewrite_for_backprop(expr::Expr, blacklist::Vector{Symbol})
+function rewrite_for_backprop(expr::Expr, blacklist::Vector)
     
     head = expr.head
     args = expr.args
@@ -125,7 +136,7 @@ function rewrite_for_backprop(expr::Expr, blacklist::Vector{Symbol})
     if head == :line
         return expr, blacklist
     elseif head == :macrocall && expr.args[1] == symbol("@blacklist")
-        return nothing, Symbol[blacklist..., expr.args[2:end]...]
+        return nothing, [blacklist..., expr.args[2:end]...]
     end
 
     if head == :call
@@ -133,7 +144,13 @@ function rewrite_for_backprop(expr::Expr, blacklist::Vector{Symbol})
             push!(newargs, shift!(args))
             push!(newargs, :__flimsy_bpstack__)
         end
+    elseif in(head, blacklist)
     elseif !in(head, SUPPORTED_SYNTAX)
+        println(head == :+=)
+        for thing in blacklist
+            dump(thing)
+        end
+        dump(:+=)
         throw(FlimsyParseError("Unsupported Expr: ($head, $args)"))
     end
     
@@ -152,6 +169,28 @@ function rewrite_for_backprop(expr::Expr, blacklist::Vector{Symbol})
     return Expr(head, newargs...), blacklist
 end
 
+function remove_directives(expr::Expr)
+    head = expr.head
+    args = expr.args
+    newargs = Any[]
+
+    if head == :macrocall && expr.args[1] == symbol("@blacklist")
+        return nothing
+    end
+
+    for arg in args
+        if typeof(arg) <: Expr
+            newarg = remove_directives(arg)
+            if newarg != nothing
+                push!(newargs, newarg)
+            end
+        else
+            push!(newargs, arg)
+        end
+    end
+    return Expr(head, newargs...)
+end
+
 function flimsy_parse(f::Expr)
     f.head == :(=) || f.head == :function || throw(FlimsyParseError("expected = or function but got $(f.head)"))
     ok = length(f.args) == 2 && f.args[1].head == :call && f.args[2].head == :block
@@ -159,6 +198,8 @@ function flimsy_parse(f::Expr)
 
     sig = f.args[1]
     body = f.args[2]
+
+    body_no_directives = remove_directives(deepcopy(body))
 
     bpsig = backprop_signature(sig)
     bpbody = rewrite_for_backprop(deepcopy(body), DEFAULT_BLACKLIST)[1]
@@ -169,11 +210,12 @@ function flimsy_parse(f::Expr)
     ubpsig, ubpconvert_stmts = untyped_signature_and_conversions(bpsig)
     wrapped_bpcall = signature_as_call(bpsig)
 
+    forig = Expr(f.head, sig, body_no_directives)
     fbp = Expr(f.head, bpsig, bpbody)
     fu = Expr(f.head, usig, Expr(:block, uconvert_stmts..., wrapped_call))
     fubp = Expr(f.head, ubpsig, Expr(:block, ubpconvert_stmts..., wrapped_bpcall))
 
-    retblock = Any[f, fbp]
+    retblock = Any[forig, fbp]
     if length(uconvert_stmts) > 0
         push!(retblock, fu)
     end

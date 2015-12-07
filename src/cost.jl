@@ -215,3 +215,10 @@ function ctc{I<:Integer,V<:Variable}(stack::BPStack, target::Vector{I}, output::
     end
     return -ll
 end
+
+
+# REINFORCE (Williams, 1992)
+function reinforce{T,M}(stack::BPStack, action::Integer, probs::Variable{T,M,1}, reward::AbstractFloat, eps::AbstractFloat=1e-20)
+    pr_action = probs.data[action] + eps
+    probs.grad[action] -= reward / pr_action
+end

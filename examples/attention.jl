@@ -1,6 +1,6 @@
 using Flimsy
 using Flimsy.Components
-import Flimsy.Components: feedforward, predict
+import Flimsy.Components: feedforward, predict, cost
 
 immutable AddTask
     range::UnitRange{Int}
@@ -53,41 +53,42 @@ end
 
 function DifferentiableFilter(n_hid::Int)
     output = LinearRegression(1, n_hid)
-    # scorer = FeedForwardLayer(relu, Orthonormal(2, 1, n_hid), Zeros(1))
-    scorer = FeedForwardLayer(identity, Orthonormal(2, 1, n_hid), Zeros(1))
+    scorer = FeedForwardLayer(identity, Orthonormal(1.0, 1, n_hid), Zeros(1))
     hidden = FeedForwardLayer(relu, Orthonormal(sqrt(2), n_hid, 2), Zeros(n_hid))
     return DifferentiableFilter(output, scorer, hidden)
 end
 
 @flimsy function feedforward(nnet::DifferentiableFilter, xs::Vector)
     # traditional attention
-    hs = Variable[feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
-    as = decat(softmax(concat(Variable[feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)])))
-    return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
+    # hs = Variable[feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
+    # as = decat(softmax(concat(Variable[feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)])))
+    # return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
     
     # additive attention
-    # hs = [feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
-    # as = [feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)]
-    # return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
+    hs = [feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
+    as = [feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)]
+    return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
 end
 
 @flimsy predict(nnet::DifferentiableFilter, xs::Vector) = predict(nnet.output, feedforward(nnet, xs))
-@flimsy predict(nnet::DifferentiableFilter, xs::Vector, y::Number) = predict(nnet.output, feedforward(nnet, xs), y)
+
+@flimsy cost(nnet::DifferentiableFilter, xs::Vector, y::Number) = cost(nnet.output, feedforward(nnet, xs), y)
 
 function check()
     n_in = 2
     n_out = 1
     x, y = rand(AddTask(5:5))
     theta = DifferentiableFilter(7)
-    g() = gradient!(predict, theta, x, y)
-    c() = predict(theta, x, y)[1]
+    g() = gradient!(cost, theta, x, y)
+    c() = cost(theta, x, y)[1]
     gradcheck(g, c, theta, tol=1e-3)
 end
 
 function fit()
+    srand(123)
     n_train = 100
     n_valid = 20
-    n_hid = 10
+    n_hid = 20
     addtask = AddTask(5:20)
 
     X_train, Y_train = rand(addtask, n_train)
@@ -97,12 +98,12 @@ function fit()
 
     theta = DifferentiableFilter(n_hid)
 
-    rmsprop = optimizer(RMSProp, theta, decay=0.95, clip=10.0, clipping_type=:scale)
+    opt = optimizer(RMSProp, theta, learning_rate=0.01, decay=0.95, clip=5.0, clipping_type=:scale)
 
     progress = Flimsy.Extras.Progress(theta, max_epochs=500, patience=10) do
         mse = 0.0
         for (xs, y) in zip(X_valid, Y_valid)
-            mse += predict(theta, xs, y)[1]
+            mse += cost(theta, xs, y)
         end
         return mse / n_valid
     end
@@ -113,18 +114,16 @@ function fit()
 
     indices = collect(1:n_train)
     println("fitting...")
-    learning_rate = 0.01
     start(progress)
     while !quit(progress)
         shuffle!(indices)
         for i in indices
-            gradient!(predict, theta, X_train[i], Y_train[i])
-            rmsprop.learning_rate = learning_rate / length(X_train[i])
-            update!(rmsprop, theta)
+            gradient!(cost, theta, X_train[i], Y_train[i])
+            update!(opt, theta)
         end
         step(progress, true)
         if progress.frustration > 4
-            learning_rate *= 0.5
+            opt.learning_rate *= 0.5
         end
         statusmsg()
     end
@@ -142,9 +141,10 @@ function fit()
     X_test, Y_test = rand(AddTask(20:50), n_test)
     minlen = minimum(map(length, X_test))
     maxlen = maximum(map(length, X_test))
+    theta_best = progress.best_model
     mse = 0
     for (xs, y) in zip(X_test, Y_test)
-        p = predict(progress.best_model, xs)
+        p = predict(theta_best, xs)
         p.data[1] = round(p.data[1])
         mse += Flimsy.Cost.gauss(y, p)
     end

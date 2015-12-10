@@ -110,7 +110,12 @@ arguments of the same name.
     f(x, y, z)
 """
 function signature_as_call(signature::Expr)
-    callexpr = Expr(:call, signature.args[1])
+    # check for type params in call
+    callexpr = if typeof(signature.args[1]) <: Expr && signature.args[1].head == :curly
+        Expr(:call, signature.args[1].args[1])
+    else
+        Expr(:call, signature.args[1])
+    end
     for arg in signature.args[2:end]
         push!(callexpr.args, typeof(arg) <: Expr ? arg.args[1] : arg)
     end

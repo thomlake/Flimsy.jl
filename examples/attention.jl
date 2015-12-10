@@ -60,14 +60,14 @@ end
 
 @flimsy function feedforward(nnet::DifferentiableFilter, xs::Vector)
     # traditional attention
-    # hs = Variable[feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
-    # as = decat(softmax(concat(Variable[feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)])))
-    # return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
+    hs = Variable[feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
+    as = softmax(Variable{Array{Float64,2},1,1}[feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)])
+    return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
     
     # additive attention
-    hs = [feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
-    as = [feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)]
-    return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
+    # hs = [feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
+    # as = [feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)]
+    # return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
 end
 
 @flimsy predict(nnet::DifferentiableFilter, xs::Vector) = predict(nnet.output, feedforward(nnet, xs))

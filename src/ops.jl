@@ -109,6 +109,51 @@ function softmax(stack::BPStack, x::Variable)
     return y
 end
 
+# -- Softmax over vector of 1x1 -- #
+function bwd_softmax{V<:Variable}(ys::Vector{V}, xs::Vector{V})
+    n = length(ys)
+    for i = 1:n
+        for j = 1:n
+            if i == j
+                xs[i].grad[1] += ys[i].data[1] * (1 - ys[j].data[1]) * ys[j].grad[1]
+            else
+                xs[i].grad[1] -= ys[i].data[1] * ys[j].data[1] * ys[j].grad[1]
+            end
+        end
+    end
+    return nothing
+end
+
+function softmax{V<:Variable}(xs::Vector{V})
+    all(x -> size(x) == (1, 1), xs) || error("softmax can only be applied over vectors if elements are of size (1, 1)")
+    xmax = -Inf
+    for x in xs
+        if x.data[1] > xmax
+            xmax = x.data[1]
+        end
+    end
+
+    Z = 0.0
+    ys = Variable{typeof(xs[1].data),1,1}[zero(x) for x in xs]
+    for i in eachindex(xs)
+        e_xi = exp(xs[i].data[1] - xmax)
+        ys[i].data[1] = e_xi
+        Z += e_xi
+    end
+
+    for i in eachindex(ys)
+        ys[i].data[1] /= Z
+    end
+
+    return ys
+end
+
+function softmax{V<:Variable}(stack::BPStack, xs::Vector{V})
+    ys = softmax(xs)
+    push!(stack, () -> bwd_softmax(ys, xs))
+    return ys
+end
+
 # -- Winner Takes All -- #
 function bwd_wta{T,M,N}(y::Variable{T,M,N}, x::Variable{T,M,N})
     _, imax = findmax(x.data, 1)

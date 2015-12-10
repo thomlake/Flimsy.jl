@@ -22,6 +22,8 @@ const DEFAULT_BLACKLIST = [
     :typeof,
     :push!,
     :append!,
+    :rand,
+    :curly,
     :!,
     :+,
     :-,
@@ -33,8 +35,7 @@ const DEFAULT_BLACKLIST = [
     :*=,
     :/=,
     :&&,
-    :||,
-    :rand,
+    :||,   
 ]
 
 """Array of supported expression head elements"""
@@ -151,11 +152,6 @@ function rewrite_for_backprop(expr::Expr, blacklist::Vector)
         end
     elseif in(head, blacklist)
     elseif !in(head, SUPPORTED_SYNTAX)
-        println(head == :+=)
-        for thing in blacklist
-            dump(thing)
-        end
-        dump(:+=)
         throw(FlimsyParseError("Unsupported Expr: ($head, $args)"))
     end
     

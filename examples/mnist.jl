@@ -1,27 +1,28 @@
+# Flimsy.jl
+# MNIST classification
+
 using Flimsy
 using Flimsy.Components
-import Flimsy.Components: score, predict, probs
+import Flimsy.Components: cost, predict
 import MNIST
 
-immutable NNet <: Component
+immutable Params <: Component
     output::LogisticRegression
     hidden::LayerStack
 end
 
-@flimsy score(nnet::NNet, x) = score(nnet.output, feedforward(nnet.hidden, x))
+@flimsy predict(theta::Params, x) = predict(theta.output, feedforward(theta.hidden, x))
 
-@flimsy predict(nnet::NNet, x) = predict(nnet.output, feedforward(nnet.hidden, x))
+# @flimsy probs(theta::Params, x) = probs(theta.output, feedforward(theta.hidden, x))
 
-@flimsy probs(nnet::NNet, x) = probs(nnet.output, feedforward(nnet.hidden, x))
-
-@flimsy probs(nnet::NNet, x, y) = probs(nnet.output, feedforward(nnet.hidden, x), y)
+@flimsy cost(theta::Params, x, y) = cost(theta.output, feedforward(theta.hidden, x), y)
 
 function image_string(x::Vector, symbols::Vector{Char}=['-', '+'])
     s = isqrt(length(x))
     img = reshape(x, (s, s))
     rows = ASCIIString[]
     for i in 1:s
-        push!(rows, join(symbols[int(img[i,:] .> 0) + 1]))
+        push!(rows, join(symbols[int(img[i,:] .> 0.3) + 1]))
     end
     return join(rows, '\n')
 end
@@ -35,18 +36,17 @@ function check()
     @assert all(isfinite(Y))
     hidden = LayerStack(relu, 5, 10, 20, size(X, 1))
     output = LogisticRegression(10, 5)
-    theta = NNet(output, hidden)
-    g() = gradient!(probs, theta, X, Y)
-    c() = probs(theta, X, Y)[1]
+    theta = Params(output, hidden)
+    g() = gradient!(cost, theta, X, Y)
+    c() = cost(theta, X, Y)
     gradcheck(g, c, theta)
 end
 
 function show_example_data()
-    rawX, rawY = MNIST.traindata()
-    X = extras.zscore(rawX)
-    @assert all(isfinite(X))
-    for i = 1:10
-        println(int(rawY[i]))
+    X, Y = MNIST.traindata()
+    for k = 1:5
+        i = rand(1:length(Y))
+        println(int(Y[i]))
         println(image_string(X[:,i]))
     end
 end
@@ -70,18 +70,14 @@ function fit()
     batch_size = 100
     indices = collect(1:n_train)
 
-    hidden = LayerStack(relu, 50, 100, 100, size(X_train, 1))
-    output = LogisticRegression(10, 50)
-    theta = NNet(output, hidden)
+    hidden = LayerStack(relu, 30, 40, 50, 60, 100, size(X_train, 1))
+    output = LogisticRegression(10, 30)
+    theta = Params(output, hidden)
 
-    rmsprop = optimizer(RMSProp, theta, learning_rate=0.01 / batch_size, decay=0.8)
+    rmsprop = optimizer(RMSProp, theta, learning_rate=0.01 / batch_size, decay=0.8, clip=5.0, clipping_type=:scale)
 
-    progress = Flimsy.Extras.Progress(theta, patience=10) do
+    progress = Progress(theta, patience=0) do
         return sum(Y_valid .!= predict(theta, X_valid)) / n_valid
-    end
-
-    function statusmsg()
-        @printf("epoch: %03d, frustration: %02d, best: %0.02f, curr: %0.02f\n", progress.epoch, progress.frustration, progress.best_value, progress.current_value)
     end
 
     println("fitting...")
@@ -91,18 +87,17 @@ function fit()
         for i = 1:batch_size:n_train
             idx = indices[i:min(i + batch_size - 1, end)]
             X, Y = X_train[:,idx], Y_train[idx]
-            gradient!(probs, theta, X, Y)
+            gradient!(cost, theta, X, Y)
             update!(rmsprop, theta)
         end
-        step(progress, progress.epoch % 10 == 0)
-        statusmsg()
+        step(progress, store_best=false)
+        println(progress)
     end
     done(progress)
 
     println("converged after ", progress.epoch, " epochs (", round(time(progress), 2), " seconds)")
     println("testing...")
     X_test, rawY = MNIST.testdata()
-    # teX = nnx.zscore(rawX, mu, sigma)
     Y_test = round(Int, rawY + 1)
     n_test = length(Y_test)
     Y_pred = predict(theta, X_test)
@@ -110,6 +105,7 @@ function fit()
     println("test error: $(error / n_test) ($error of $n_test)")
 end
 
-check()
+("-c" in ARGS || "--check" in ARGS) && check()
+("-s" in ARGS || "--show" in ARGS) && show_example_data()
 fit()
-# show_example_data()
+

@@ -1,14 +1,14 @@
+# Flimsy.jl
+# Logistic Regression
+
 using Flimsy
 using Flimsy.Components
 using RDatasets
 using MLBase
 
 function check()
-    # Example of how to apply finite difference
-    # gradient checking to a Learner.
     n_sample = 2
-    n_feature = 10
-    n_labels = 3
+    n_labels, n_feature = 3, 10
     X = randn(n_feature, n_sample)
     Y = rand(1:n_labels, n_sample)
     theta = LogisticRegression(n_labels, n_feature)
@@ -49,10 +49,8 @@ function demo()
     println("  number of test samples  => ", n_test)
 
     theta = LogisticRegression(n_labels, n_feature)
-
     opt = optimizer(GradientDescent, theta, learning_rate=0.01)
-
-    progress = Flimsy.Extras.Progress(theta, patience=1, max_epochs=200)
+    progress = Progress(theta, patience=1, max_epochs=200)
 
     # Fit parameters
     start(progress)

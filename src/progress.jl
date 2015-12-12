@@ -5,7 +5,7 @@ type Progress{T<:Component}
     tol::Number
     minimize::Bool
     min_epochs::Int
-    max_epochs::Int
+    max_epochs::Number
     patience::Int
     precision::Int
     # state
@@ -28,7 +28,7 @@ function Progress(
     tol::Number=1e-3,
     minimize::Bool=true,
     min_epochs::Int=2,
-    max_epochs::Int=20,
+    max_epochs::Number=20,
     patience::Int=1,
     precision::Int=2,
     )
@@ -62,7 +62,7 @@ function Progress(
     tol::Number=1e-3,
     minimize::Bool=true,
     min_epochs::Int=2,
-    max_epochs::Int=20,
+    max_epochs::Number=20,
     patience::Int=1,
     precision::Int=3,
     )
@@ -77,7 +77,7 @@ function Progress(
         patience,
         precision,
         # state
-        ceil(Int, log10(max_epochs + 1)),
+        max_epochs < Inf ? ceil(Int, log10(max_epochs + 1)) : 0,
         ceil(Int, log10(patience + 1)),
         0.0,
         0.0,

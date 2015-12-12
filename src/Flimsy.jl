@@ -44,6 +44,8 @@ export GradientNoise
 
 export gradcheck
 
+export Progress
+
 include("var.jl")
 include("core.jl")
 include("macros.jl")
@@ -53,6 +55,7 @@ include("initialization.jl")
 include("fit.jl")
 include("gradientnoise.jl")
 include("gradcheck.jl")
+include("progress.jl")
 
 module Cost
     using ..Flimsy
@@ -66,7 +69,6 @@ end
 module Extras
     using ..Flimsy
     include("extras.jl")
-    include("progress.jl")
 end
 
 module Components

@@ -61,7 +61,7 @@ function fit()
 
     theta = Params(n_hid)
     opt = optimizer(RMSProp, theta, learning_rate=0.01, decay=0.95, clip=5.0, clipping_type=:scale)
-    progress = Flimsy.Extras.Progress(theta, max_epochs=50, patience=10) do
+    progress = Progress(theta, max_epochs=50, patience=10) do
         mse = 0.0
         for (xs, y) in zip(X_valid, Y_valid)
             mse += cost(theta, xs, y)

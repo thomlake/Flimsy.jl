@@ -27,10 +27,6 @@ function bwd_sigmoid{T,M,N}(y::Variable{T,M,N}, x::Variable{T,M,N})
     return nothing
 end
 
-# x * (1 - x) * g = (i - x)
-# x * (1 - x) / (i - x) = 1 / g
-# (i - x) / x * (1 - x) = g
-
 function sigmoid(x::Variable)
     y = zero(x)
     for i in eachindex(x)

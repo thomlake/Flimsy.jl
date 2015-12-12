@@ -1,21 +1,17 @@
-# Linear Regression example using Nimble.jl package
-# author: tllake
-# email: thom.l.lake@gmail.com
-#
+# Flimsy.jl
+# Linear Regression
+
 # This example is for demonstration purposes only.
 # Using gradient descent to fit a linear regression
 # model on a dataset like Boston Housing is a poor life choice.
-
 using RDatasets
 using Flimsy
 using Flimsy.Components
 
 function check()
-    # Example of how to apply finite difference
-    # gradient checking to a Learner.
+    # check computed gradients using finite differences
     n_samples = 2
-    n_features = 10
-    n_outputs = 3
+    n_outputs, n_features = 3, 10
     X = randn(n_features, n_samples)
     Y = randn(n_outputs, n_samples)
     theta = LinearRegression(n_outputs, n_features)
@@ -44,10 +40,10 @@ function demo()
     n_outputs = length(resp)
     theta = LinearRegression(n_outputs, n_features)
 
-    # Use the Progress type to assess training convergence.
-    progress = Flimsy.Extras.Progress(theta, max_epochs=Inf, patience=0, tol=1e-10)
+    # Use the Progress type to monitor training convergence.
+    progress = Progress(theta, max_epochs=Inf, patience=0, tol=1e-10)
 
-    # Update type
+    # Learning Algorithm
     opt = optimizer(GradientDescent, theta, learning_rate=0.01 / n_samples)
 
     # Main training loop.

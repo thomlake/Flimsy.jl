@@ -51,7 +51,6 @@ end
 
 argmaxneq{I<:Integer}(x::AbstractVariable, ks::Vector{I}) = argmaxneq(x.data, ks)
 
-
 zscore(x, mu, sigma, sigma_min::AbstractFloat=1e-6) = (x .- mu) ./ max(sigma, sigma_min)
 
 function zscore(x::Matrix, sigma_min::AbstractFloat=1e-6)

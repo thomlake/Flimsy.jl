@@ -1,86 +1,49 @@
+# Flimsy.jl
+# Attention Demo
+
+# Task:
+# Given a vector of (number, flag) pairs 
+# learn to output the sum of the two 
+# numbers where the flag is non-zero.
+
+# Example:
+# Input = [[2,1],[5,0],[9,0],[4,0],[4,0],[4,0],[7,0],[9,0],[4,1]]
+# Output = 6
+
 using Flimsy
 using Flimsy.Components
 import Flimsy.Components: feedforward, predict, cost
+import Flimsy.Demo: AddTask
 
-immutable AddTask
-    range::UnitRange{Int}
-end
-
-AddTask(t::Int) = AddTask(t:t)
-
-function Base.rand(addtask::AddTask)
-    steps = rand(addtask.range)
-    i1 = rand(1:steps)
-    i2 = i1
-    while i1 == i2
-        i2 = rand(1:steps)
-    end
-    n1 = rand(1:10)
-    n2 = rand(1:10)
-    output = float(n1 + n2)
-    input = Vector{Float64}[]
-
-    for i = 1:steps
-        x = if i == i1
-            [n1, 1]
-        elseif i == i2
-            [n2, 1]
-        else
-            [rand(1:10), 0]
-        end
-        push!(input, x)
-    end
-
-    return input, output
-end
-
-function Base.rand(addtask::AddTask, n::Int)
-    x, y = rand(addtask)
-    X, Y = typeof(x)[x], typeof(y)[y]
-    for i = 2:n
-        x, y = rand(addtask)
-        push!(X, x)
-        push!(Y, y)
-    end
-    X, Y
-end
-
-immutable DifferentiableFilter{T,NHid} <: Component
+immutable Params{T,NHid} <: Component
     output::LinearRegression{T,1,NHid}
-    scorer::FeedForwardLayer{T,1,NHid}
+    attend::FeedForwardLayer{T,1,NHid}
     hidden::FeedForwardLayer{T,NHid,2}
 end
 
-function DifferentiableFilter(n_hid::Int)
+function Params(n_hid::Int)
     output = LinearRegression(1, n_hid)
-    scorer = FeedForwardLayer(identity, Orthonormal(1.0, 1, n_hid), Zeros(1))
-    hidden = FeedForwardLayer(relu, Orthonormal(sqrt(2), n_hid, 2), Zeros(n_hid))
-    return DifferentiableFilter(output, scorer, hidden)
+    attend = FeedForwardLayer(identity, Glorot(1, n_hid), Zeros(1))
+    hidden = FeedForwardLayer(relu, Glorot(n_hid, 2), Zeros(n_hid))
+    return Params(output, attend, hidden)
 end
 
-@flimsy function feedforward(nnet::DifferentiableFilter, xs::Vector)
-    # traditional attention
-    hs = Variable[feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
-    as = softmax(Variable{Array{Float64,2},1,1}[feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)])
+@flimsy function feedforward(theta::Params, xs::Vector)
+    hs = Variable[feedforward(theta.hidden, x) for x in xs]
+    as = softmax(Variable[feedforward(theta.attend, h) for h in hs])
     return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
-    
-    # additive attention
-    # hs = [feedforward(nnet.hidden, xs[t]) for t = 1:length(xs)]
-    # as = [feedforward(nnet.scorer, hs[t]) for t = 1:length(hs)]
-    # return sum(Variable[prod(a, h) for (a, h) in zip(as, hs)])
 end
 
-@flimsy predict(nnet::DifferentiableFilter, xs::Vector) = predict(nnet.output, feedforward(nnet, xs))
+@flimsy predict(theta::Params, xs::Vector) = predict(theta.output, feedforward(theta, xs))
 
-@flimsy cost(nnet::DifferentiableFilter, xs::Vector, y::Number) = cost(nnet.output, feedforward(nnet, xs), y)
+@flimsy cost(theta::Params, xs::Vector, y::Number) = cost(theta.output, feedforward(theta, xs), y)
 
 function check()
-    n_in = 2
-    n_out = 1
+    n_out, n_hid, n_in = 1, 7, 2
     x, y = rand(AddTask(5:5))
-    theta = DifferentiableFilter(7)
+    theta = Params(n_hid)
     g() = gradient!(cost, theta, x, y)
-    c() = cost(theta, x, y)[1]
+    c() = cost(theta, x, y)
     gradcheck(g, c, theta, tol=1e-3)
 end
 
@@ -96,20 +59,14 @@ function fit()
     minlen = minimum(map(length, X_train))
     maxlen = maximum(map(length, X_train))
 
-    theta = DifferentiableFilter(n_hid)
-
+    theta = Params(n_hid)
     opt = optimizer(RMSProp, theta, learning_rate=0.01, decay=0.95, clip=5.0, clipping_type=:scale)
-
-    progress = Flimsy.Extras.Progress(theta, max_epochs=500, patience=10) do
+    progress = Flimsy.Extras.Progress(theta, max_epochs=50, patience=10) do
         mse = 0.0
         for (xs, y) in zip(X_valid, Y_valid)
             mse += cost(theta, xs, y)
         end
         return mse / n_valid
-    end
-
-    function statusmsg()
-        @printf("epoch: %03d, frustration: %02d, best: %0.02f, curr: %0.02f\n", progress.epoch, progress.frustration, progress.best_value, progress.current_value)
     end
 
     indices = collect(1:n_train)
@@ -121,11 +78,11 @@ function fit()
             gradient!(cost, theta, X_train[i], Y_train[i])
             update!(opt, theta)
         end
-        step(progress, true)
+        step(progress, store_best=true)
         if progress.frustration > 4
             opt.learning_rate *= 0.5
         end
-        statusmsg()
+        println(progress)
     end
     done(progress)
 

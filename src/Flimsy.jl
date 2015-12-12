@@ -106,9 +106,12 @@ module Components
     include("components/lstm.jl")
 end
 
-module SampleData
+module Demo
     using ..Flimsy
-    include("sampledata.jl")
+    include("demo/xor.jl")
+    include("demo/addtask.jl")
+    include("demo/mog.jl")
 end
+
 
 end #module Flimsy

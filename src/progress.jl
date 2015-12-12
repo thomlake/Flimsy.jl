@@ -1,13 +1,16 @@
 type Progress{T<:Component}
     # parameters
-    f::Union{Function,Void}
+    f::Nullable{Function}
     model::T
     tol::Number
     minimize::Bool
-    min_epochs::Number
-    max_epochs::Number
-    patience::Number
+    min_epochs::Int
+    max_epochs::Int
+    patience::Int
+    precision::Int
     # state
+    epoch_pad::Int
+    frustration_pad::Int
     start_time::Float64
     stop_time::Float64
     best_model::T
@@ -24,18 +27,24 @@ function Progress(
     model::Component;
     tol::Number=1e-3,
     minimize::Bool=true,
-    min_epochs::Number=2,
-    max_epochs::Number=20,
-    patience::Number=1
+    min_epochs::Int=2,
+    max_epochs::Int=20,
+    patience::Int=1,
+    precision::Int=2,
     )
     return Progress(
-        f,
+        # parameters
+        Nullable{Function}(f),
         model,
         tol,
         minimize,
         min_epochs,
         max_epochs,
         patience,
+        precision,
+        # state
+        ceil(Int, log10(max_epochs + 1)),
+        ceil(Int, log10(patience + 1)),
         0.0,
         0.0,
         model,
@@ -52,18 +61,24 @@ function Progress(
     model::Component;
     tol::Number=1e-3,
     minimize::Bool=true,
-    min_epochs::Number=2,
-    max_epochs::Number=20,
-    patience::Number=1
+    min_epochs::Int=2,
+    max_epochs::Int=20,
+    patience::Int=1,
+    precision::Int=3,
     )
     return Progress(
-        nothing,
+        # parameters
+        Nullable{Function}(),
         model,
         tol,
         minimize,
         min_epochs,
         max_epochs,
         patience,
+        precision,
+        # state
+        ceil(Int, log10(max_epochs + 1)),
+        ceil(Int, log10(patience + 1)),
         0.0,
         0.0,
         model,
@@ -76,7 +91,15 @@ function Progress(
     )
 end
 
-function Base.step(self::Progress, current_value::Number, store_best::Bool=false)
+function Base.show(io::IO, self::Progress)
+    epoch = lpad(self.epoch, self.epoch_pad, " ")
+    frustration = lpad(self.frustration, self.frustration_pad, " ")
+    current = round(self.current_value, self.precision)
+    best = round(self.best_value, self.precision)
+    print(io, "epoch: $epoch, frustration: $frustration, current: $current, best: $best")
+end
+
+function Base.step(self::Progress, current_value::Number; store_best::Bool=false)
     self.epoch += 1
 
     self.current_value = current_value
@@ -105,13 +128,13 @@ function Base.step(self::Progress, current_value::Number, store_best::Bool=false
     else
         self.frustration > self.patience
     end
-    nothing
+    return nothing
 end
 
-function Base.step(self::Progress, store_best::Bool=false)
-     self.f == nothing && error("must provide current value if no evaluation function provided")
-     step(self, self.f(), store_best)
-     nothing
+function Base.step(self::Progress; store_best::Bool=false)
+     isnull(self.f) && error("must provide current value if no evaluation function provided")
+     step(self, get(self.f)(), store_best=store_best)
+     return nothing
  end
 
 Base.start(self::Progress) = self.start_time = time()

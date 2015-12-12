@@ -23,7 +23,6 @@ const DEFAULT_BLACKLIST = [
     :push!,
     :append!,
     :rand,
-    :curly,
     :!,
     :+,
     :-,
@@ -40,22 +39,23 @@ const DEFAULT_BLACKLIST = [
 
 """Array of supported expression head elements"""
 const SUPPORTED_SYNTAX = [
-    :block
-    :tuple
-    :dict
-    :vect
-    :(=)
-    :(:)
-    :(=>)
-    :(.)
-    :quote
-    :ref
-    :comparison
-    :return
-    :for
-    :while
-    :comprehension
-    :typed_comprehension
+    :block,
+    :tuple,
+    :dict,
+    :vect,
+    :(=),
+    :(:),
+    :(=>),
+    :(.),
+    :quote,
+    :ref,
+    :comparison,
+    :return,
+    :for,
+    :while,
+    :comprehension,
+    :typed_comprehension,
+    :curly,
 ]
 
 """

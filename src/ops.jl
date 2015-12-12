@@ -110,7 +110,7 @@ function softmax(stack::BPStack, x::Variable)
 end
 
 # -- Softmax over vector of 1x1 -- #
-function bwd_softmax{V<:Variable}(ys::Vector{V}, xs::Vector{V})
+function bwd_softmax{V1<:AbstractVariable,V2<:AbstractVariable}(ys::Vector{V1}, xs::Vector{V2})
     n = length(ys)
     for i = 1:n
         for j = 1:n
@@ -148,7 +148,7 @@ function softmax{V<:Variable}(xs::Vector{V})
     return ys
 end
 
-function softmax{V<:Variable}(stack::BPStack, xs::Vector{V})
+function softmax{V<:AbstractVariable}(stack::BPStack, xs::Vector{V})
     ys = softmax(xs)
     push!(stack, () -> bwd_softmax(ys, xs))
     return ys

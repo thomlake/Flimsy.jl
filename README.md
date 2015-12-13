@@ -16,7 +16,8 @@ Computations are described natively within Julia, making it _relatively_ easy to
 - No memory pre-allocation or reuse
 
 ## Why?
-Flimsy.jl is primarily an experiment in interface design for neural network centric machine learning libraries. It aims to overcome what I see as the biggest interface drawbacks of popular libraries such as [Theano](http://deeplearning.net/software/theano/), [Torch](http://torch.ch/), and [TensorFlow](https://www.tensorflow.org/). N.B. I'm much less familiar with the other libararies listed above than Theano, which I have worked with extensively for several years. As such the below criticism may or may not be applicable to all the libraries listed above.
+Flimsy.jl is primarily an experiment in interface design for neural network centric machine learning libraries. It aims to overcome what I see as the biggest interface drawbacks of popular libraries such as [Theano](http://deeplearning.net/software/theano/), [Torch](http://torch.ch/), and [TensorFlow](https://www.tensorflow.org/).<br>
+**N.B.** I'm much less familiar with the other libararies listed above than Theano, which I have worked with extensively for several years. As such the below criticism may or may not be applicable to all the libraries listed above.
 
 - **Awkward, limited, and non-native control flow structures**<br>
 Flimsy.jl sidesteps the need for an explict computational graph structure and the *special* control flow functions they bring with them, e.g., `scan`, by implicitly constructing a backward graph at runtime. This is done by pushing a closure onto a shared stack after each function application. Popping and calling the closures until the stack is empty implicitly carries out backpropagation.

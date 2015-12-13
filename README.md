@@ -16,13 +16,16 @@ Computations are described natively within Julia, making it _relatively_ easy to
 - No memory pre-allocation or reuse
 
 ## Why?
-Flimsy.jl is primarily an experiment in interface design for neural network centric machine learning libraries. It aims to overcome what I see as the biggest interface drawbacks of popular libraries such as [Theano](http://deeplearning.net/software/theano/), [Torch](http://torch.ch/), and [TensorFlow](https://www.tensorflow.org/).
+Flimsy.jl is primarily an experiment in interface design for neural network centric machine learning libraries. It aims to overcome what I see as the biggest interface drawbacks of popular libraries such as [Theano](http://deeplearning.net/software/theano/), [Torch](http://torch.ch/), and [TensorFlow](https://www.tensorflow.org/). N.B. I'm much less familiar with the other libararies listed above than Theano, which I have worked with extensively for several years. As such the below criticism may or may not be applicable to all the libraries listed above.
 
 - **Awkward, limited, and non-native control flow structures**<br>
-Flimsy.jl sidesteps the need for an explict computational graph by pushing a closure onto a shared stack after each function application. Popping and calling the closures until the stack is empty implicitly carries out backpropagation.
+Flimsy.jl sidesteps the need for an explict computational graph structure and the *special* control flow functions they bring with them, e.g., `scan`, by implicitly constructing a backward graph at runtime. This is done by pushing a closure onto a shared stack after each function application. Popping and calling the closures until the stack is empty implicitly carries out backpropagation.
 
-- Disconnected model definition and execution phases
-- Inability to build reuseable sub-models
+- **Lack of reuseable and composable sub-components**<br>
+Flimsy.jl defines an abstract `Component` type for coupling parameters and functionality. Using Julia's multiple dispatch and a common set of function names allows the creation of a library of `Components` which can easily be combined to form larger `Components`. See [`examples/rnn_comparison.jl`](https://github.com/thomlake/Flimsy.jl/blob/master/examples/rnn_comparison.jl) for a practical example.
+
+- **Two Language Syndrome**<br>
+Flimsy.jl is written entirely in Julia, and Julia is fast. This means new primitive operations can be defined without switching languages and writing wrappers.
 
 Unfortunately Flimsy.jl is currently nowhere near performant enough to serve as a substitute for the libraries mentioned above in most cases. 
 
@@ -41,35 +44,51 @@ An example Logistic Regression implementation is given below. This and several o
 ```julia
 using Flimsy
 
+# model parameters
 immutable Params{T,M,N} <: Component
     w::Variable{T,M,N}
     b::Variable{T,M,1}
 end
+
+# default constructor
 Params(m, n) = Params(Variable(randn(m, n)), Variable(zeros(m)))
 
+# computation the model performs
 @flimsy score(θ::Params, x::Variable) = affine(θ.w, x, θ.b)
 @flimsy predict(θ::Params, x::Variable) = Flimsy.Extras.argmax(score(θ, x))
 @flimsy probs(θ::Params, x::Variable) = softmax(score(θ, x))
 @flimsy cost(θ::Params, x::Variable, y) = Flimsy.Cost.cat(y, probs(θ, x))
 
-function run()
+# check gradients
+function check()
+    n_samples, n_classes, n_features = 5, 3, 20
+    X, Y = rand(Flimsy.Demo.MoG(n_classes, n_features), n_samples)
+    θ = Params(n_classes, n_features)
+    g() = gradient!(cost, θ, X, Y)
+    c() = cost(θ, X, Y)
+    gradcheck(g, c, θ)
+end
+
+# train and test
+function main()
     n_classes, n_features = 3, 20
     n_train, n_test = 50, 50
-    D = Flimsy.SampleData.MoG(n_classes, n_features)
+    D = Flimsy.Demo.MoG(n_classes, n_features)
     X_train, Y_train = rand(D, n_train)
     X_test, Y_test = rand(D, n_test)
 
     θ = Params(n_classes, n_features)
     opt = optimizer(RMSProp, θ, learning_rate=0.01, decay=0.9)
     for i = 1:100
-        nll = gradient!(cost, θ, X_train, Y_train)[1]
+        nll = gradient!(cost, θ, X_train, Y_train)
         update!(opt, θ)
         i % 10 == 0 && println("epoch => $i, nll => $nll")
     end
-    test_error = sum(Y_test .!= predict(θ, X_test)) / n_test
-    println("test error => $test_error")
+    println("train error => ", sum(Y_train .!= predict(θ, X_train)) / n_train)
+    println("test error  => ", sum(Y_test .!= predict(θ, X_test)) / n_test)
 end
+
+any(f -> f in ARGS, ("-c", "--check")) && check()
+main()
 ```
 
-## Backpropagation Technique
-The overall technique for automating backpropagation is essentially the same stack based approach employed by Andrej Karpathy's [recurrentjs](https://github.com/karpathy/recurrentjs). As computation occurs, Flimsy.jl tracks the application of functions. Each functions internally handle how its application changes backpropagation by pushing closures onto a stack.

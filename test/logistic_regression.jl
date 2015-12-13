@@ -4,7 +4,7 @@ using Base.Test
 
 function check()
     n_classes, n_features, n_samples = 3, 20, 10
-    X, Y = rand(Flimsy.SampleData.MoG(n_classes, n_features), n_samples)
+    X, Y = rand(Flimsy.Demo.MoG(n_classes, n_features), n_samples)
     theta = LogisticRegression(n_classes, n_features)
     g() = gradient!(cost, theta, X, Y)
     c() = cost(theta, X, Y)
@@ -14,7 +14,7 @@ end
 function fit()
     n_classes, n_features = 3, 20
     n_train, n_test = 50, 50
-    D = Flimsy.SampleData.MoG(n_classes, n_features)
+    D = Flimsy.Demo.MoG(n_classes, n_features)
     X_train, Y_train = rand(D, n_train)
     X_test, Y_test = rand(D, n_test)
 

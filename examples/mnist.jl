@@ -32,7 +32,7 @@ function check()
     Y = round(Int, rawY + 1)[1]
     @assert all(isfinite(X))
     @assert all(isfinite(Y))
-    hidden = LayerStack(relu, 5, 10, 20, size(X, 1))
+    hidden = LayerStack(relu, 20, 40, 50, 60, 100, size(X, 1))
     output = LogisticRegression(10, 5)
     theta = Params(output, hidden)
     g() = gradient!(cost, theta, X, Y)

@@ -40,6 +40,7 @@ function update!(opt::ScaledGradientDescent, theta::Component)
     lr = opt.learning_rate
     gnorm = gradnorm(theta)
     if gnorm > opt.max_norm
+        # println("clip $gnorm => $(opt.max_norm)")
         lr *= opt.max_norm / gnorm
     end
     for param in getparams(theta)
@@ -301,7 +302,6 @@ function update!(opt::ClippedRMSProp, theta::Component)
     end
 end
 
-
 ####################
 # --- AdaDelta --- #
 ####################
@@ -549,7 +549,7 @@ function optimizer{O<:Optimizer}(::Type{O}, theta::Component;
         end
     elseif O <: Nesterov
         if clipping_type == :none
-            return PlainsNesterov(learning_rate, momentum, paramdict(theta))
+            return PlainNesterov(learning_rate, momentum, paramdict(theta))
         elseif clipping_type == :scale
             return ScaledNesterov(learning_rate, momentum, clip, paramdict(theta))
         elseif clipping_type == :clip

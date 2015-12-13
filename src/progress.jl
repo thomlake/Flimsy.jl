@@ -43,7 +43,7 @@ function Progress(
         patience,
         precision,
         # state
-        ceil(Int, log10(max_epochs + 1)),
+        max_epochs < Inf ? ceil(Int, log10(max_epochs + 1)) : 0,
         ceil(Int, log10(patience + 1)),
         0.0,
         0.0,

@@ -6,12 +6,13 @@ immutable SimpleRecurrent{T,M,N} <: RecurrentComponent{T,M,N}
     h0::Variable{T,M,1}
 end
 
-SimpleRecurrent(f::Function, m::Int, n::Int) = SimpleRecurrent(f, Orthonormal(m, n), Orthonormal(m, m), Zeros(m), Zeros(m))
+SimpleRecurrent(f::Function, m::Int, n::Int) = SimpleRecurrent(f, Orthonormal(2, m, n), Orthonormal(2, m, m), Zeros(m), Zeros(m))
+
 SimpleRecurrent(m::Int, n::Int) = SimpleRecurrent(tanh, m, n)
 
-@flimsy Base.step(theta::SimpleRecurrent, x::Variable) = theta.f(affine(theta.w, x, theta.h0))
-
 @flimsy Base.step(theta::SimpleRecurrent, x::Variable, htm1) = theta.f(sum(linear(theta.w, x), linear(theta.u, htm1), theta.b))
+
+@flimsy Base.step(theta::SimpleRecurrent, x::Variable) = step(theta, x, theta.h0)
 
 @flimsy function unfold(theta::SimpleRecurrent, x::Vector)
     h = Array(Variable, length(x))

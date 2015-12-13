@@ -76,7 +76,7 @@ module Components
     import StatsBase: predict
     import Distributions: probs
 
-    abstract RecurrentComponent{T,M,N}
+    abstract RecurrentComponent{T,M,N} <: Component
 
     export LogisticRegression,
            LinearRegression,

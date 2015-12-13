@@ -1,3 +1,4 @@
+
 immutable GatedRecurrent{T,M,N} <: RecurrentComponent{T,M,N}
     wr::Variable{T,M,N}; wz::Variable{T,M,N}; wc::Variable{T,M,N};
     ur::Variable{T,M,M}; uz::Variable{T,M,M}; uc::Variable{T,M,M};
@@ -12,19 +13,14 @@ GatedRecurrent(m::Int, n::Int) = GatedRecurrent(
     Zeros(m)
 )
 
-@flimsy function Base.step(theta::GatedRecurrent, x::Variable)
-    r = sigmoid(sum(linear(theta.wr, x), linear(theta.ur, theta.h0), theta.br))
-    z = sigmoid(sum(linear(theta.wz, x), linear(theta.uz, theta.h0), theta.bz))
-    c = tanh(sum(linear(theta.wc, x), prod(r, linear(theta.uc, theta.h0)), theta.bc))
-    return sum(prod(z, theta.h0), prod(minus(1.0, z), c))
-end
-
 @flimsy function Base.step(theta::GatedRecurrent, x::Variable, htm1)
     r = sigmoid(sum(linear(theta.wr, x), linear(theta.ur, htm1), theta.br))
     z = sigmoid(sum(linear(theta.wz, x), linear(theta.uz, htm1), theta.bz))
     c = tanh(sum(linear(theta.wc, x), prod(r, linear(theta.uc, htm1)), theta.bc))
     return sum(prod(z, htm1), prod(minus(1.0, z), c))
 end
+
+@flimsy Base.step(theta::GatedRecurrent, x::Variable) = step(theta, x, theta.h0)
 
 @flimsy function unfold(theta::GatedRecurrent, x::Vector)
     h = Array(Variable, length(x))

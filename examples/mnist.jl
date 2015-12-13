@@ -13,8 +13,6 @@ end
 
 @flimsy predict(theta::Params, x) = predict(theta.output, feedforward(theta.hidden, x))
 
-# @flimsy probs(theta::Params, x) = probs(theta.output, feedforward(theta.hidden, x))
-
 @flimsy cost(theta::Params, x, y) = cost(theta.output, feedforward(theta.hidden, x), y)
 
 function image_string(x::Vector, symbols::Vector{Char}=['-', '+'])

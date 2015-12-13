@@ -6,7 +6,7 @@ end
 
 LogisticRegression(w::AbstractMatrix, b::AbstractVector) = LogisticRegression(Variable(w), Variable(b))
 
-LogisticRegression(n_classes, n_features) = LogisticRegression(Gaussian(n_classes, n_features), Zeros(n_classes))
+LogisticRegression(n_classes, n_features) = LogisticRegression(Glorot(n_classes, n_features), Zeros(n_classes))
 
 @flimsy score(theta::LogisticRegression, x::Variable) = affine(theta.w, x, theta.b)
 

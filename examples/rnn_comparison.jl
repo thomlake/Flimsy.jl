@@ -1,8 +1,17 @@
+# Flimsy/examples/rnn_comparisson.jl
+#
+# Comparison of SRNN, LSTM, and GRU hidden layers
+# on sequential xor task. Demonstrates how to build
+# components with generic sub-components.
+
 using Flimsy
 using Flimsy.Components
 import Flimsy.Components: cost, predict
 import Flimsy.Demo: XORTask
 
+# Sequence tagger:
+# h[t] = g(x[t], h[t-1]) : Recurrent Hidden Layer
+# y[t] = f(h[t])         : Classifier
 immutable Params{T,NOut,NHid,NIn} <: Component
     out::LogisticRegression{T,NOut,NHid}
     rnn::RecurrentComponent{T,NHid,NIn}

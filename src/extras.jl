@@ -20,7 +20,7 @@ end
 
 argmax(x::Variable) = argmax(x.data)
 
-# argmax_i {x_i in X : i != k}
+# argmaxneq(x, k) = argmax { x_i : i != k }
 function argmaxneq(x::Vector, k::Integer)
     m = -Inf
     imax = 0

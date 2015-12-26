@@ -3,9 +3,9 @@ using Base.Test
 
 for (M, N) in [(1, 2), (2, 3), (3,1)]
     for T in [Float64, Float32, Float16]
-        x = zeros(Variable{T}, M, N)
+        x = zeros(Variable, T, M, N)
         @test typeof(x) <: Variable{Array{T, 2},M,N}
-        @test typeof(x) == NativeVariable{Array{T, 2},M,N}
+        @test typeof(x) == Variable{Array{T, 2},M,N}
         @test eltype(x) == T
         @test all(x.data .== 0)
         @test all(x.grad .== 0)

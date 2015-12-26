@@ -2,21 +2,21 @@ using Flimsy
 using Base.Test
 
 immutable C1 <: Component
-    x::AbstractVariable
-    y::AbstractVariable
-    z::AbstractVariable
+    x::Variable
+    y::Variable
+    z::Variable
     blah::Int
 end
 C1() = C1(Variable(ones(1)), Variable(2 * ones(2, 2)), Variable(3 * ones(3, 3)), 13)
 
 immutable C2 <: Component
-    q::AbstractVariable
+    q::Variable
     c1::C1
     blah::ASCIIString
 end
 C2() = C2(Variable([1 4; 2 5; 3 6.0]), C1(), "so it goes")
 
-immutable C3{T<:AbstractVariable} <: Component
+immutable C3{T<:Variable} <: Component
     blah::Float64
     xs::Vector{T}
 end

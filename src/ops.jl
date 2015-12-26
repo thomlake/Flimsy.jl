@@ -106,7 +106,7 @@ function softmax(stack::BPStack, x::Variable)
 end
 
 # -- Softmax over vector of 1x1 -- #
-function bwd_softmax{V1<:AbstractVariable,V2<:AbstractVariable}(ys::Vector{V1}, xs::Vector{V2})
+function bwd_softmax{V1<:Variable,V2<:Variable}(ys::Vector{V1}, xs::Vector{V2})
     n = length(ys)
     for i = 1:n
         for j = 1:n
@@ -144,7 +144,7 @@ function softmax{V<:Variable}(xs::Vector{V})
     return ys
 end
 
-function softmax{V<:AbstractVariable}(stack::BPStack, xs::Vector{V})
+function softmax{V<:Variable}(stack::BPStack, xs::Vector{V})
     ys = softmax(xs)
     push!(stack, () -> bwd_softmax(ys, xs))
     return ys
@@ -280,7 +280,7 @@ function Base.sum{T,M,N1,N2}(stack::BPStack, x1::Variable{T,M,N1}, x2::Variable{
 end
 
 # -- Sum (arbitrary number of blocks) -- #
-function Base.sum{T<:AbstractVariable}(xs::Vector{T})
+function Base.sum{T<:Variable}(xs::Vector{T})
     y = sum(xs[1], xs[2])
     for i = 3:length(xs)
         y = sum(y, xs[i])
@@ -288,7 +288,7 @@ function Base.sum{T<:AbstractVariable}(xs::Vector{T})
     return y
 end
 
-function Base.sum{T<:AbstractVariable}(stack::BPStack, xs::Vector{T})
+function Base.sum{T<:Variable}(stack::BPStack, xs::Vector{T})
     y = sum(stack, xs[1], xs[2])
     for i = 3:length(xs)
         y = sum(stack, y, xs[i])
@@ -358,7 +358,7 @@ function threshold(stack::BPStack, x::Variable, t::AbstractFloat)
 end
 
 # -- Concatenation --#
-function bwd_concat{T<:AbstractVariable}(y::Variable, xs::Vector{T})
+function bwd_concat{T<:Variable}(y::Variable, xs::Vector{T})
     offset = 0
     for k = 1:length(xs)
         for j = 1:size(xs[k], 2)
@@ -374,7 +374,7 @@ function bwd_concat{T<:AbstractVariable}(y::Variable, xs::Vector{T})
     return nothing
 end
 
-function concat{T<:AbstractVariable}(xs::Vector{T})
+function concat{T<:Variable}(xs::Vector{T})
     n2 = size(xs[1], 2)
     for i = 2:length(xs)
         @assert n2 == size(xs[i], 2)
@@ -382,7 +382,7 @@ function concat{T<:AbstractVariable}(xs::Vector{T})
     return Variable(vcat([x.data for x in xs]...))
 end
 
-function concat{T<:AbstractVariable}(stack::BPStack, xs::Vector{T})
+function concat{T<:Variable}(stack::BPStack, xs::Vector{T})
     y = concat(xs)
     push!(stack, () -> bwd_concat(y, xs))
     return y
@@ -390,7 +390,7 @@ end
 
 
 # -- Deconcatentation -- #
-function bwd_decat{T<:AbstractVariable}(y::Vector{T}, x::Variable)
+function bwd_decat{T<:Variable}(y::Vector{T}, x::Variable)
     @assert length(y) == size(x, 1)
     for i = 1:size(x, 1)
         x.grad[i,:] += y[i].grad
@@ -398,8 +398,8 @@ function bwd_decat{T<:AbstractVariable}(y::Vector{T}, x::Variable)
     return nothing
 end
 
-function decat(x::Variable)
-    return Variable[Variable(x.data[i,:]) for i = 1:size(x, 1)]
+function decat{T,M,N}(x::Variable{T,M,N})
+    return Variable{T,1,N}[Variable(x.data[i,:]) for i = 1:size(x, 1)]
 end
 
 function decat(stack::BPStack, x::Variable)

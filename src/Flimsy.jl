@@ -1,8 +1,6 @@
 module Flimsy
 
-export AbstractVariable,
-       Variable,
-       NativeVariable,
+export Variable,
        BPStack,
        Component,
        backprop!,

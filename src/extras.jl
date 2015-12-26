@@ -18,7 +18,7 @@ function argmax(x::Matrix)
     return imax
 end
 
-argmax(x::AbstractVariable) = argmax(x.data)
+argmax(x::Variable) = argmax(x.data)
 
 # argmax_i {x_i in X : i != k}
 function argmaxneq(x::Vector, k::Integer)
@@ -49,7 +49,7 @@ function argmaxneq{I<:Integer}(x::Matrix, ks::Vector{I})
     return imax
 end
 
-argmaxneq{I<:Integer}(x::AbstractVariable, ks::Vector{I}) = argmaxneq(x.data, ks)
+argmaxneq{I<:Integer}(x::Variable, ks::Vector{I}) = argmaxneq(x.data, ks)
 
 zscore(x, mu, sigma, sigma_min::AbstractFloat=1e-6) = (x .- mu) ./ max(sigma, sigma_min)
 

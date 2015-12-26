@@ -1,8 +1,9 @@
-# Flimsy/examples/rnn_comparisson.jl
+# Flimsy.jl
+# RNN Comparison
 #
 # Comparison of SRNN, LSTM, and GRU hidden layers
 # on sequential xor task. Demonstrates how to build
-# components with generic sub-components.
+# components with a generic sub-component.
 
 using Flimsy
 using Flimsy.Components

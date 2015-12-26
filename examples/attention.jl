@@ -15,6 +15,12 @@ using Flimsy.Components
 import Flimsy.Components: feedforward, predict, cost
 import Flimsy.Demo: AddTask
 
+# A Differentiable Filter
+# h[t] = f1(x[t])          : embed
+# s[t] = f2(h[t])          : embedding score
+# a[t] = softmax(s)[t]     : attention weight
+#    g = sum_t a[t] * h[t] : glimpse, convex comb of embeddings
+#    y = f3(g)             : output
 immutable Params{T,NHid} <: Component
     output::LinearRegression{T,1,NHid}
     attend::FeedForwardLayer{T,1,NHid}

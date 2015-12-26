@@ -9,7 +9,7 @@ using Flimsy.Components
 import Flimsy.Components: cost, predict
 import Flimsy.Demo: XORTask
 
-# Sequence tagger:
+# Sequence Tagger:
 # h[t] = g(x[t], h[t-1]) : Recurrent Hidden Layer
 # y[t] = f(h[t])         : Classifier
 immutable Params{T,NOut,NHid,NIn} <: Component

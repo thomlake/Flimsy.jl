@@ -40,7 +40,8 @@ export GradientDescent,
        update!,
        optimizer
 
-export GradientNoise
+export GradientNoise,
+       gradient_noise_scalar
 
 export gradcheck
 

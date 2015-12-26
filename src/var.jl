@@ -13,6 +13,8 @@ Variable(x::AbstractMatrix) = NativeVariable(x, zero(x))
 
 Variable(x::AbstractVector) = NativeVariable(reshape(x, length(x), 1), reshape(zero(x), length(x), 1))
 
+Variable(x::Real) = Variable([x])
+
 Base.eltype{T,M,N}(::Type{Variable{T,M,N}}) = eltype(T)
 
 Base.eltype{T<:AbstractVariable}(x::T) = eltype(T)

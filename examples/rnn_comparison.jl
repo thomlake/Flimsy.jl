@@ -33,10 +33,12 @@ Params{R<:RecurrentComponent}(::Type{R}, n_out::Int, n_hid::Int, n_in::Int) = Pa
     R(n_hid, n_in),
 )
 
+const recurrent_layer_types = (SimpleRecurrent, GatedRecurrent, LSTM, ResidualRecurrent)
+
 function check()
     n_out, n_hid, n_in = 2, 5, 2
     xs, ys = rand(XORTask(20))
-    for R in (SimpleRecurrent, GatedRecurrent, LSTM)
+    for R in recurrent_layer_types
         print("$R => ")
         theta = Params(R, n_out, n_hid, n_in)
         g() = gradient!(cost, theta, xs, ys)
@@ -46,7 +48,7 @@ function check()
 end
 
 function fit()
-    srand(123)
+    srand(1235)
 
     n_out, n_hid, n_in = 2, 5, 2
     n_train, n_valid = 100, 20
@@ -63,13 +65,13 @@ function fit()
     println("  min seq length   => ", minlen)
     println("  max seq length   => ", maxlen)
 
-    models = [R => Params(R, n_out, n_hid, n_in) for R in (SimpleRecurrent, GatedRecurrent, LSTM)]
+    models = [R => Params(R, n_out, n_hid, n_in) for R in recurrent_layer_types]
     info = Dict()
 
     for (name, theta) in models
         println(name)
-        opt = optimizer(GradientDescent, theta, learning_rate=0.1, clip=3.0, clipping_type=:scale)
-        progress = Progress(theta, min_epochs=100, max_epochs=100) do
+        opt = optimizer(GradientDescent, theta, learning_rate=0.1, clip=5.0, clipping_type=:scale)
+        progress = Progress(theta, min_epochs=25, max_epochs=25) do
             errors = 0
             for (xs, ys) in zip(X_valid, Y_valid)
                 errors += sum(ys .!= predict(theta, xs))
@@ -87,7 +89,7 @@ function fit()
                 update!(opt, theta)
             end
             step(progress, store_best=true)
-            progress.epoch % 20 == 0 && println(progress)
+            progress.epoch % 5 == 0 && println(progress)
         end
         done(progress)
         info[name] = progress

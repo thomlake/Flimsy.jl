@@ -87,6 +87,7 @@ module Components
            RecurrentComponent,
            SimpleRecurrent,
            GatedRecurrent,
+           ResidualRecurrent,
            LSTM,
            cost,
            score,
@@ -105,6 +106,7 @@ module Components
     include("components/simple_recurrent.jl")
     include("components/gatedrecurrent.jl")
     include("components/lstm.jl")
+    include("components/residualrecurrent.jl")
 end
 
 module Demo

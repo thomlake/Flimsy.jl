@@ -52,7 +52,7 @@ function test_handler(r::Test.Error)
 end
 
 
-function test_op_grad(f1::Function, f2::Function, x::Flimsy.Variable; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6)
+function test_op_grad(f1::Function, f2::Function, x::Variable; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6)
     stack = BPStack()
     y = f1(stack)
     t = randn(size(y))
@@ -67,6 +67,29 @@ function test_op_grad(f1::Function, f2::Function, x::Flimsy.Variable; eps::Abstr
         x.data[i] = xi
         dx = (lp - lm) / (2 * eps)
         @test abs(dx - x.grad[i]) < tol
+    end
+end
+
+function test_op_grad(f1::Function, f2::Function, x::Vector{Variable}; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6)
+    stack = BPStack()
+    y = f1(stack)
+    n = length(y)
+    t = [randn(size(y[i])) for i = 1:n]
+    for i = 1:n Flimsy.Cost.gauss(BPStack(), t[i], y[i]) end
+    backprop!(stack)
+    for i = 1:n
+        for j in eachindex(x[i]) 
+            x_ij = x[i].data[j]
+            x[i].data[j] = x_ij + eps
+            yp = f2()
+            lp = sum([Flimsy.Cost.gauss(t[k], yp[k]) for k = 1:n])
+            x[i].data[j] = x_ij - eps
+            ym = f2()
+            lm = sum([Flimsy.Cost.gauss(t[k], ym[k]) for k = 1:n])
+            x[i].data[j] = x_ij
+            dx_ij = (lp - lm) / (2 * eps)
+            @test abs(dx_ij - x[i].grad[j]) < tol
+        end
     end
 end
 

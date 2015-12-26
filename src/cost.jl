@@ -42,13 +42,6 @@ function cat{T,M}(target::Integer, output::Variable{T,M,1}, eps::AbstractFloat=1
     return nll
 end
 
-function cat_nll{T,M}(target::Integer, output::Variable{T,M,1}, eps::AbstractFloat=1e-20)
-    pr_target = output.data[target] + eps
-    nll = -log(pr_target)
-    isfinite(nll) || error("nll: $nll not finite")
-    return nll
-end
-
 function cat{T,M}(stack::BPStack, target::Integer, output::Variable{T,M,1}, eps::AbstractFloat=1e-20)
     pr_target = output.data[target] + eps
     output.grad[target] -= 1 / pr_target

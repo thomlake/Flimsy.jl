@@ -1,34 +1,29 @@
 ## Mixture of Gaussians
-import Distributions: Categorical, MultivariateNormal, InverseWishart
+import Distributions: MixtureModel, Categorical, MultivariateNormal
+import ConjugatePriors: NormalInverseWishart
 
-type MoG
-    p::Categorical
-    d::Vector{MultivariateNormal}
-end
-
-function MoG{T<:Float64}(mu::Vector{Vector{T}}, sigma::Vector{Matrix{T}})
-    n = length(mu)
-    return MoG(Categorical(n), [MultivariateNormal(mu[i], sigma[i]) for i = 1:n])
+immutable MixtureModelWrapper
+    m::MixtureModel
 end
 
 function MoG(n_classes::Int, n_features::Int)
-    mu = [randn(n_features) for i = 1:n_classes]
-    sigma = [rand(InverseWishart(n_features + 1, eye(n_features))) for i = 1:n_classes]
-    return MoG(mu, sigma)
+    d = NormalInverseWishart(zeros(n_features), 1, eye(n_features), n_features)
+    mog = MixtureModel([MultivariateNormal(rand(d)...) for i = 1:n_classes], Categorical(n_classes))
+    return MixtureModelWrapper(mog)
 end
 
-Base.length(mog::MoG) = length(mog.d[1])
-
-function Base.rand(mog::MoG)
-    y = rand(mog.p)
-    x = rand(mog.d[y])
+function Base.rand(w::MixtureModelWrapper)
+    m = w.m
+    y = rand(m.prior)
+    x = rand(m.components[y])
     return x, y
 end
 
-function Base.rand(mog::MoG, n::Int)
-    X, Y = zeros(length(mog), n), zeros(Int, n)
+function Base.rand(w::MixtureModelWrapper, n::Int)
+    m = w.m
+    X, Y = zeros(length(m), n), zeros(Int, n)
     for i = 1:n
-        x, y = rand(mog)
+        x, y = rand(w)
         X[:,i] = x
         Y[i] = y
     end

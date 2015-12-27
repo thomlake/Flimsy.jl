@@ -10,7 +10,31 @@ function gauss{T}(stack::BPStack, target::AbstractFloat, output::Variable{T,1,1}
     return 0.5 * delta * delta
 end
 
-function gauss{T<:AbstractFloat}(target::Array{T}, output::Variable)
+function gauss{T,M}(target::AbstractVector, output::Variable{T,M,1})
+    @assert length(target) == M
+
+    sse = 0.0
+    for i = 1:endof(target)
+        delta = output.data[i] - target[i]
+        sse += delta * delta
+    end
+    return 0.5 * sse
+end
+
+
+function gauss{T,M}(stack::BPStack, target::AbstractVector, output::Variable{T,M,1})
+    @assert length(target) == M
+
+    sse = 0.0
+    for i = 1:endof(target)
+        delta = output.data[i] - target[i]
+        output.grad[i] += delta
+        sse += delta * delta
+    end
+    return 0.5 * sse
+end
+
+function gauss(target::AbstractMatrix, output::Variable)
     @assert size(target) == size(output)
 
     sse = 0.0
@@ -22,7 +46,7 @@ function gauss{T<:AbstractFloat}(target::Array{T}, output::Variable)
 end
 
 
-function gauss{T<:AbstractFloat}(stack::BPStack, target::Array{T}, output::Variable)
+function gauss(stack::BPStack, target::AbstractMatrix, output::Variable)
     @assert size(target) == size(output)
 
     sse = 0.0
@@ -215,7 +239,6 @@ function ctc{I<:Integer,V<:Variable}(stack::BPStack, target::Vector{I}, output::
     end
     return -ll
 end
-
 
 # REINFORCE (Williams, 1992)
 function reinforce{T,M}(stack::BPStack, action::Integer, probs::Variable{T,M,1}, reward::AbstractFloat, eps::AbstractFloat=1e-20)

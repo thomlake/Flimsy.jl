@@ -16,6 +16,13 @@ function gradient!(f::Function, theta::Component, args...)
     return output
 end
 
+function gradient!(f::Function, args...)
+    stack = BPStack()
+    output = f(stack, args...)
+    backprop!(stack)
+    return output
+end
+
 function getparams(theta::Component)
     params = Variable[]
     for f in fieldnames(theta)

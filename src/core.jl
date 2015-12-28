@@ -2,6 +2,21 @@ typealias BPStack Vector{Function}
 
 abstract Component{T,M,N}
 
+function call{T<:Component}(::Type{T}; kwargs...)
+    @assert length(kwargs) == length(fieldnames(T))
+    kwdict = Dict(kwargs)
+    args = []
+    for field in fieldnames(T)
+        value = kwdict[field]
+        if fieldtype(T, field) <: AbstractVariable
+            push!(args, typeof(value) <: AbstractVariable ? value : Variable(value))
+        else
+            push!(args, value)
+        end
+    end
+    return T(args...)
+end
+
 function backprop!(stack::BPStack)
     for i = endof(stack):-1:1
         stack[i]()

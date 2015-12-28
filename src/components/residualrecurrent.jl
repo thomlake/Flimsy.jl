@@ -9,22 +9,15 @@ immutable ResidualRecurrent{T,M,N,H} <: RecurrentComponent{T,M,N}
 end
 
 ResidualRecurrent(m::Int, h::Int, n::Int) = ResidualRecurrent(
-    Orthonormal(h, n), 
-    Orthonormal(h, m), 
-    Orthonormal(m, h),
-    Zeros(h), 
-    Zeros(m), 
-    Zeros(m),
+    w=rand(Normal(0, 0.01), h, n), 
+    u=rand(Normal(0, 0.01), h, m), 
+    v=rand(Normal(0, 0.01), m, h),
+    bh=zeros(h), 
+    br=zeros(m), 
+    h0=zeros(m),
 )
 
-ResidualRecurrent(m::Int, n::Int) = ResidualRecurrent(
-    Orthonormal(m, n), 
-    Orthonormal(m, m), 
-    Orthonormal(m, m),
-    Zeros(m), 
-    Zeros(m), 
-    Zeros(m),
-)
+ResidualRecurrent(m::Int, n::Int) = ResidualRecurrent(m, max(10, round(Int, m / 2)), n)
 
 @flimsy function Base.step(theta::ResidualRecurrent, x::Variable, stm1)
     h = relu(sum(linear(theta.w, x), linear(theta.u, stm1), theta.bh))

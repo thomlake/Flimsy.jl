@@ -4,9 +4,10 @@ immutable LogisticRegression{T,M,N} <: Component{T,M,N}
     b::Variable{T,M,1}
 end
 
-LogisticRegression(w::AbstractMatrix, b::AbstractVector) = LogisticRegression(Variable(w), Variable(b))
-
-LogisticRegression(n_classes, n_features) = LogisticRegression(Glorot(n_classes, n_features), Zeros(n_classes))
+LogisticRegression(n_out::Int, n_in::Int) = LogisticRegression(
+    w=glorot(n_out, n_in), 
+    b=zeros(n_out),
+)
 
 @flimsy score(theta::LogisticRegression, x::Variable) = affine(theta.w, x, theta.b)
 

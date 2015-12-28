@@ -4,9 +4,12 @@ immutable MultilabelClassifier{T,M,N} <: Component{T,M,N}
     b::Variable{T,M,1}
 end
 
-MultilabelClassifier(w::AbstractArray, b::AbstractArray) = MultilabelClassifier(Variable(w), Variable(b))
+MultilabelClassifier(args...) = MultilabelClassifier(map(Variable, args)...)
 
-MultilabelClassifier(n_classes, n_features) = MultilabelClassifier(Gaussian(n_classes, n_features), Zeros(n_classes))
+MultilabelClassifier(n_classes, n_features) = MultilabelClassifier(
+    w=glorot(n_classes, n_features), 
+    b=zeros(n_classes),
+)
 
 @flimsy score(theta::MultilabelClassifier, x::Variable) = affine(theta.w, x, theta.b)
 

@@ -1,5 +1,11 @@
 module Flimsy
 
+using Distributions
+
+# Distributions exports
+export Normal,
+       Uniform
+
 export Variable,
        BPStack,
        Component,
@@ -21,13 +27,8 @@ export sigmoid,
        dropout!,
        threshold
 
-export Gaussian,
-       Uniform,
-       Glorot,
-       Orthonormal,
-       Sparse,
-       Identity,
-       Zeros
+export glorot,
+       orthonormal
 
 export GradientDescent,
        Momentum,
@@ -83,7 +84,7 @@ module Components
            LinearSVM,
            CTCOutput,
            FeedForwardLayer,
-           LayerStack,
+           multilayer,
            RecurrentComponent,
            SimpleRecurrent,
            GatedRecurrent,

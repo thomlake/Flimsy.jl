@@ -29,8 +29,8 @@ end
 
 function Params(n_hid::Int)
     output = LinearRegression(1, n_hid)
-    attend = FeedForwardLayer(identity, Glorot(1, n_hid), Zeros(1))
-    hidden = FeedForwardLayer(relu, Glorot(n_hid, 2), Zeros(n_hid))
+    attend = FeedForwardLayer(identity, 1, n_hid)
+    hidden = FeedForwardLayer(relu, n_hid, 2)
     return Params(output, attend, hidden)
 end
 

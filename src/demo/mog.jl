@@ -7,7 +7,7 @@ immutable MixtureModelWrapper
 end
 
 function MoG(n_classes::Int, n_features::Int)
-    d = NormalInverseWishart(zeros(n_features), 1, eye(n_features), n_features)
+    d = NormalInverseWishart(zeros(n_features), 1, eye(n_features), 2 * n_features)
     mog = MixtureModel([MultivariateNormal(rand(d)...) for i = 1:n_classes], Categorical(n_classes))
     return MixtureModelWrapper(mog)
 end

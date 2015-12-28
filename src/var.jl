@@ -1,5 +1,6 @@
+abstract AbstractVariable
 
-immutable Variable{T<:AbstractMatrix,M,N}
+immutable Variable{T<:AbstractMatrix,M,N} <: AbstractVariable
     data::T
     grad::T
 end

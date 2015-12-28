@@ -6,7 +6,11 @@ end
 
 CTCOutput(w::Matrix, b::Vector, blank::Int=1) = CTCOutput(Variable(w), Variable(b), blank)
 
-CTCOutput(n_classes, n_features, blank::Int=1) = CTCOutput(Orthonormal(n_classes, n_features), Zeros(n_classes), blank)
+CTCOutput(n_classes::Int, n_features::Int, blank::Int=1) = CTCOutput(
+    Variable(Orthonormal, n_classes, n_features), 
+    Variable(zeros(n_classes)), 
+    blank,
+)
 
 @flimsy score(theta::CTCOutput, xs::Vector) = [affine(theta.w, xs[t], theta.b) for t = 1:length(xs)]
 

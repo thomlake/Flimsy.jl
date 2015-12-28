@@ -4,9 +4,10 @@ immutable LinearSVM{T,M,N} <: Component{T,M,N}
     b::Variable{T,M,1}
 end
 
-LinearSVM(w::AbstractMatrix, b::AbstractVector) = LinearSVM(Variable(w), Variable(b))
-
-LinearSVM(n_classes, n_features) = LinearSVM(Gaussian(n_classes, n_features), Zeros(n_classes))
+LinearSVM(n_classes, n_features) = LinearSVM(
+    w=glorot(n_classes, n_features), 
+    b=zeros(n_classes),
+)
 
 @flimsy score(theta::LinearSVM, x::Variable) = affine(theta.w, x, theta.b)
 

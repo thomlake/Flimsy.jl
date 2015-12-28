@@ -1,3 +1,4 @@
+
 immutable SimpleRecurrent{T,M,N} <: RecurrentComponent{T,M,N}
     f::Function
     w::Variable{T,M,N}
@@ -6,7 +7,13 @@ immutable SimpleRecurrent{T,M,N} <: RecurrentComponent{T,M,N}
     h0::Variable{T,M,1}
 end
 
-SimpleRecurrent(f::Function, m::Int, n::Int) = SimpleRecurrent(f, Orthonormal(2, m, n), Orthonormal(2, m, m), Zeros(m), Zeros(m))
+SimpleRecurrent(f::Function, m::Int, n::Int) = SimpleRecurrent(
+    f=f,
+    w=orthonormal(f, m, n),
+    u=orthonormal(f, m, m),
+    b=zeros(m),
+    h0=zeros(m),
+)
 
 SimpleRecurrent(m::Int, n::Int) = SimpleRecurrent(tanh, m, n)
 

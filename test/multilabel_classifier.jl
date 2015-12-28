@@ -8,7 +8,7 @@ function check_single()
     Y = [yid == 2 for yid in Yid]
     theta = MultilabelClassifier(1, n_features)
     g() = gradient!(cost, theta, X[:,1], Y[1])
-    c() = cost(theta, X[:,1], Y[1])[1]
+    c() = cost(theta, X[:,1], Y[1])
     gradcheck(g, c, theta, verbose=false)
 end
 
@@ -18,7 +18,7 @@ function check_batch()
     Y = [yid == 2 for yid in Yid]
     theta = MultilabelClassifier(1, n_features)
     g() = gradient!(cost, theta, X, Y)
-    c() = cost(theta, X, Y)[1]
+    c() = cost(theta, X, Y)
     gradcheck(g, c, theta, verbose=false)
 end
 
@@ -30,11 +30,12 @@ function check_ml_single()
     X4, Yid4 = rand(Flimsy.Demo.MoG(2, n_features[4]), n_samples)
 
     X = vcat(X1, X2, X3, X4)
-    Y = [[yid == 2 for yid in yids] for yids in zip(Yid1, Yid2, Yid3, Yid4)]
+    Yid = hcat(Yid1, Yid2, Yid3, Yid4).'
+    Y = Yid .== 2
 
     theta = MultilabelClassifier(n_classes, sum(n_features))
-    g() = gradient!(cost, theta, X[:,1], Y[1])
-    c() = cost(theta, X[:,1], Y[1])[1]
+    g() = gradient!(cost, theta, X, Y)
+    c() = cost(theta, X, Y)
     gradcheck(g, c, theta, verbose=false)
 end
 
@@ -76,11 +77,11 @@ function fit()
     X_test, Y_test = create_data(n_test)
 
     theta = MultilabelClassifier(n_classes, sum(n_features))
-    rmsprop = optimizer(RMSProp, theta, learning_rate=0.1, decay=0.5)
+    opt = optimizer(GradientDescent, theta, learning_rate=0.01)
     nll_prev = Inf
     for i = 1:100
         nll_curr = gradient!(cost, theta, X_train, Y_train)[1]
-        update!(rmsprop, theta)
+        update!(opt, theta)
         @test nll_curr <= nll_prev
         nll_prev = nll_curr
     end
@@ -88,7 +89,7 @@ function fit()
     @test sum(Y_test .!= predict(theta, X_test)) / n_test <= 0.3
 end
 
-srand(12345)
+srand(1234)
 check_single()
 check_batch()
 check_ml_single()

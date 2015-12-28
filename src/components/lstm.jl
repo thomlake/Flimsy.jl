@@ -6,11 +6,13 @@ immutable LSTM{T,M,N} <: RecurrentComponent{T,M,N}
     h0::Variable{T,M,1}; c0::Variable{T,M,1}
 end
 
+LSTM(args...) = LSTM(map(Variable, args)...)
+
 LSTM(m::Int, n::Int) = LSTM(
-    Orthonormal(m, n), Orthonormal(m, n), Orthonormal(m, n), Orthonormal(m, n),
-    Orthonormal(m, m), Orthonormal(m, m), Orthonormal(m, m), Orthonormal(m, m), Orthonormal(m, m),
-    Zeros(m), Zeros(m), Zeros(m), Zeros(m),
-    Zeros(m), Zeros(m),
+    wi=orthonormal(m, n), wf=orthonormal(m, n), wc=orthonormal(m, n), wo=orthonormal(m, n),
+    ui=orthonormal(m, m), uf=orthonormal(m, m), uc=orthonormal(m, m), uo=orthonormal(m, m), vo=orthonormal(m, m),
+    bi=zeros(m), bf=zeros(m), bc=zeros(m), bo=zeros(m),
+    h0=zeros(m), c0=zeros(m),
 )
 
 @flimsy function Base.step{V1<:Variable,V2<:Variable}(theta::LSTM, x::Variable, state::Tuple{V1,V2})

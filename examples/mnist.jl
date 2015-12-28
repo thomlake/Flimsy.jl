@@ -8,7 +8,7 @@ import MNIST
 
 immutable Params <: Component
     output::LogisticRegression
-    hidden::LayerStack
+    hidden::Vector{FeedForwardLayer}
 end
 
 @flimsy predict(theta::Params, x) = predict(theta.output, feedforward(theta.hidden, x))
@@ -32,7 +32,7 @@ function check()
     Y = round(Int, rawY + 1)[1]
     @assert all(isfinite(X))
     @assert all(isfinite(Y))
-    hidden = LayerStack(relu, 20, 40, 50, 60, 100, size(X, 1))
+    hidden = multilayer(relu, 20, 40, 50, 60, 100, size(X, 1))
     output = LogisticRegression(10, 5)
     theta = Params(output, hidden)
     g() = gradient!(cost, theta, X, Y)
@@ -68,7 +68,7 @@ function fit()
     batch_size = 100
     indices = collect(1:n_train)
 
-    hidden = LayerStack(relu, 30, 40, 50, 60, 100, size(X_train, 1))
+    hidden = multilayer(relu, 30, 40, 50, 60, 100, size(X_train, 1))
     output = LogisticRegression(10, 30)
     theta = Params(output, hidden)
 

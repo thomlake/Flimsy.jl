@@ -6,11 +6,11 @@ immutable GatedRecurrent{T,M,N} <: RecurrentComponent{T,M,N}
     h0::Variable{T,M,1}
 end
 
+
 GatedRecurrent(m::Int, n::Int) = GatedRecurrent(
-    Orthonormal(m, n), Orthonormal(m, n), Orthonormal(m, n),
-    Orthonormal(m, m), Orthonormal(m, m), Orthonormal(m, m),
-    Zeros(m), Zeros(m), Zeros(m),
-    Zeros(m)
+    wr=orthonormal(m, n), wz=orthonormal(m, n), wc=orthonormal(m, n),
+    ur=orthonormal(m, m), uz=orthonormal(m, m), uc=orthonormal(m, m),
+    br=zeros(m), bz=zeros(m), bc=zeros(m), h0=zeros(m),
 )
 
 @flimsy function Base.step(theta::GatedRecurrent, x::Variable, htm1)

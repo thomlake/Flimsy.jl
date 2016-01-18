@@ -15,6 +15,24 @@ FeedForwardLayer(m::Int, n::Int) = FeedForwardLayer(relu, m, n)
 
 @flimsy feedforward(theta::FeedForwardLayer, x::Variable) = theta.f(affine(theta.w, x, theta.b))
 
+# immutable FeedForwardLayer2{T,M,N1,N2} <: Component{T,M,N1,N2}
+#     f::Function
+#     w::Variable{T,M,N2}
+#     u::Variable{T,M,N1}
+#     b::Variable{T,M,1}
+# end
+
+# FeedForwardLayer2(f::Function, m::Int, n1::Int, n2::Int) = FeedForwardLayer2(
+#     f=f, 
+#     w=orthonormal(f, m, n),
+#     w=orthonormal(f, m, n),
+#     b=zeros(m)
+# )
+
+# FeedForwardLayer(m::Int, n::Int) = FeedForwardLayer(relu, m, n)
+
+# @flimsy feedforward(theta::FeedForwardLayer, x::Variable) = theta.f(affine(theta.w, x, theta.b))
+
 # -- Homogenous Layer Wrapper -- #
 # immutable LayerStack <: Component
 #     layers::Vector{FeedForwardLayer}

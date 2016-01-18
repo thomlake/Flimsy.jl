@@ -8,6 +8,8 @@ LinearRegression(n_classes, n_features) = LinearRegression(
     b=zeros(n_classes),
 )
 
-@flimsy predict(theta::LinearRegression, x::Variable) = affine(theta.w, x, theta.b)
+@flimsy score(theta::LinearRegression, x::Variable) = affine(theta.w, x, theta.b)
 
-@flimsy cost(theta::LinearRegression, x, y) = Flimsy.Cost.gauss(y, predict(theta, x))
+@flimsy predict(theta::LinearRegression, x::Variable) = score(theta, x).data
+
+@flimsy cost(theta::LinearRegression, x, y) = Flimsy.Cost.gauss(y, score(theta, x))

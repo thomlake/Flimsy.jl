@@ -23,6 +23,7 @@ const DEFAULT_BLACKLIST = [
     :push!,
     :append!,
     :rand,
+    :if,
     :!,
     :+,
     :-,

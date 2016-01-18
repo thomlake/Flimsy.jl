@@ -76,7 +76,7 @@ module Components
     import StatsBase: predict
     import Distributions: probs
 
-    abstract RecurrentComponent{T,M,N} <: Component
+    abstract RecurrentComponent{T,M,N} <: Component{T,M,N}
 
     export LogisticRegression,
            LinearRegression,
@@ -88,8 +88,9 @@ module Components
            RecurrentComponent,
            SimpleRecurrent,
            GatedRecurrent,
-           ResidualRecurrent,
            LSTM,
+           ResidualRecurrent,
+           BlockRecurrent,
            cost,
            score,
            probs,
@@ -105,15 +106,17 @@ module Components
     include("components/ctcoutput.jl")
     include("components/feedforwardlayer.jl")
     include("components/simple_recurrent.jl")
-    include("components/gatedrecurrent.jl")
+    include("components/gated_recurrent.jl")
     include("components/lstm.jl")
-    include("components/residualrecurrent.jl")
+    include("components/residual_recurrent.jl")
+    include("components/block_recurrent.jl")
 end
 
 module Demo
     using ..Flimsy
     include("demo/xor.jl")
     include("demo/addtask.jl")
+    include("demo/sequence_copy_task.jl")
     include("demo/mog.jl")
 end
 

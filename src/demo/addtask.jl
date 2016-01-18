@@ -5,6 +5,8 @@ end
 
 AddTask(t::Int) = AddTask(t:t)
 
+Base.length(addtask::AddTask) = 2
+
 function Base.rand(addtask::AddTask)
     steps = rand(addtask.range)
     i1 = rand(1:steps)

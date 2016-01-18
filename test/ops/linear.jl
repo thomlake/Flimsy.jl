@@ -1,24 +1,16 @@
 using Flimsy
 using Base.Test
 
-# MxN dot Nx1
-w, x = Variable(randn(5, 3)), Variable(randn(3))
+x = GradVariable(randn(3))
+w = GradVariable(randn(4, 3))
 y = linear(w, x)
-@test size(y) == (5, 1)
-@test all(y.data .== w.data * x.data)
+@test size(y) == (4, 1)
+@test all((w.data * x.data) .== y.data)
+test_op_grad_mse(linear, w, x, wrt=[w, x])
 
-w, x = Variable(randn(5, 3)), Variable(randn(3))
-test_op_grad((s)->linear(s, w, x), ()->linear(w, x), w)
-w, x = Variable(randn(5, 3)), Variable(randn(3))
-test_op_grad((s)->linear(s, w, x), ()->linear(w, x), x)
-
-# MxK dot KxN
-w, x = Variable(randn(5, 3)), Variable(randn(3, 10))
+x = GradVariable(randn(3, 5))
+w = GradVariable(randn(4, 3))
 y = linear(w, x)
-@test size(y) == (5, 10)
-@test all(y.data .== w.data * x.data)
-
-w, x = Variable(randn(5, 3)), Variable(randn(3, 10))
-test_op_grad((s)->linear(s, w, x), ()->linear(w, x), w)
-w, x = Variable(randn(5, 3)), Variable(randn(3, 10))
-test_op_grad((s)->linear(s, w, x), ()->linear(w, x), x)
+@test size(y) == (4, 5)
+@test all((w.data * x.data) .== y.data)
+test_op_grad_mse(linear, w, x, wrt=[w, x])

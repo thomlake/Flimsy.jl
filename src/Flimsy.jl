@@ -1,124 +1,43 @@
 module Flimsy
 
-using Distributions
+export Component,
+       ReverseOperation
 
-# Distributions exports
-export Normal,
-       Uniform
+export @component
 
 export Variable,
-       BPStack,
-       Component,
+       GradVariable,
+       GradInput,
+       DataVariable,
+       Input,
+       is_matrix,
+       is_column_vector,
+       is_row_vector,
+       is_scalar
+
+export getparams,
+       getnamedparams
+
+export CallbackStack,
+       push_callback!,
        backprop!,
-       gradient!,
-       getparams,
-       getnamedparams,
-       @flimsy
+       gradient!
 
-export sigmoid,
-       relu,
-       softmax,
-       wta,
-       linear,
-       minus,
-       concat,
-       decat,
-       affine,
-       dropout!,
-       threshold
+export check_gradients
 
-export glorot,
-       orthonormal
+export Cost
 
-export GradientDescent,
-       Momentum,
-       Nesterov,
-       RMSProp,
-       AdaDelta,
-       Adam,
-       update!,
-       optimizer
+abstract Component
+abstract ReverseOperation
 
-export GradientNoise,
-       gradient_noise_scalar
-
-export gradcheck
-
-export Progress
-
-include("var.jl")
-include("core.jl")
-include("macros.jl")
-include("hashmat.jl")
+include("component_macro.jl")
+include("variable.jl")
+include("getparams.jl")
+include("callback_stack.jl")
 include("ops.jl")
-include("initialization.jl")
-include("fit.jl")
-include("gradientnoise.jl")
-include("gradcheck.jl")
-include("progress.jl")
+include("check_gradients.jl")
+include("cost.jl")
+include("demo.jl")
 
-module Cost
-    using ..Flimsy
-    include("cost.jl")
-    module CTC
-        using ....Flimsy
-        include("ctc.jl")
-    end
+
 end
-
-module Extras
-    using ..Flimsy
-    include("extras.jl")
-end
-
-module Components
-    using ..Flimsy
-    import StatsBase: predict
-    import Distributions: probs
-
-    abstract RecurrentComponent{T,M,N} <: Component{T,M,N}
-
-    export LogisticRegression,
-           LinearRegression,
-           MultilabelClassifier,
-           LinearSVM,
-           CTCOutput,
-           FeedForwardLayer,
-           multilayer,
-           RecurrentComponent,
-           SimpleRecurrent,
-           GatedRecurrent,
-           LSTM,
-           ResidualRecurrent,
-           BlockRecurrent,
-           cost,
-           score,
-           probs,
-           predict,
-           feedforward,
-           step,
-           unfold
-
-    include("components/logistic_regression.jl")
-    include("components/linear_regression.jl")
-    include("components/multilabel_classifier.jl")
-    include("components/linear_svm.jl")
-    include("components/ctcoutput.jl")
-    include("components/feedforwardlayer.jl")
-    include("components/simple_recurrent.jl")
-    include("components/gated_recurrent.jl")
-    include("components/lstm.jl")
-    include("components/residual_recurrent.jl")
-    include("components/block_recurrent.jl")
-end
-
-module Demo
-    using ..Flimsy
-    include("demo/xor.jl")
-    include("demo/addtask.jl")
-    include("demo/sequence_copy_task.jl")
-    include("demo/mog.jl")
-end
-
-
-end #module Flimsy

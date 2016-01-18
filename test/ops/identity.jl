@@ -1,14 +1,15 @@
 using Flimsy
 using Base.Test
 
-x = Variable(randn(3))
-y = identity(x)
-@test size(y) == (3, 1)
-@test all(x.data .== y.data)
-test_op_grad((s)->identity(s, x), ()->identity(x), x)
 
-x = Variable(randn(3, 5))
+m, n = 6, 1
+x = GradVariable(randn(m))
 y = identity(x)
-@test size(y) == (3, 5)
 @test all(x.data .== y.data)
-test_op_grad((s)->identity(s, x), ()->identity(x), x)
+test_op_grad_mse(identity, x, wrt=x)
+
+m, n = 3, 9
+x = GradVariable(randn(m, n))
+y = identity(x)
+@test all(x.data .== y.data)
+test_op_grad_mse(identity, x, wrt=x)

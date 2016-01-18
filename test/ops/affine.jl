@@ -1,32 +1,31 @@
 using Flimsy
 using Base.Test
 
-w, x, b = Variable(randn(5, 3)), Variable(randn(3)), Variable(randn(5))
+m, n = 4, 3
+w = GradVariable(randn(m, n))
+x = GradVariable(randn(n))
+b = GradVariable(randn(m))
+
 y = affine(w, x, b)
-@test size(y) == (5, 1)
-@test all(y.data .== (w.data * x.data .+ b.data))
+@test size(y) == (m, 1)
+@test all((w.data * x.data + b.data) .== y.data)
+test_op_grad_mse(affine, w, x, b, wrt=[w, x, b])
 
-
-w, x, b = Variable(randn(5, 3)), Variable(randn(3)), Variable(randn(5))
-test_op_grad((s)->affine(s, w, x, b), ()->affine(w, x, b), w)
-
-w, x, b = Variable(randn(5, 3)), Variable(randn(3)), Variable(randn(5))
-test_op_grad((s)->affine(s, w, x, b), ()->affine(w, x, b), x)
-
-w, x, b = Variable(randn(5, 3)), Variable(randn(3)), Variable(randn(5))
-test_op_grad((s)->affine(s, w, x, b), ()->affine(w, x, b), b)
-
-
-w, x, b = Variable(randn(5, 3)), Variable(randn(3, 10)), Variable(randn(5))
+m, n, k = 5, 10, 7
+w = GradVariable(randn(m, n))
+x = GradVariable(randn(n, k))
+b = GradVariable(randn(m))
 y = affine(w, x, b)
-@test size(y) == (5, 10)
-@test all(y.data .== (w.data * x.data .+ b.data))
+@test size(y) == (m, k)
+@test all((w.data * x.data .+ b.data) .== y.data)
+test_op_grad_mse(affine, w, x, b, wrt=[w, x, b])
 
-w, x, b = Variable(randn(5, 3)), Variable(randn(3, 10)), Variable(randn(5))
-test_op_grad((s)->affine(s, w, x, b), ()->affine(w, x, b), w)
+w = GradVariable(randn(m, n))
+x = GradVariable(randn(n, k))
+b = GradVariable(randn(m + 1))
+@test_throws OperationError affine(w, x, b)
 
-w, x, b = Variable(randn(5, 3)), Variable(randn(3, 10)), Variable(randn(5))
-test_op_grad((s)->affine(s, w, x, b), ()->affine(w, x, b), x)
-
-w, x, b = Variable(randn(5, 3)), Variable(randn(3, 10)), Variable(randn(5))
-test_op_grad((s)->affine(s, w, x, b), ()->affine(w, x, b), b)
+w = GradVariable(randn(m, n + 1))
+x = GradVariable(randn(n, k))
+b = GradVariable(randn(m))
+@test_throws DimensionMismatch affine(w, x, b)

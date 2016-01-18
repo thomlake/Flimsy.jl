@@ -1,60 +1,76 @@
 using Flimsy
 using Base.Test
 
-# MxN + MxN
-x1, x2 = Variable(randn(5, 3)), Variable(randn(5, 3))
-y = sum(x1, x2)
-@test size(y) == (5, 3)
-@test all(y.data .== x1.data .+ x2.data)
+# Binary Sums
+# Mx1 + Mx1
+m, n = 3, 1
+a = GradVariable(randn(m))
+b = GradVariable(randn(m))
+c = sum(a, b)
+@test size(c) == (m, n)
+@test all((a.data .+ b.data) .== c.data)
+test_op_grad_mse(sum, a, b, wrt=[a, b])
 
-x1, x2 = Variable(randn(5, 3)), Variable(randn(5, 3))
-test_op_grad((s)->sum(s, x1, x2), ()->sum(x1, x2), x1)
-x1, x2 = Variable(randn(5, 3)), Variable(randn(5, 3))
-test_op_grad((s)->sum(s, x1, x2), ()->sum(x1, x2), x2)
+
+# MxN + MxN
+m, n = 3, 5
+a = GradVariable(randn(m, n))
+b = GradVariable(randn(m, n))
+c = sum(a, b)
+@test size(c) == (m, n)
+@test all((a.data .+ b.data) .== c.data)
+test_op_grad_mse(sum, a, b, wrt=[a, b])
+
 
 # MxN + Mx1
-x1, x2 = Variable(randn(5, 3)), Variable(randn(5))
-y = sum(x1, x2)
-@test size(y) == (5, 3)
-@test all(y.data .== x1.data .+ x2.data)
+m, n = 3, 5
+a = GradVariable(randn(m, n))
+b = GradVariable(randn(m))
+c = sum(a, b)
+@test size(c) == (m, n)
+@test all((a.data .+ b.data) .== c.data)
+test_op_grad_mse(sum, a, b, wrt=[a, b])
 
-x1, x2 = Variable(randn(5, 3)), Variable(randn(5))
-test_op_grad((s)->sum(s, x1, x2), ()->sum(x1, x2), x1)
-x1, x2 = Variable(randn(5, 3)), Variable(randn(5))
-test_op_grad((s)->sum(s, x1, x2), ()->sum(x1, x2), x2)
+# Mx1 + MxN
+m, n = 3, 5
+a = GradVariable(randn(m))
+b = GradVariable(randn(m, n))
+c = sum(a, b)
+@test size(c) == (m, n)
+@test all((a.data .+ b.data) .== c.data)
+test_op_grad_mse(sum, a, b, wrt=[a, b])
 
-# MxN + Mx1 + MxN
-xs = vcat(Variable(randn(5, 3)), Variable(randn(5, 1)), Variable(randn(5, 3)))
+
+# K-ary Sum
+# Mx1 + ... + Mx1
+K, m, n = 5, 3, 1
+xs = [GradVariable(randn(m)) for k = 1:K]
 y = sum(xs)
-y_expected = xs[1].data .+ xs[2].data .+ xs[3].data
-@test size(y) == (5, 3)
-@test all(y.data .== y_expected)
+@test size(y) == (m, n)
+@test all(sum(map(x->x.data, xs)) .== y.data)
+test_op_grad_mse(sum, xs, wrt=xs)
 
-for k = 1:3
-    xs = vcat(Variable(randn(5, 3)), Variable(randn(5, 1)), Variable(randn(5, 3)))
-    test_op_grad((s)->sum(s, xs), ()->sum(xs), xs[k])
-end
 
-# sum(x1, x2, x3...)
-xs = vcat(Variable(randn(5, 3)), Variable(randn(5, 1)), Variable(randn(5, 3)), Variable(randn(5, 1)))
-y = sum(xs...)
-y_expected = xs[1].data .+ xs[2].data .+ xs[3].data .+ xs[4].data
-@test size(y) == (5, 3)
-@test all(y.data .== y_expected)
-
-for k = 1:4
-    xs = vcat(Variable(randn(5, 3)), Variable(randn(5, 1)), Variable(randn(5, 3)), Variable(randn(5, 1)))
-    test_op_grad((s)->sum(s, xs...), ()->sum(xs...), xs[k])
-end
-
-# Vector of MxN
-xs = [Variable(randn(5, 3)) for i = 1:10]
+# MxN + ... + MxN
+K, m, n = 10, 3, 5
+xs = [GradVariable(randn(m, n)) for k = 1:K]
 y = sum(xs)
-y_expected = sum([x.data for x in xs])
-@test size(y) == (5, 3)
-@test all(y.data .== y_expected)
+@test size(y) == (m, n)
+@test all(sum(map(x->x.data, xs)) .== y.data)
+test_op_grad_mse(sum, xs, wrt=xs)
 
-for k = 1:10
-    xs = [Variable(randn(5, 3)) for i = 1:10]
-    test_op_grad((s)->sum(s, xs), ()->sum(xs), xs[k])
+
+# MxN + Mx1 + ... + Mx1
+K, m, n = 6, 3, 5
+xs = [GradVariable(randn(m, n))]
+for k = 2:K
+    push!(xs, GradVariable(randn(m)))
 end
+y = sum(xs)
+@test size(y) == (m, n)
+y_true = deepcopy(xs[1].data)
+for k = 2:K
+    y_true = y_true .+ xs[k].data
+end 
+@test all(y_true .== y.data)
+test_op_grad_mse(sum, xs, wrt=xs)

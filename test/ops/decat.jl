@@ -1,10 +1,27 @@
 using Flimsy
 using Base.Test
 
-x = Variable(randn(10))
-ys = decat(x)
-@test length(ys) == 10
-@test reduce(&, [size(y) == (1, 1) for y in ys])
-@test reduce(&, [ys[i].data[1] == x.data[i] for i = 1:10])
+f(x) = concat(decat(x))
+f(s, x) = concat(s, decat(s, x))
 
-test_op_grad((s)->concat(s, decat(s, x)), ()->concat(decat(x)), x)
+m, n = 6, 1
+x = GradVariable(randn(m))
+ys = decat(x)
+for i = 1:m
+    @test size(ys[i]) == (1, n)
+    for j = 1:n
+        @test all(x.data[i,j] .== ys[i].data[j])
+    end
+end
+test_op_grad_mse(f, x, wrt=x)
+
+m, n = 3, 9
+x = GradVariable(randn(m, n))
+ys = decat(x)
+for i = 1:m
+    @test size(ys[i]) == (1, n)
+    for j = 1:n
+        @test all(x.data[i,j] .== ys[i].data[j])
+    end
+end
+test_op_grad_mse(f, x, wrt=x)

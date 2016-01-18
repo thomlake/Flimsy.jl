@@ -21,16 +21,15 @@ gradcheck(g::Function, c::Function, theta::Variable; eps::AbstractFloat=1e-6, to
 
 *Usage*
 ```
-x, y = Variable(randn(4)), randn(4)
-g() = gradient!(Flimsy.Cost.gauss, y, x)
-c() = Flimsy.Cost.gauss(y, x)
-gradcheck(g, c, x)
+x, y = GradVariable(randn(4)), randn(4)
+g() = gradient!(Cost.mse, x, y)
+c() = Cost.mse(x, y)
+check_gradients(g, c, x)
 ```
-
 """
-function gradcheck end
+function check_gradients end
 
-function gradcheck(g::Function, c::Function, theta::Component; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
+function check_gradients(g::Function, c::Function, theta::Component; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
     g()
     passed = true
     for (name, param) in getnamedparams(theta)
@@ -61,12 +60,12 @@ function gradcheck(g::Function, c::Function, theta::Component; eps::AbstractFloa
     end
     if verbose
         status = passed ? "passed" : "failed"
-        println("gradcheck $status")
+        println("Finite difference gradient check $(status)!")
     end
     return passed
 end
 
-function gradcheck(g::Function, c::Function, param::Variable; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
+function check_gradients(g::Function, c::Function, param::Variable; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
     g()
     passed = true
     for j = 1:size(param, 2)
@@ -80,7 +79,7 @@ function gradcheck(g::Function, c::Function, param::Variable; eps::AbstractFloat
             dxij = (lp - lm) / (2 * eps)
             if abs(dxij - param.grad[i,j]) > tol
                 errmsg = "Finite difference gradient check failed!"
-                errelm = "  name => $name, index => ($i, $j), ratio => $(dxij / param.grad[i,j])"
+                errelm = "  index => ($i, $j), ratio => $(dxij / param.grad[i,j])"
                 errdsc = "  |$(dxij) - $(param.grad[i,j])| > $tol"
                 if throwerr
                     error("$errmsg\n$errelm\n$errdsc")
@@ -95,7 +94,7 @@ function gradcheck(g::Function, c::Function, param::Variable; eps::AbstractFloat
     end
     if verbose
         status = passed ? "passed" : "failed"
-        println("gradcheck $status")
+        println("Finite difference gradient check $(status)!")
     end
     return passed
 end

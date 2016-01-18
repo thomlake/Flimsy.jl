@@ -9,14 +9,17 @@ tests = [
     "ops/sigmoid.jl",
     "ops/relu.jl",
     "ops/softmax.jl",
+    "ops/vector_softmax.jl",
     "ops/wta.jl",
     "ops/linear.jl",
-    "ops/prod.jl",
+    "ops/affine.jl",
     "ops/sum.jl",
+    "ops/scalar_minus.jl",
+    "ops/scalar_prod.jl",
+    "ops/prod.jl",
     "ops/minus.jl",
     "ops/concat.jl",
     "ops/decat.jl",
-    "ops/affine.jl",
     "ops/dropout.jl",
     "ndembed.jl",
     "logistic_regression.jl",
@@ -51,44 +54,28 @@ function test_handler(r::Test.Error)
     println()
 end
 
-
-function test_op_grad(f1::Function, f2::Function, x::Variable; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6)
-    stack = BPStack()
-    y = f1(stack)
-    t = randn(size(y))
-    Flimsy.Cost.gauss(BPStack(), t, y)
-    backprop!(stack)
-    for i in eachindex(x)
-        xi = x.data[i]
-        x.data[i] = xi + eps
-        lp = Flimsy.Cost.gauss(t, f2())
-        x.data[i] = xi - eps
-        lm = Flimsy.Cost.gauss(t, f2())
-        x.data[i] = xi
-        dx = (lp - lm) / (2 * eps)
-        @test abs(dx - x.grad[i]) < tol
+function test_op_grad_mse(f::Function, args...; wrt=nothing, eps=1e-6, tol=1e-6)
+    if wrt == nothing
+        error("wrt must be given")
     end
-end
-
-function test_op_grad(f1::Function, f2::Function, x::Vector{Variable}; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6)
-    stack = BPStack()
-    y = f1(stack)
-    n = length(y)
-    t = [randn(size(y[i])) for i = 1:n]
-    for i = 1:n Flimsy.Cost.gauss(BPStack(), t[i], y[i]) end
+    if !isa(wrt, AbstractArray)
+        wrt = typeof(wrt)[wrt]
+    end
+    stack = CallbackStack()
+    output = f(stack, args...)
+    target = randn(size(output))
+    Cost.mse(stack, output, target)
     backprop!(stack)
-    for i = 1:n
-        for j in eachindex(x[i]) 
-            x_ij = x[i].data[j]
-            x[i].data[j] = x_ij + eps
-            yp = f2()
-            lp = sum([Flimsy.Cost.gauss(t[k], yp[k]) for k = 1:n])
-            x[i].data[j] = x_ij - eps
-            ym = f2()
-            lm = sum([Flimsy.Cost.gauss(t[k], ym[k]) for k = 1:n])
-            x[i].data[j] = x_ij
-            dx_ij = (lp - lm) / (2 * eps)
-            @test abs(dx_ij - x[i].grad[j]) < tol
+    for x in wrt
+        for i in eachindex(x)
+            xi = x.data[i]
+            x.data[i] = xi + eps
+            lp = Cost.mse(f(args...), target)
+            x.data[i] = xi - eps
+            lm = Cost.mse(f(args...), target)
+            x.data[i] = xi
+            dx = (lp - lm) / (2 * eps)
+            @test abs(dx - x.grad[i]) < tol
         end
     end
 end
@@ -97,10 +84,14 @@ for tf in tests
     global failed
     failed = false
     print("* test $tf...")
-    Test.with_handler(test_handler) do
-        include(tf)
-    end
-    if !failed
-        print_with_color(:green, " ok\n")
+    if isfile(tf)
+        Test.with_handler(test_handler) do
+            include(tf)
+        end
+        if !failed
+            print_with_color(:green, " ok\n")
+        end
+    else
+        print_with_color(:blue, " no file\n")
     end
 end

@@ -1,3 +1,4 @@
+
 abstract Variable{T}
 
 type GradVariable{T<:AbstractMatrix} <: Variable{T}
@@ -16,6 +17,9 @@ call{V<:GradVariable}(::Type{V}, x::Real) = GradVariable([x])
 type DataVariable{T<:AbstractMatrix} <: Variable{T}
     data::T
 end
+
+# GradVariable{V<:DataVariable}(x::V) = GradVariable(x.data, zero(x.data))
+# call{G<:GradVariable,D<:DataVariable}(::Type{G}, x::D) = GradVariable(x.data, zero(x.data))
 
 typealias Input{T} DataVariable{T}
 

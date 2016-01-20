@@ -21,6 +21,8 @@ tests = [
     "ops/concat.jl",
     "ops/decat.jl",
     "ops/dropout.jl",
+    "categorical_cross_entropy.jl",
+    "categorical_cross_entropy_with_scores.jl",
     "ndembed.jl",
     "logistic_regression.jl",
     "multilabel_classifier.jl",

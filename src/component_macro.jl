@@ -57,6 +57,7 @@ const SUPPORTED_SYNTAX = [
     :comprehension,
     :typed_comprehension,
     :curly,
+    :kw,
 ]
 
 """

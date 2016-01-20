@@ -1,4 +1,39 @@
 
+function call{T<:Component}(::Type{T}; kwargs...)
+    @assert length(kwargs) == length(fieldnames(T))
+    kwdict = Dict(kwargs)
+    args = []
+    for field in fieldnames(T)
+        value = kwdict[field]
+        if fieldtype(T, field) <: Variable
+            push!(args, typeof(value) <: Variable ? value : DataVariable(value))
+        else
+            push!(args, value)
+        end
+    end
+    return T(args...)
+end
+
+@generated function GradComponent{C<:Component}(theta::C)
+    CType = C.name.primary
+    return quote
+        args = Any[]
+        for f in fieldnames(theta)
+            T = fieldtype(C, f)
+            if T <: Variable
+                push!(args, GradVariable(getfield(theta, f)))
+            elseif T <: AbstractArray && eltype(T) <: Variable
+                push!(args, getfield(theta, f))
+            elseif T <: Component
+                push!(args, GradComponent(getfield(theta, f)))
+            elseif T <: AbstractArray && eltype(T) <: Component
+                push!(args, map(GradComponent, getfield(theta, f)))
+            end
+        end
+        return $CType(args...)
+    end
+end
+
 function getparams(theta::Component)
     params = Variable[]
     for f in fieldnames(theta)

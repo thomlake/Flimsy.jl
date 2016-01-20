@@ -2,11 +2,12 @@ module Cost
 
 using .. Flimsy
 
-export mse
-include("cost/mse.jl")
+export mse,
+       categorical_cross_entropy,
+       categorical_cross_entropy_with_scores
 
-# export categorical_cross_entropy,
-#        categorical_cross_entropy_with_scores
-# include("cost/categorical_cross_entropy.jl")
+include("cost/mse.jl")
+include("cost/categorical_cross_entropy.jl")
+include("cost/categorical_cross_entropy_with_scores.jl")
 
 end

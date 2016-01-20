@@ -29,7 +29,7 @@ check_gradients(g, c, x)
 """
 function check_gradients end
 
-function check_gradients(g::Function, c::Function, theta::Component; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
+function check_gradients(g, c, theta::Component; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
     g()
     passed = true
     for (name, param) in getnamedparams(theta)
@@ -65,7 +65,7 @@ function check_gradients(g::Function, c::Function, theta::Component; eps::Abstra
     return passed
 end
 
-function check_gradients(g::Function, c::Function, param::Variable; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
+function check_gradients(g, c, param::Variable; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
     g()
     passed = true
     for j = 1:size(param, 2)

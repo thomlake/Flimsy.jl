@@ -11,14 +11,16 @@ function check()
     n_labels, n_feature = 3, 10
     X = randn(n_feature, n_sample)
     Y = rand(1:n_labels, n_sample)
-    params = SoftmaxRegression(
+
+    model = Model(
+        SoftmaxRegression,
         w=rand(Normal(0, 0.01), n_labels, n_feature),
         b=zeros(n_labels),
     )
-    gparams = GradComponent(params)
-    # gradcost = compile(cost, params, Variable, Int)
+    gcost = compile(:cost, model, Variable, Int, gradients=true)
+    cost = compile(:cost, model, Variable, Int, gradients=false)
     # c = F.compile(cost, params, typeof(X), typeof(Y), gradients=false)
-    g = () -> gradient!(cost, gparams, GradInput(X), Y)
+    g = () -> gradient!(cost, params, GradInput(X), Y)
     c = () -> cost(params, Input(X), Y)
     check_gradients(g, c, gparams)
 end

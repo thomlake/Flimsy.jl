@@ -1,3 +1,5 @@
+# DANGER! This package is in a state of flux and is currently broken.
+
 # Flimsy.jl
 Flimsy.jl is a Julia package for expressing and training a rich class of machine learning models whose parameters are differentiable with respect to a scalar loss function, i.e., neural networks.
 

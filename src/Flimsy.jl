@@ -17,7 +17,6 @@ export @component
 
 export Variable,
        GradVariable,
-       GradInput,
        DataVariable,
        Input,
        is_matrix,

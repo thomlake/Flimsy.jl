@@ -1,6 +1,5 @@
 
 abstract Variable{T}
-abstract Input
 
 type GradVariable{T<:AbstractMatrix} <: Variable{T}
     data::T
@@ -17,12 +16,13 @@ type DataVariable{T<:AbstractMatrix} <: Variable{T}
     data::T
 end
 
-# GradVariable{V<:DataVariable}(x::V) = GradVariable(x.data, zero(x.data))
-# call{G<:GradVariable,D<:DataVariable}(::Type{G}, x::D) = GradVariable(x.data, zero(x.data))
-
 call{V<:DataVariable}(::Type{V}, x::AbstractVector) = DataVariable(reshape(x, length(x), 1))
 
 call{V<:DataVariable}(::Type{V}, x::Real) = DataVariable([x])
+
+Input(x) = DataVariable(x)
+Input(x::AbstractVector) = DataVariable(reshape(x, length(x), 1))
+Input(x::Real) = DataVariable([x])
 
 Base.size(x::Variable) = size(x.data)
 

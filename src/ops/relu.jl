@@ -1,10 +1,12 @@
 
-type ReverseRelu{T<:GradVariable} <: ReverseOperation
+type ReverseRelu{T<:Variable} <: ReverseOperation
     y::T
     x::T
 end
 
-function call(rop::ReverseRelu)
+call{T<:DataVariable}(rop::ReverseRelu{T}) = nothing
+
+function call{T<:GradVariable}(rop::ReverseRelu{T})
     y = rop.y
     x = rop.x
     for i in eachindex(x)

@@ -1,10 +1,12 @@
 
-type ReverseWTA{T<:GradVariable} <: ReverseOperation
+type ReverseWTA{T<:Variable} <: ReverseOperation
     y::T
     x::T
 end
 
-function call(rop::ReverseWTA)
+call{T<:DataVariable}(rop::ReverseWTA{T}) = nothing
+
+function call{T<:GradVariable}(rop::ReverseWTA{T})
     y = rop.y
     x = rop.x
     _, imax = findmax(x.data, 1)
@@ -13,8 +15,6 @@ function call(rop::ReverseWTA)
     end
     return nothing
 end
-
-Base.tanh{V<:Variable}(x::V) = V(tanh(x.data))
 
 function wta(x::Variable)
     y = zero(x)

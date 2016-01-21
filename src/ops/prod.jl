@@ -1,49 +1,75 @@
-type ReverseBroadcastProd{T<:GradVariable} <: ReverseOperation
-    c::T
-    a::T
-    b::T
+
+type ReverseBroadcastProd{Tc<:Variable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
+    c::Tc
+    a::Ta
+    b::Tb
 end
 
-function call(rop::ReverseBroadcastProd)
-    c = rop.c
-    a = rop.a
-    b = rop.b
-    for j = 1:size(c, 2)
-        for i = 1:size(c, 1)
-            a.grad[j] += c.grad[i,j] * b.data[i,j]
-            b.grad[i,j] += c.grad[i,j] * a.data[j]
-        end
+@generated function call{Tc,Ta,Tb}(rop::ReverseBroadcastProd{Tc,Ta,Tb})
+    if Tc <: DataVariable
+        return
     end
-    # for j = 1:size(x, 2)
-    #     for i = 1:size(x, 1)
-    #         x.grad[i,j] += y.grad[i,j] .* a.data[j]
-    #     end
-    # end
-    return nothing
-end
-
-type ReverseProd{T<:GradVariable} <: ReverseOperation
-    c::T
-    a::T
-    b::T
-end
-
-function call(rop::ReverseProd)
-    c = rop.c
-    a = rop.a
-    b = rop.b
-    for j = 1:size(c, 2)
-        for i = 1:size(c, 1)
-            a.grad[i,j] += c.grad[i,j] * b.data[i,j]
-            b.grad[i,j] += c.grad[i,j] * a.data[i,j]
-        end
+    updates = Any[]
+    if Ta <: GradVariable
+        push!(updates, :(a.grad[j] += c.grad[i,j] * b.data[i,j]))
     end
-    return nothing
+    if Tb <: GradVariable
+        push!(updates, :(b.grad[i,j] += c.grad[i,j] * a.data[j]))
+    end
+    inner = Expr(:block, updates...)
+    return quote
+        c = rop.c
+        a = rop.a
+        b = rop.b
+        for j = 1:size(c, 2)
+            for i = 1:size(c, 1)
+                $inner
+            end
+        end
+        return nothing
+    end
 end
 
-Base.prod{V<:Variable}(a::V, b::V) = V(a.data .* b.data)
+type ReverseProd{Tc<:Variable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
+    c::Tc
+    a::Ta
+    b::Tb
+end
 
-function Base.prod(stack::CallbackStack, a::GradVariable, b::GradVariable)
+@generated function call{Tc,Ta,Tb}(rop::ReverseProd{Tc,Ta,Tb})
+    if Tc <: DataVariable
+        return
+    end
+    updates = Any[]
+    if Ta <: GradVariable
+        push!(updates, :(a.grad[i,j] += c.grad[i,j] * b.data[i,j]))
+    end
+    if Tb <: GradVariable
+        push!(updates, :(b.grad[i,j] += c.grad[i,j] * a.data[i,j]))
+    end
+    inner = Expr(:block, updates...)
+    return quote
+        c = rop.c
+        a = rop.a
+        b = rop.b
+        for j = 1:size(c, 2)
+            for i = 1:size(c, 1)
+                $inner
+            end
+        end
+        return nothing
+    end
+end
+
+@generated function Base.prod{Va<:Variable,Vb<:Variable}(a::Va, b::Vb)
+    if Va <: GradVariable || Vb <: GradVariable
+        return :(GradVariable(a.data .* b.data))
+    else
+        return :(DataVariable(a.data .* b.data))
+    end
+end
+
+function Base.prod(stack::CallbackStack, a::Variable, b::Variable)
     c = prod(a, b)
     if size(a) == size(b)
         push_callback!(stack, ReverseProd(c, a, b))

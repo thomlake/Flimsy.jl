@@ -38,8 +38,6 @@ export Cost
 
 export Components
 
-export compile
-
 abstract Component{T}
 abstract ReverseOperation
 
@@ -51,7 +49,6 @@ include("ops.jl")
 include("check_gradients.jl")
 include("cost.jl")
 include("components.jl")
-include("compile.jl")
 include("demo.jl")
 
 

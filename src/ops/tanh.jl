@@ -1,10 +1,12 @@
 
-type ReverseTanh{T<:GradVariable} <: ReverseOperation
+type ReverseTanh{T<:Variable} <: ReverseOperation
     y::T
     x::T
 end
 
-function call(rop::ReverseTanh)
+call{T<:DataVariable}(rop::ReverseTanh{T}) = nothing
+
+function call{T<:GradVariable}(rop::ReverseTanh{T})
     y = rop.y
     x = rop.x
     for i in eachindex(x)

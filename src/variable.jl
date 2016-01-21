@@ -21,8 +21,6 @@ call{V<:DataVariable}(::Type{V}, x::AbstractVector) = DataVariable(reshape(x, le
 call{V<:DataVariable}(::Type{V}, x::Real) = DataVariable([x])
 
 Input(x) = DataVariable(x)
-Input(x::AbstractVector) = DataVariable(reshape(x, length(x), 1))
-Input(x::Real) = DataVariable([x])
 
 Base.size(x::Variable) = size(x.data)
 

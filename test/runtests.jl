@@ -9,7 +9,7 @@ tests = [
     "ops/sigmoid.jl",
     "ops/relu.jl",
     "ops/softmax.jl",
-    "ops/vector_softmax.jl",
+    "ops/softmax_vector.jl",
     "ops/wta.jl",
     "ops/linear.jl",
     "ops/affine.jl",

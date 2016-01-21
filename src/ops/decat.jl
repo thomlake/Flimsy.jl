@@ -1,10 +1,12 @@
 
-type ReverseDecat{T<:GradVariable} <: ReverseOperation
+type ReverseDecat{T<:Variable} <: ReverseOperation
     ys::Vector{T}
     x::T
 end
 
-function call(rop::ReverseDecat)
+call{T<:DataVariable}(rop::ReverseDecat{T}) = nothing
+
+function call{T<:GradVariable}(rop::ReverseDecat{T})
     ys = rop.ys
     x = rop.x
     m, n = size(x)
@@ -16,9 +18,9 @@ function call(rop::ReverseDecat)
     return nothing
 end
 
-decat{V<:Variable}(x::V) = [V(x.data[i,:]) for i = 1:size(x, 1)]
+decat{V<:Variable}(x::V) = V[V(x.data[i,:]) for i = 1:size(x, 1)]
 
-function decat(stack::CallbackStack, x::GradVariable)
+function decat(stack::CallbackStack, x::Variable)
     ys = decat(x)
     push_callback!(stack, ReverseDecat(ys, x))
     return ys

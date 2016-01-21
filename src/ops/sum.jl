@@ -1,10 +1,12 @@
 
-type ReverseSum{T<:GradVariable} <: ReverseOperation
+type ReverseSum{T<:Variable} <: ReverseOperation
     y::T
     x::T
 end
 
-function call(rop::ReverseSum)
+call{T<:DataVariable}(rop::ReverseSum{T}) = nothing
+
+function call{T<:GradVariable}(rop::ReverseSum{T})
     y = rop.y
     x = rop.x
     for i in eachindex(y)
@@ -13,12 +15,14 @@ function call(rop::ReverseSum)
     return nothing
 end
 
-type ReverseColumnSum{T<:GradVariable} <: ReverseOperation
+type ReverseColumnSum{T<:Variable} <: ReverseOperation
     y::T
     x::T
 end
 
-function call(rop::ReverseColumnSum)
+call{T<:DataVariable}(rop::ReverseColumnSum{T}) = nothing
+
+function call{T<:GradVariable}(rop::ReverseColumnSum{T})
     y = rop.y
     x = rop.x
     for j = 1:size(y, 2)

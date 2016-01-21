@@ -1,10 +1,12 @@
 
-type ReverseConcat{T<:GradVariable} <: ReverseOperation
+type ReverseConcat{T<:Variable} <: ReverseOperation
     y::T
     xs::Vector{T}
 end
 
-function call(rop::ReverseConcat)
+call{T<:DataVariable}(rop::ReverseConcat{T}) = nothing
+
+function call{T<:GradVariable}(rop::ReverseConcat{T})
     y = rop.y
     xs = rop.xs
     offset = 0
@@ -27,12 +29,12 @@ function concat{V<:Variable}(xs::Vector{V})
     return V(vcat([x.data for x in xs]...))
 end
 
-function concat{V<:GradVariable}(stack::CallbackStack, xs::Vector{V})
+function concat{V<:Variable}(stack::CallbackStack, xs::Vector{V})
     y = concat(xs)
     push_callback!(stack, ReverseConcat(y, xs))
     return y
 end
 
-concat{V<:GradVariable}(xs::V...) = concat([x for x in xs])
+concat{V<:Variable}(xs::V...) = concat([x for x in xs])
 
-concat{V<:GradVariable}(stack::CallbackStack, xs::V...) = concat(stack, [x for x in xs])
+concat{V<:Variable}(stack::CallbackStack, xs::V...) = concat(stack, [x for x in xs])

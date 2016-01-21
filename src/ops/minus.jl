@@ -1,10 +1,12 @@
 
-type ReverseMinus{T<:GradVariable} <: ReverseOperation
+type ReverseMinus{T<:Variable} <: ReverseOperation
     y::T
     x::T
 end
 
-function call(rop::ReverseMinus)
+call{T<:DataVariable}(rop::ReverseMinus{T}) = nothing
+
+function call{T<:GradVariable}(rop::ReverseMinus{T})
     y = rop.y
     x = rop.x
     for i in eachindex(y)
@@ -13,12 +15,14 @@ function call(rop::ReverseMinus)
     return nothing
 end
 
-type ReverseColumnMinus{T<:GradVariable} <: ReverseOperation
+type ReverseColumnMinus{T<:Variable} <: ReverseOperation
     y::T
     x::T
 end
 
-function call(rop::ReverseColumnMinus)
+call{T<:DataVariable}(rop::ReverseColumnMinus{T}) = nothing
+
+function call{T<:GradVariable}(rop::ReverseColumnMinus{T})
     y = rop.y
     x = rop.x
     for j = 1:size(y, 2)
@@ -29,9 +33,15 @@ function call(rop::ReverseColumnMinus)
     return nothing
 end
 
-minus{V<:Variable}(a::V, b::V) = V(a.data .- b.data)
+@generated function minus{Va<:Variable,Vb<:Variable}(a::Va, b::Vb) 
+    if Va <: GradVariable || Vb <: GradVariable
+        return :(GradVariable(a.data .- b.data))
+    else
+        return :(DataVariable(a.data .- b.data))
+    end
+end
 
-function minus(stack::CallbackStack, a::GradVariable, b::GradVariable)
+function minus(stack::CallbackStack, a::Variable, b::Variable)
     c = minus(a, b)
     if size(a) == size(b)
         push_callback!(stack, ReverseSum(c, a))

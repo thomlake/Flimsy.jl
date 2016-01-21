@@ -1,29 +1,51 @@
 
-type ReverseLinear{T<:GradVariable} <: ReverseOperation
-    y::T
-    w::T
-    x::T
+type ReverseLinear{Ty<:Variable,Tw<:Variable,Tx<:Variable} <: ReverseOperation
+    y::Ty
+    w::Tw
+    x::Tx
 end
 
-function call(rop::ReverseLinear)
-    y = rop.y
-    w = rop.w
-    x = rop.x
-    dx = At_mul_B(w.data, y.grad)
-    dw = A_mul_Bt(y.grad, x.data)
-    for i in eachindex(x)
-        x.grad[i] += dx[i]
+call{Ty<:DataVariable,Tw,Tx}(rop::ReverseLinear{Ty,Tw,Tx}) = nothing
+
+@generated function call{Ty<:GradVariable,Tw,Tx}(rop::ReverseLinear{Ty,Tw,Tx})
+    stmts = Any[
+        :(y = rop.y),
+        :(w = rop.w),
+        :(x = rop.x),
+    ]
+    if Tw <: GradVariable
+        s = quote
+            dw = A_mul_Bt(y.grad, x.data)
+            for i in eachindex(w)
+                w.grad[i] += dw[i]
+            end
+        end
+        push!(stmts, s)
     end
-    for i in eachindex(w)
-        w.grad[i] += dw[i]
+    
+    if Tx <: GradVariable
+        s = quote
+            dx = At_mul_B(w.data, y.grad)
+            for i in eachindex(x)
+                x.grad[i] += dx[i]
+            end
+        end
+        push!(stmts, s)
     end
-    return nothing
+    push!(stmts, :(return nothing))
+    return Expr(:block, stmts...)
 end
 
-linear{V1<:Variable,V2<:Variable}(w::V1, x::V2) = V2(w.data * x.data)
+@generated function linear{Tw<:Variable,Tx<:Variable}(w::Tw, x::Tx)
+    if Tw <: GradVariable || Tx <: GradVariable
+        return :(GradVariable(w.data * x.data))
+    else
+        return :(DataVariable(w.data * x.data))
+    end
+end
 
-function linear(stack::CallbackStack, w::GradVariable, x::GradVariable)
+function linear(stack::CallbackStack, w::Variable, x::Variable)
     y = linear(w, x)
-    push_callback!(stack, ReverseLinear(y, w, x))
+    push!(stack, ReverseLinear(y, w, x))
     return y
 end

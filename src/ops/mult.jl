@@ -1,14 +1,11 @@
 
-type ReverseBroadcastProd{Tc<:Variable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
+type ReverseBroadcastMult{Tc<:GradVariable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
     c::Tc
     a::Ta
     b::Tb
 end
 
-@generated function call{Tc,Ta,Tb}(rop::ReverseBroadcastProd{Tc,Ta,Tb})
-    if Tc <: DataVariable
-        return
-    end
+@generated function call{Tc,Ta,Tb}(rop::ReverseBroadcastMult{Tc,Ta,Tb})
     updates = Any[]
     if Ta <: GradVariable
         push!(updates, :(a.grad[j] += c.grad[i,j] * b.data[i,j]))
@@ -30,16 +27,13 @@ end
     end
 end
 
-type ReverseProd{Tc<:Variable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
+type ReverseMult{Tc<:GradVariable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
     c::Tc
     a::Ta
     b::Tb
 end
 
-@generated function call{Tc,Ta,Tb}(rop::ReverseProd{Tc,Ta,Tb})
-    if Tc <: DataVariable
-        return
-    end
+@generated function call{Tc,Ta,Tb}(rop::ReverseMult{Tc,Ta,Tb})
     updates = Any[]
     if Ta <: GradVariable
         push!(updates, :(a.grad[i,j] += c.grad[i,j] * b.data[i,j]))
@@ -61,28 +55,30 @@ end
     end
 end
 
-Base.prod(a::Variable, b::Variable) = DataVariable(a.data .* b.data)
+mult(a::AbstractArray, b::AbstractArray) = a .* b
 
-@generated function Base.prod{Ta<:Variable,Tb<:Variable}(stack::CallbackStack, a::Ta, b::Tb)
-    if Ta <: GradVariable || Tb <: GradVariable
+mult(a::Variable, b::Variable) = DataVariable(mult(a.data, b.data))
+
+@generated function mult{Ta<:Variable,Tb<:Variable}(stack::CallbackStack, a::Ta, b::Tb)
+    if anygrads(Ta, Tb)
         return quote
-            c = GradVariable(a.data .* b.data)
+            c = GradVariable(mult(a.data, b.data))
             if size(a) == size(b)
-                push_callback!(stack, ReverseProd(c, a, b))
+                push!(stack, ReverseMult(c, a, b))
             elseif is_matrix(a) && is_row_vector(b)
-                push_callback!(stack, ReverseBroadcastProd(c, b, a))
+                push!(stack, ReverseBroadcastMult(c, b, a))
             elseif is_row_vector(a) && is_matrix(b)
-                push_callback!(stack, ReverseBroadcastProd(c, a, b))
+                push!(stack, ReverseBroadcastMult(c, a, b))
             elseif is_column_vector(a) && is_scalar(b)
-                push_callback!(stack, ReverseBroadcastProd(c, b, a))
+                push!(stack, ReverseBroadcastMult(c, b, a))
             elseif is_scalar(a) && is_column_vector(b)
-                push_callback!(stack, ReverseBroadcastProd(c, a, b))
+                push!(stack, ReverseBroadcastMult(c, a, b))
             else
-                error("no prod for sizes a: $(size(a)), b: $(size(b))")
+                throw(OperationError("no prod for sizes a: $(size(a)), b: $(size(b))"))
             end
             return c
         end
     else
-        return :(DataVariable(a.data .* b.data))
+        return :(mult(a, b))
     end
 end

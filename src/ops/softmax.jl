@@ -1,12 +1,10 @@
 
-type ReverseSoftmax{T<:Variable} <: ReverseOperation
+type ReverseSoftmax{T<:GradVariable} <: ReverseOperation
     y::T
     x::T
 end
 
-call{T<:DataVariable}(rop::ReverseSoftmax{T}) = nothing
-
-function call{T<:GradVariable}(rop::ReverseSoftmax{T})
+function call(rop::ReverseSoftmax)
     y = rop.y
     x = rop.x
     for n = 1:size(y, 2)
@@ -43,14 +41,10 @@ end
 
 softmax(x::Variable) = DataVariable(softmax(x.data))
 
-@generated function softmax{T<:Variable}(stack::CallbackStack, x::T)
-    if T <: GradVariable
-        return quote
-            y = GradVariable(softmax(x.data))
-            push_callback!(stack, ReverseSoftmax(y, x))
-            return y
-        end
-    else
-        return :(DataVariable(softmax(x.data)))
-    end
+softmax(stack::CallbackStack, x::DataVariable) = DataVariable(softmax(x.data))
+
+function softmax(stack::CallbackStack, x::GradVariable)
+    y = GradVariable(softmax(x.data))
+    push!(stack, ReverseSoftmax(y, x))
+    return y
 end

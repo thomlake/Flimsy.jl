@@ -1,12 +1,10 @@
 
-type ReverseMinus{T<:Variable} <: ReverseOperation
+type ReverseMinus{T<:GradVariable} <: ReverseOperation
     y::T
     x::T
 end
 
-call{T<:DataVariable}(rop::ReverseMinus{T}) = nothing
-
-function call{T<:GradVariable}(rop::ReverseMinus{T})
+function call(rop::ReverseMinus)
     y = rop.y
     x = rop.x
     for i in eachindex(y)
@@ -15,14 +13,12 @@ function call{T<:GradVariable}(rop::ReverseMinus{T})
     return nothing
 end
 
-type ReverseColumnMinus{T<:Variable} <: ReverseOperation
+type ReverseColumnMinus{T<:GradVariable} <: ReverseOperation
     y::T
     x::T
 end
 
-call{T<:DataVariable}(rop::ReverseColumnMinus{T}) = nothing
-
-function call{T<:GradVariable}(rop::ReverseColumnMinus{T})
+function call(rop::ReverseColumnMinus)
     y = rop.y
     x = rop.x
     for j = 1:size(y, 2)
@@ -33,27 +29,29 @@ function call{T<:GradVariable}(rop::ReverseColumnMinus{T})
     return nothing
 end
 
-minus(a::Variable, b::Variable) = DataVariable(a.data .- b.data) 
+minus(a::AbstractArray, b::AbstractArray) = a .- b
+
+minus(a::Variable, b::Variable) = DataVariable(minus(a.data, b.data))
 
 @generated function minus{Ta<:Variable,Tb<:Variable}(stack::CallbackStack, a::Ta, b::Tb)
-    if Ta <: GradVariable || Tb <: GradVariable
+    if anygrads(Ta, Tb)
         return quote
-            c = GradVariable(a.data .- b.data)
+            c = GradVariable(minus(a.data, b.data))
             if size(a) == size(b)
-                push_callback!(stack, ReverseSum(c, a))
-                push_callback!(stack, ReverseMinus(c, b))
+                isa(a, GradVariable) && push!(stack, ReversePlus(c, a))
+                isa(b, GradVariable) && push!(stack, ReverseMinus(c, b))
             elseif is_matrix(a) && is_column_vector(b)
-                push_callback!(stack, ReverseSum(c, a))
-                push_callback!(stack, ReverseColumnMinus(c, b))
+                isa(a, GradVariable) && push!(stack, ReversePlus(c, a))
+                isa(b, GradVariable) && push!(stack, ReverseColumnMinus(c, b))
             elseif is_matrix(b) && is_column_vector(a)
-                push_callback!(stack, ReverseMinus(c, b))
-                push_callback!(stack, ReverseColumnSum(c, a))
+                isa(b, GradVariable) && push!(stack, ReverseMinus(c, b))
+                isa(a, GradVariable) && push!(stack, ReverseColumnPlus(c, a))
             else
-                error("no minus for sizes a: $(size(a)), b: $(size(b))")
+                throw(OperationError("no minus for sizes a: $(size(a)), b: $(size(b))"))
             end
             return c
         end
     else
-        return :(DataVariable(a.data .- b.data))
+        return :(minus(a, b))
     end
 end

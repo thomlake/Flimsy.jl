@@ -6,19 +6,20 @@ type GradVariable{T<:AbstractMatrix} <: Variable{T}
     grad::T
 end
 
-call{V<:GradVariable}(::Type{V}, x::AbstractMatrix) = GradVariable(x, zero(x))
+GradVariable{T}(x::Matrix{T}) = GradVariable(x, zero(x))
 
-call{V<:GradVariable}(::Type{V}, x::AbstractVector) = GradVariable(reshape(x, length(x), 1))
+GradVariable{T}(x::Vector{T}) = GradVariable(reshape(x, length(x), 1))
 
-call{V<:GradVariable}(::Type{V}, x::Real) = GradVariable([x])
+GradVariable(x::Real) = GradVariable([x])
+
 
 type DataVariable{T<:AbstractMatrix} <: Variable{T}
     data::T
 end
 
-call{V<:DataVariable}(::Type{V}, x::AbstractVector) = DataVariable(reshape(x, length(x), 1))
+DataVariable{T}(x::Vector{T}) = DataVariable(reshape(x, length(x), 1))
 
-call{V<:DataVariable}(::Type{V}, x::Real) = DataVariable([x])
+DataVariable(x::Real) = DataVariable([x])
 
 Input(x) = DataVariable(x)
 

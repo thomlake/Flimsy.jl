@@ -1,12 +1,10 @@
 
-type ReverseSigmoid{T<:Variable} <: ReverseOperation
+type ReverseSigmoid{T<:GradVariable} <: ReverseOperation
     y::T
     x::T
 end
 
-call{T<:DataVariable}(rop::ReverseSigmoid{T}) = nothing
-
-function call{T<:GradVariable}(rop::ReverseSigmoid{T})
+function call(rop::ReverseSigmoid)
     y = rop.y
     x = rop.x
     for i in eachindex(x)
@@ -25,14 +23,10 @@ end
 
 sigmoid(x::Variable) = DataVariable(sigmoid(x.data))
 
-@generated function sigmoid{T<:Variable}(stack::CallbackStack, x::T)
-    if T <: GradVariable
-        return quote
-            y = GradVariable(sigmoid(x.data))
-            push_callback!(stack, ReverseSigmoid(y, x))
-            return y
-        end
-    else
-        return :(DataVariable(sigmoid(x.data)))
-    end
+sigmoid(stack::CallbackStack, x::DataVariable) = DataVariable(sigmoid(x.data))
+
+function sigmoid(stack::CallbackStack, x::GradVariable)
+    y = GradVariable(sigmoid(x.data))
+    push!(stack, ReverseSigmoid(y, x))
+    return y
 end

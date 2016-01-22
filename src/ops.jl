@@ -1,11 +1,12 @@
+#
 # Operator Implementations
 # ------------------------
 # 
 # At least two versions of an operator f must be implemented. The **Base Operator**
-# always return Variables with type T<:DataVariable (used at test time).
+# always return Variables with type T<:DataVariable (typically used at test time).
 # The **Grad Operator** promotes output Variables to type T<:GradVariable when 
-# necessary (used at train time). For the later, staged (@generated) functions are 
-# useful for generating efficient code which is type stable and does not incur 
+# necessary (typically used at train time). For the later, staged (@generated) functions 
+# are useful for generating efficient code which is type stable and does not incur 
 # repeated runtime type checking costs.
 #
 # Additionally a closure type (a subtype of ReverseOperation) must be implemented for 
@@ -33,12 +34,15 @@
 #   also have type GradVariable. This is because their gradient will be required for computing
 #   gradients with respect to input variables X.
 #
+export anygrads
 
 export sigmoid,
        relu,
        wta,
        softmax,
+       plus,
        minus,
+       mult,
        linear,
        affine,
        decat,
@@ -52,14 +56,16 @@ end
 
 Base.showerror(io::IO, e::OperationError) = print(io, "Flimsy.OperationError: ", e.msg)
 
-function anygrads(xs::DataType...)
-    for x in xs
-        if x <: GradVariable
+function anygrads(ts::DataType...)
+    for t in ts
+        if t <: GradVariable
             return true
         end
     end
     return false
 end
+
+anygrads(ts::Vector) = anygrads(ts...)
 
 include("ops/identity.jl")
 include("ops/tanh.jl")
@@ -68,11 +74,11 @@ include("ops/relu.jl")
 include("ops/wta.jl")
 include("ops/softmax.jl")
 include("ops/softmax_vector.jl")
-include("ops/sum.jl")
+include("ops/plus.jl")
 include("ops/minus_scalar.jl")
 include("ops/minus.jl")
-include("ops/prod_scalar.jl")
-include("ops/prod.jl")
+include("ops/mult_scalar.jl")
+include("ops/mult.jl")
 include("ops/linear.jl")
 include("ops/affine.jl")
 include("ops/decat.jl")

@@ -24,17 +24,18 @@ function call(rop::ReverseVectorSoftmax)
     return nothing
 end
 
-function softmax{V<:Variable}(xs::Vector{V})
+
+function softmax{T<:AbstractMatrix}(xs::Vector{T})
     m = length(xs)
     k, n = size(xs[1])
-    k == 1 || error("softmax can only be applied over a vector of 1xN matrices")
-    xmax = deepcopy(xs[1].data)
+    k == 1 || throw(OperationError("softmax can only be applied over a vector of 1xN matrices"))
+    xmax = deepcopy(xs[1])
     for i = 2:m
         k_i, n_i = size(xs[i])
-        k_i == 1 || error("softmax can only be applied over a vector of 1xN matrices")
-        n_i == n || error("softmax can only be applied over a vector of matrices with the same size")
+        k_i == 1 || throw(OperationError("softmax can only be applied over a vector of 1xN matrices"))
+        n_i == n || throw(OperationError("softmax can only be applied over a vector of matrices with the same size"))
         for j = 1:n
-            xmax[j] = max(xmax[j], xs[i].data[j])
+            xmax[j] = max(xmax[j], xs[i][j])
         end
     end
     
@@ -42,45 +43,24 @@ function softmax{V<:Variable}(xs::Vector{V})
     Z = zero(xmax)
     for i = 1:m
         for j = 1:n
-            ys[i].data[j] = exp(xs[i].data[j] - xmax[j])
-            Z[j] += ys[i].data[j]
+            ys[i][j] = exp(xs[i][j] - xmax[j])
+            Z[j] += ys[i][j]
         end
     end
     for i = 1:m
         for j = 1:n
-            ys[i].data[j] = ys[i].data[j] / Z[j] 
+            ys[i][j] = ys[i][j] / Z[j] 
         end
     end
     return ys
 end
 
+softmax{T<:Variable}(xs::Vector{T}) = map(DataVariable, softmax([x.data for x in xs]))
+
+softmax{V<:DataVariable}(stack::CallbackStack, xs::Vector{V}) = softmax(xs)
+
 function softmax{V<:GradVariable}(stack::CallbackStack, xs::Vector{V})
-    m = length(xs)
-    k, n = size(xs[1])
-    k == 1 || error("softmax can only be applied over a vector of 1xN matrices")
-    xmax = deepcopy(xs[1].data)
-    for i = 2:m
-        k_i, n_i = size(xs[i])
-        k_i == 1 || error("softmax can only be applied over a vector of 1xN matrices")
-        n_i == n || error("softmax can only be applied over a vector of matrices with the same size")
-        for j = 1:n
-            xmax[j] = max(xmax[j], xs[i].data[j])
-        end
-    end
-    
-    ys = [zero(x) for x in xs]
-    Z = zero(xmax)
-    for i = 1:m
-        for j = 1:n
-            ys[i].data[j] = exp(xs[i].data[j] - xmax[j])
-            Z[j] += ys[i].data[j]
-        end
-    end
-    for i = 1:m
-        for j = 1:n
-            ys[i].data[j] = ys[i].data[j] / Z[j] 
-        end
-    end
-    push_callback!(stack, ReverseVectorSoftmax(ys, xs))
+    ys = map(GradVariable, softmax([x.data for x in xs]))
+    push!(stack, ReverseVectorSoftmax(ys, xs))
     return ys
 end

@@ -1,20 +1,19 @@
 
-type ReverseAffine{Ty<:Variable,Tw<:Variable,Tx<:Variable,Tb<:Variable} <: ReverseOperation
+type ReverseAffine{Ty<:GradVariable,Tw<:Variable,Tx<:Variable,Tb<:Variable} <: ReverseOperation
     y::Ty
     w::Tw
     x::Tx
     b::Tb
 end
 
-call{Ty<:DataVariable,Tw,Tx,Tb}(rop::ReverseAffine{Ty,Tw,Tx,Tb}) = nothing
-
-@generated function call{Ty<:GradVariable,Tw,Tx,Tb}(rop::ReverseAffine{Ty,Tw,Tx,Tb})
+@generated function call{Ty,Tw,Tx,Tb}(rop::ReverseAffine{Ty,Tw,Tx,Tb})
     stmts = Any[
         :(y = rop.y),
         :(w = rop.w),
         :(x = rop.x),
         :(b = rop.b),
     ]
+
     if Tw <: GradVariable
         s = quote
             dw = A_mul_Bt(y.grad, x.data)
@@ -24,6 +23,7 @@ call{Ty<:DataVariable,Tw,Tx,Tb}(rop::ReverseAffine{Ty,Tw,Tx,Tb}) = nothing
         end
         push!(stmts, s)
     end
+
     if Tx <: GradVariable
         s = quote
             dx = At_mul_B(w.data, y.grad)
@@ -33,6 +33,7 @@ call{Ty<:DataVariable,Tw,Tx,Tb}(rop::ReverseAffine{Ty,Tw,Tx,Tb}) = nothing
         end
         push!(stmts, s)
     end
+
     if Tb <: GradVariable
         s = quote
             for j = 1:size(y, 2)
@@ -43,10 +44,10 @@ call{Ty<:DataVariable,Tw,Tx,Tb}(rop::ReverseAffine{Ty,Tw,Tx,Tb}) = nothing
         end
         push!(stmts, s)
     end
+
     push!(stmts, :(return nothing))
     return Expr(:block, stmts...)
 end
-
 
 function affine(w::AbstractMatrix, x::AbstractMatrix, b::AbstractMatrix)
     size(b) == (size(w, 1), 1) || throw(OperationError("b must be a $(size(w, 1))x1 matrix"))
@@ -65,7 +66,7 @@ affine(w::Variable, x::Variable, b::Variable) = DataVariable(affine(w.data, x.da
     if anygrads(Tw, Tx, Tb)
         return quote
             y = GradVariable(affine(w.data, x.data, b.data))
-            push_callback!(stack, ReverseAffine(y, w, x, b))
+            push!(stack, ReverseAffine(y, w, x, b))
             return y
         end
     else

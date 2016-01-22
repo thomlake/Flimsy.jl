@@ -1,14 +1,63 @@
 using Flimsy
 using Base.Test
 
-x = GradVariable(randn(3))
-y = sigmoid(x)
-@test size(y) == (3, 1)
-@test all(sigmoid(x.data) .== y.data)
-test_op_grad_mse(sigmoid, x, wrt=x)
+function test_sigmoid()
+    # Mx1
+    m, n = 3, 1
+    x = DataVariable(randn(m))
+    y = sigmoid(x)
+    @test isa(y, DataVariable)
+    @test size(y) == (m, n)
+    @test all(sigmoid(x.data) .== y.data)
 
-x = GradVariable(randn(3, 5))
-y = sigmoid(x)
-@test size(y) == (3, 5)
-@test all(sigmoid(x.data) .== y.data)
-test_op_grad_mse(tanh, x, wrt=x)
+    x = GradVariable(randn(m))
+    y = sigmoid(x)
+    @test isa(y, DataVariable)
+    @test size(y) == (m, n)
+    @test all(sigmoid(x.data) .== y.data)
+
+    x = DataVariable(randn(m))
+    y = sigmoid(CallbackStack(), x)
+    @test isa(y, DataVariable)
+    @test size(y) == (m, n)
+    @test all(sigmoid(x.data) .== y.data)
+
+    x = GradVariable(randn(m))
+    y = sigmoid(CallbackStack(), x)
+    @test isa(y, GradVariable)
+    @test size(y) == (m, n)
+    @test all(sigmoid(x.data) .== y.data)
+
+    x = GradVariable(randn(m))
+    test_op_grad_mse(sigmoid, x, wrt=x)
+
+    # MxN
+    m, n = 5, 8
+    x = DataVariable(randn(m, n))
+    y = sigmoid(x)
+    @test isa(y, DataVariable)
+    @test size(y) == (m, n)
+    @test all(sigmoid(x.data) .== y.data)
+
+    x = GradVariable(randn(m, n))
+    y = sigmoid(x)
+    @test isa(y, DataVariable)
+    @test size(y) == (m, n)
+    @test all(sigmoid(x.data) .== y.data)
+
+    x = DataVariable(randn(m, n))
+    y = sigmoid(CallbackStack(), x)
+    @test isa(y, DataVariable)
+    @test size(y) == (m, n)
+    @test all(sigmoid(x.data) .== y.data)
+
+    x = GradVariable(randn(m, n))
+    y = sigmoid(CallbackStack(), x)
+    @test isa(y, GradVariable)
+    @test size(y) == (m, n)
+    @test all(sigmoid(x.data) .== y.data)
+
+    x = GradVariable(randn(m, n))
+    test_op_grad_mse(sigmoid, x, wrt=x)
+end
+test_sigmoid()

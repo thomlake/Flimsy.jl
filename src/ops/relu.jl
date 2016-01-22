@@ -1,12 +1,10 @@
 
-type ReverseRelu{T<:Variable} <: ReverseOperation
+type ReverseRelu{T<:GradVariable} <: ReverseOperation
     y::T
     x::T
 end
 
-call{T<:DataVariable}(rop::ReverseRelu{T}) = nothing
-
-function call{T<:GradVariable}(rop::ReverseRelu{T})
+function call(rop::ReverseRelu)
     y = rop.y
     x = rop.x
     for i in eachindex(x)
@@ -21,10 +19,10 @@ relu(x::AbstractArray) = max(0, x)
 
 relu(x::Variable) = DataVariable(relu(x.data))
 
+relu(stack::CallbackStack, x::DataVariable) = DataVariable(relu(x.data))
+
 function relu(stack::CallbackStack, x::GradVariable)
     y = GradVariable(relu(x.data))
-    push_callback!(stack, ReverseRelu(y, x))
+    push!(stack, ReverseRelu(y, x))
     return y
 end
-
-relu(stack::CallbackStack, x::DataVariable) = GradVariable(relu(x.data))

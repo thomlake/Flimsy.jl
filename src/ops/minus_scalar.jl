@@ -1,3 +1,5 @@
+
+# minus(Real, Variable) 
 type ReverseScalarMinusMatrix{T<:Variable} <: ReverseOperation
     y::T
     x::T
@@ -14,14 +16,19 @@ function call{T<:GradVariable}(rop::ReverseScalarMinusMatrix{T})
     return nothing
 end
 
-minus{V<:Variable}(a::Real, x::V) = V(a .- x.data)
+minus(a::Real, x::Array) = a .- x
 
-function minus(stack::CallbackStack, a::Real, x::Variable)
-    y = minus(a, x)
+minus(a::Real, x::Variable) = DataVariable(minus(a, x.data))
+
+function minus(stack::CallbackStack, a::Real, x::GradVariable)
+    y = GradVariable(minus(a, x.data))
     push_callback!(stack, ReverseScalarMinusMatrix(y, x))
     return y
 end
 
+minus(stack::CallbackStack, a::Real, x::DataVariable) = DataVariable(minus(a, x.data))
+
+# minus(Variable, Real)
 type ReverseMatrixMinusScalar{T<:Variable} <: ReverseOperation
     y::T
     x::T
@@ -38,10 +45,19 @@ function call{T<:GradVariable}(rop::ReverseMatrixMinusScalar{T})
     return nothing
 end
 
-minus{V<:Variable}(x::V, a::Real) = V(x.data .- a)
+minus(x::Array, a::Real) = x .- a
 
-function minus(stack::CallbackStack, x::Variable, a::Real)
-    y = minus(x, a)
+minus(x::Variable, a::Real) = DataVariable(minus(x.data, a))
+
+function minus(stack::CallbackStack, x::GradVariable, a::Real)
+    y = GradVariable(minus(x.data, a))
     push_callback!(stack, ReverseMatrixMinusScalar(y, x))
     return y
 end
+
+function minus(stack::CallbackStack, x::DataVariable, a::Real)
+    y = DataVariable(minus(x.data, a))
+    push_callback!(stack, ReverseMatrixMinusScalar(y, x))
+    return y
+end
+

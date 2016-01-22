@@ -61,28 +61,28 @@ end
     end
 end
 
-@generated function Base.prod{Va<:Variable,Vb<:Variable}(a::Va, b::Vb)
-    if Va <: GradVariable || Vb <: GradVariable
-        return :(GradVariable(a.data .* b.data))
+Base.prod(a::Variable, b::Variable) = DataVariable(a.data .* b.data)
+
+@generated function Base.prod{Ta<:Variable,Tb<:Variable}(stack::CallbackStack, a::Ta, b::Tb)
+    if Ta <: GradVariable || Tb <: GradVariable
+        return quote
+            c = GradVariable(a.data .* b.data)
+            if size(a) == size(b)
+                push_callback!(stack, ReverseProd(c, a, b))
+            elseif is_matrix(a) && is_row_vector(b)
+                push_callback!(stack, ReverseBroadcastProd(c, b, a))
+            elseif is_row_vector(a) && is_matrix(b)
+                push_callback!(stack, ReverseBroadcastProd(c, a, b))
+            elseif is_column_vector(a) && is_scalar(b)
+                push_callback!(stack, ReverseBroadcastProd(c, b, a))
+            elseif is_scalar(a) && is_column_vector(b)
+                push_callback!(stack, ReverseBroadcastProd(c, a, b))
+            else
+                error("no prod for sizes a: $(size(a)), b: $(size(b))")
+            end
+            return c
+        end
     else
         return :(DataVariable(a.data .* b.data))
     end
-end
-
-function Base.prod(stack::CallbackStack, a::Variable, b::Variable)
-    c = prod(a, b)
-    if size(a) == size(b)
-        push_callback!(stack, ReverseProd(c, a, b))
-    elseif is_matrix(a) && is_row_vector(b)
-        push_callback!(stack, ReverseBroadcastProd(c, b, a))
-    elseif is_row_vector(a) && is_matrix(b)
-        push_callback!(stack, ReverseBroadcastProd(c, a, b))
-    elseif is_column_vector(a) && is_scalar(b)
-        push_callback!(stack, ReverseBroadcastProd(c, b, a))
-    elseif is_scalar(a) && is_column_vector(b)
-        push_callback!(stack, ReverseBroadcastProd(c, a, b))
-    else
-        error("no prod for sizes a: $(size(a)), b: $(size(b))")
-    end
-    return c
 end

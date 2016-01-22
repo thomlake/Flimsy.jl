@@ -1,12 +1,12 @@
 
-type ReverseWTA{T<:Variable} <: ReverseOperation
+type ReverseWTA{T<:GradVariable} <: ReverseOperation
     y::T
     x::T
 end
 
-call{T<:DataVariable}(rop::ReverseWTA{T}) = nothing
+# call{T<:DataVariable}(rop::ReverseWTA{T}) = nothing
 
-function call{T<:GradVariable}(rop::ReverseWTA{T})
+function call(rop::ReverseWTA)
     y = rop.y
     x = rop.x
     _, imax = findmax(x.data, 1)
@@ -16,17 +16,21 @@ function call{T<:GradVariable}(rop::ReverseWTA{T})
     return nothing
 end
 
-function wta(x::Variable)
+function wta(x::AbstractMatrix)
     y = zero(x)
-    xmax, imax = findmax(x.data, 1)
+    xmax, imax = findmax(x, 1)
     for i = 1:endof(imax)
-        y.data[imax[i]] = xmax[i]
+        y[imax[i]] = xmax[i]
     end
     return y
 end
 
+wta(x::Variable) = DataVariable(wta(x.data))
+
+wta(stack::CallbackStack, x::DataVariable) = wta(x)
+
 function wta(stack::CallbackStack, x::GradVariable)
-    y = wta(x)
-    push_callback!(stack, ReverseWTA(y, x))
+    y = GradVariable(wta(x.data))
+    push!(stack, ReverseWTA(y, x))
     return y
 end

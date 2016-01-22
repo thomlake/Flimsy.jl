@@ -19,10 +19,12 @@ end
 
 relu(x::AbstractArray) = max(0, x)
 
-relu{V<:Variable}(x::V) = V(relu(x.data))
+relu(x::Variable) = DataVariable(relu(x.data))
 
-function relu(stack::CallbackStack, x::Variable)
-    y = relu(x)
+function relu(stack::CallbackStack, x::GradVariable)
+    y = GradVariable(relu(x.data))
     push_callback!(stack, ReverseRelu(y, x))
     return y
 end
+
+relu(stack::CallbackStack, x::DataVariable) = GradVariable(relu(x.data))

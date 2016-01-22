@@ -47,27 +47,28 @@ call{Ty<:DataVariable,Tw,Tx,Tb}(rop::ReverseAffine{Ty,Tw,Tx,Tb}) = nothing
     return Expr(:block, stmts...)
 end
 
-@generated function affine{Tw<:Variable,Tx<:Variable,Tb<:Variable}(w::Tw, x::Tx, b::Tb)
-    rtype = if Tw <: GradVariable || Tx <: GradVariable || Tb <: GradVariable
-        GradVariable
-    else
-        DataVariable
-    end
-    return quote
-        size(b) == (size(w, 1), 1) || throw(OperationError("b must be a $(size(w, 1))x1 matrix"))
-        tmp = w.data * x.data
-        bias = b.data
-        for j = 1:size(tmp, 2)
-            for i = 1:size(tmp, 1)
-                tmp[i,j] += bias[i]
-            end
+
+function affine(w::AbstractMatrix, x::AbstractMatrix, b::AbstractMatrix)
+    size(b) == (size(w, 1), 1) || throw(OperationError("b must be a $(size(w, 1))x1 matrix"))
+    tmp = w * x
+    for j = 1:size(tmp, 2)
+        for i = 1:size(tmp, 1)
+            tmp[i,j] += b[i]
         end
-        return $rtype(tmp)
     end
+    return tmp
 end
 
-function affine(stack::CallbackStack, w::Variable, x::Variable, b::Variable)
-    y = affine(w, x, b)
-    push_callback!(stack, ReverseAffine(y, w, x, b))
-    return y
+affine(w::Variable, x::Variable, b::Variable) = DataVariable(affine(w.data, x.data, b.data))
+
+@generated function affine{Tw<:Variable,Tx<:Variable,Tb<:Variable}(stack::CallbackStack, w::Tw, x::Tx, b::Tb)
+    if anygrads(Tw, Tx, Tb)
+        return quote
+            y = GradVariable(affine(w.data, x.data, b.data))
+            push_callback!(stack, ReverseAffine(y, w, x, b))
+            return y
+        end
+    else
+        return :(affine(w, x, b))
+    end
 end

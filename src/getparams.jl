@@ -21,9 +21,9 @@ end
         for f in fieldnames(theta)
             T = fieldtype(C, f)
             if T <: Variable
-                push!(args, GradVariable(getfield(theta, f)))
+                push!(args, GradVariable(getfield(theta, f).data))
             elseif T <: AbstractArray && eltype(T) <: Variable
-                push!(args, getfield(theta, f))
+                push!(args, map(x -> GradVariable(x.data), getfield(theta, f)))
             elseif T <: Component
                 push!(args, GradComponent(getfield(theta, f)))
             elseif T <: AbstractArray && eltype(T) <: Component

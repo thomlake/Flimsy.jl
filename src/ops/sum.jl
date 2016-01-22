@@ -1,12 +1,12 @@
 
-type ReverseSum{T<:Variable} <: ReverseOperation
+type ReverseSum{T<:GradVariable} <: ReverseOperation
     y::T
     x::T
 end
 
-call{T<:DataVariable}(rop::ReverseSum{T}) = nothing
+# call{T<:DataVariable}(rop::ReverseSum{T}) = nothing
 
-function call{T<:GradVariable}(rop::ReverseSum{T})
+function call(rop::ReverseSum{T})
     y = rop.y
     x = rop.x
     for i in eachindex(y)
@@ -33,23 +33,29 @@ function call{T<:GradVariable}(rop::ReverseColumnSum{T})
     return nothing
 end
 
-Base.sum{V<:Variable}(a::V, b::V) = V(a.data .+ b.data)
+Base.sum(a::Variable, b::Variable) = DataVariable(a.data .+ b.data)
 
-function Base.sum(stack::CallbackStack, a::GradVariable, b::GradVariable)
-    c = sum(a, b)
-    if size(a) == size(b)
-        push_callback!(stack, ReverseSum(c, a))
-        push_callback!(stack, ReverseSum(c, b))
-    elseif is_matrix(a) && is_column_vector(b)
-        push_callback!(stack, ReverseSum(c, a))
-        push_callback!(stack, ReverseColumnSum(c, b))
-    elseif is_matrix(b) && is_column_vector(a)
-        push_callback!(stack, ReverseSum(c, b))
-        push_callback!(stack, ReverseColumnSum(c, a))
+@generated function Base.sum{Ta<:Variable,Tb<:Variable}(stack::CallbackStack, a::Ta, b::Tb)
+    if Ta <: GradVariable || Tb <: GradVariable
+        quote
+            c = GradVariable(a.data .+ b.data)
+            if size(a) == size(b)
+                push_callback!(stack, ReverseSum(c, a))
+                push_callback!(stack, ReverseSum(c, b))
+            elseif is_matrix(a) && is_column_vector(b)
+                push_callback!(stack, ReverseSum(c, a))
+                push_callback!(stack, ReverseColumnSum(c, b))
+            elseif is_matrix(b) && is_column_vector(a)
+                push_callback!(stack, ReverseSum(c, b))
+                push_callback!(stack, ReverseColumnSum(c, a))
+            else
+                error("no sum for sizes a: $(size(a)), b: $(size(b))")
+            end
+            return c
+        end
     else
-        error("no sum for sizes a: $(size(a)), b: $(size(b))")
+        :(DataVariable(a.data .+ b.data))
     end
-    return c
 end
 
 # # -- Sum (arbitrary number of blocks) -- #
@@ -69,7 +75,7 @@ function Base.sum{V<:Variable}(stack::CallbackStack, xs::Vector{V})
     return y
 end
 
-Base.sum{V<:Variable}(x1::V, x2::V, xrest::V...) = sum([x1, x2, xrest...])
+Base.sum{V<:Variable}(x1::V, x2::V, x3::V, xrest::V...) = sum([x1, x2, x3, xrest...])
 
-Base.sum(stack::CallbackStack, x1::GradVariable, x2::GradVariable, xrest::GradVariable...) = sum(stack, [x1, x2, xrest...])
+Base.sum(stack::CallbackStack, x1::Variable, x2::Variable, x3::Variable, xrest::Variable...) = sum(stack, [x1, x2, x3, xrest...])
 

@@ -36,16 +36,19 @@ call{Ty<:DataVariable,Tw,Tx}(rop::ReverseLinear{Ty,Tw,Tx}) = nothing
     return Expr(:block, stmts...)
 end
 
-@generated function linear{Tw<:Variable,Tx<:Variable}(w::Tw, x::Tx)
-    if Tw <: GradVariable || Tx <: GradVariable
-        return :(GradVariable(w.data * x.data))
-    else
-        return :(DataVariable(w.data * x.data))
-    end
-end
+linear(w::Variable, x::Variable) = DataVariable(w.data * x.data)
 
-function linear(stack::CallbackStack, w::Variable, x::Variable)
-    y = linear(w, x)
-    push!(stack, ReverseLinear(y, w, x))
-    return y
+@generated function linear{Tw<:Variable,Tx<:Variable}(stack::CallbackStack, w::Tw, x::Tx)
+    stmts = Any[]
+    if Tw <: GradVariable || Tx <: GradVariable
+        s = quote
+            y = GradVariable(w.data * x.data)
+            push!(stack, ReverseLinear(y, w, x))
+        end
+        push!(stmts, s)
+    else
+        push!(stmts, :(y = DataVariable(w.data * x.data)))
+    end
+    push!(stmts, :(return y))
+    return Expr(:block, stmts...)
 end

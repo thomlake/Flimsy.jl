@@ -23,10 +23,16 @@ function sigmoid(x::AbstractArray)
     return y
 end
 
-sigmoid{V<:Variable}(x::V) = V(sigmoid(x.data))
+sigmoid(x::Variable) = DataVariable(sigmoid(x.data))
 
-function sigmoid(stack::CallbackStack, x::Variable)
-    y = sigmoid(x)
-    push_callback!(stack, ReverseSigmoid(y, x))
-    return y
+@generated function sigmoid{T<:Variable}(stack::CallbackStack, x::T)
+    if T <: GradVariable
+        return quote
+            y = GradVariable(sigmoid(x.data))
+            push_callback!(stack, ReverseSigmoid(y, x))
+            return y
+        end
+    else
+        return :(DataVariable(sigmoid(x.data)))
+    end
 end

@@ -18,10 +18,12 @@ function call{T<:GradVariable}(rop::ReverseDecat{T})
     return nothing
 end
 
-decat{V<:Variable}(x::V) = V[V(x.data[i,:]) for i = 1:size(x, 1)]
+decat(x::Variable) = DataVariable{eltype(x)}[DataVariable(x.data[i,:]) for i = 1:size(x, 1)]
 
-function decat(stack::CallbackStack, x::Variable)
-    ys = decat(x)
+function decat(stack::CallbackStack, x::GradVariable)
+    ys = GradVariable{eltype(x)}[GradVariable(x.data[i,:]) for i = 1:size(x, 1)]
     push_callback!(stack, ReverseDecat(ys, x))
     return ys
 end
+
+decat(stack::CallbackStack, x::DataVariable) = decat(x)

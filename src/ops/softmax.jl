@@ -41,10 +41,16 @@ function softmax(x::AbstractArray)
     return y
 end
 
-softmax{V<:Variable}(x::V) = V(softmax(x.data))
+softmax(x::Variable) = DataVariable(softmax(x.data))
 
-function softmax(stack::CallbackStack, x::Variable)
-    y = softmax(x)
-    push_callback!(stack, ReverseSoftmax(y, x))
-    return y
+@generated function softmax{T<:Variable}(stack::CallbackStack, x::T)
+    if T <: GradVariable
+        return quote
+            y = GradVariable(softmax(x.data))
+            push_callback!(stack, ReverseSoftmax(y, x))
+            return y
+        end
+    else
+        return :(DataVariable(softmax(x.data)))
+    end
 end

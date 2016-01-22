@@ -3,6 +3,7 @@
 
 using Flimsy
 using Flimsy.Components
+# using FastAnonymous
 using RDatasets
 using MLBase
 
@@ -12,17 +13,14 @@ function check()
     X = randn(n_feature, n_sample)
     Y = rand(1:n_labels, n_sample)
 
-    model = Model(
-        SoftmaxRegression,
+    params = SoftmaxRegression(
         w=rand(Normal(0, 0.01), n_labels, n_feature),
         b=zeros(n_labels),
     )
-    gcost = compile(:cost, model, Variable, Int, gradients=true)
-    cost = compile(:cost, model, Variable, Int, gradients=false)
-    # c = F.compile(cost, params, typeof(X), typeof(Y), gradients=false)
-    g = () -> gradient!(cost, params, GradInput(X), Y)
+    grads = GradComponent(params)
+    g = () -> gradient!(cost, params, Input(X), Y)
     c = () -> cost(params, Input(X), Y)
-    check_gradients(g, c, gparams)
+    check_gradients(g, c, grads)
 end
 
 
@@ -56,9 +54,9 @@ function demo()
     println("  number of samples       => ", n_sample)
     println("  number of train samples => ", n_train)
     println("  number of test samples  => ", n_test)
-
-    theta = LogisticRegression(n_labels, n_feature)
-    opt = optimizer(GradientDescent, theta, learning_rate=0.01)
+    params = LogisticRegression(n_labels, n_feature)
+    # theta = LogisticRegression(n_labels, n_feature)
+    opt = optimizer(GradientDescent, grads, learning_rate=0.01)
     progress = Progress(theta, patience=1, max_epochs=200)
 
     # Fit parameters

@@ -26,7 +26,7 @@ Base.size(x::Variable) = size(x.data)
 
 Base.size(x::Variable, d::Integer) = size(x.data, d)
 
-Base.eltype{V<:Variable}(::Type{V}) = eltype(V)
+Base.eltype{T}(::Type{GradVariable{T}}) = T
 
 Base.eltype{V<:Variable}(x::V) = eltype(V)
 

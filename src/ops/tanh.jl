@@ -1,12 +1,10 @@
 
-type ReverseTanh{T<:Variable} <: ReverseOperation
+type ReverseTanh{T<:GradVariable} <: ReverseOperation
     y::T
     x::T
 end
 
-call{T<:DataVariable}(rop::ReverseTanh{T}) = nothing
-
-function call{T<:GradVariable}(rop::ReverseTanh{T})
+function call(rop::ReverseTanh)
     y = rop.y
     x = rop.x
     for i in eachindex(x)
@@ -15,10 +13,12 @@ function call{T<:GradVariable}(rop::ReverseTanh{T})
     return nothing
 end
 
-Base.tanh{V<:Variable}(x::V) = V(tanh(x.data))
+Base.tanh(x::Variable)  = DataVariable(tanh(x.data))
+
+Base.tanh(stack::CallbackStack, x::DataVariable) = tanh(x)
 
 function Base.tanh(stack::CallbackStack, x::GradVariable)
-    y = tanh(x)
-    push_callback!(stack, ReverseTanh(y, x))
+    y = GradVariable(tanh(x.data))
+    push!(stack, ReverseTanh(y, x))
     return y
 end

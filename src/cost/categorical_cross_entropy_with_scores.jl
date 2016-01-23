@@ -48,36 +48,3 @@ function categorical_cross_entropy_with_scores{I<:Integer}(stack::CallbackStack,
     isfinite(nll) || throw(ErrorException("nll not finite ($nll)"))
     return avg ? nll / length(target) : nll
 end
-
-# function cat{T,M}(stack::BPStack, target::Integer, output::Variable{T,M,1}, eps::AbstractFloat=1e-20)
-#     pr_target = output.data[target] + eps
-#     output.grad[target] -= 1 / pr_target
-#     nll = -log(pr_target)
-#     isfinite(nll) || error("nll: $nll not finite")
-#     return nll
-# end
-
-# function cat{I<:Integer}(target::Vector{I}, output::Variable, eps::AbstractFloat=1e-20)
-#     @assert size(output, 2) == length(target)
-
-#     nll = 0.0
-#     for i = 1:size(output, 2)
-#         pr_target = output.data[target[i],i] + eps
-#         nll -= log(pr_target)
-#     end
-#     isfinite(nll) || error("nll: $nll not finite")
-#     return nll
-# end
-
-# function cat{I<:Integer}(stack::BPStack, target::Vector{I}, output::Variable, eps::AbstractFloat=1e-20)
-#     @assert size(output, 2) == length(target)
-
-#     nll = 0.0
-#     for i = 1:size(output, 2)
-#         pr_target = output.data[target[i],i] + eps
-#         output.grad[target[i],i] -= 1 / pr_target
-#         nll -= log(pr_target)
-#     end
-#     isfinite(nll) || error("nll: $nll not finite")
-#     return nll
-# end

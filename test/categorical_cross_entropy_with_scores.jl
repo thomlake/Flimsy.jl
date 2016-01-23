@@ -2,12 +2,22 @@ using Flimsy
 import Flimsy.Components: ValueComponent
 using Base.Test
 
-K = 4
-for k = 1:K
-    x = GradVariable(randn(K))
+function test_categorical_cross_entropy_with_scores()
+    K = 4
+    for k = 1:K
+        x = GradVariable(randn(K))
+        p = ValueComponent(x)
+        @component cost() = Cost.categorical_cross_entropy_with_scores(p.value, k)
+        grad = () -> gradient!(cost)
+        check_gradients(grad, cost, p, verbose=false)
+    end
+
+    n = 7
+    targets = rand(1:K, n)
+    x = GradVariable(randn(K, n))
     p = ValueComponent(x)
-    @component f() = Cost.categorical_cross_entropy_with_scores(p.value, k)
-    g = () -> gradient!(f)
-    c = () -> f()
-    check_gradients(g, c, p, verbose=false)
+    @component cost() = Cost.categorical_cross_entropy_with_scores(p.value, targets)
+    grad = () -> gradient!(cost)
+    check_gradients(grad, cost, p, verbose=false)
 end
+test_categorical_cross_entropy_with_scores()

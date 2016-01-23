@@ -19,35 +19,30 @@ function categorical_cross_entropy(stack::CallbackStack, output::GradVariable, t
     return nll
 end
 
-# function cat{T,M}(stack::BPStack, target::Integer, output::Variable{T,M,1}, eps::AbstractFloat=1e-20)
-#     pr_target = output.data[target] + eps
-#     output.grad[target] -= 1 / pr_target
-#     nll = -log(pr_target)
-#     isfinite(nll) || error("nll: $nll not finite")
-#     return nll
-# end
 
-# function cat{I<:Integer}(target::Vector{I}, output::Variable, eps::AbstractFloat=1e-20)
-#     @assert size(output, 2) == length(target)
+function categorical_cross_entropy{I<:Integer}(output::Variable, target::Vector{I}, eps::AbstractFloat=1e-20)
+    n = length(target)
+    size(output, 2) == n || throw(DimensionMismatch("output must be size Mx$n"))
 
-#     nll = 0.0
-#     for i = 1:size(output, 2)
-#         pr_target = output.data[target[i],i] + eps
-#         nll -= log(pr_target)
-#     end
-#     isfinite(nll) || error("nll: $nll not finite")
-#     return nll
-# end
+    nll = 0.0
+    for j = 1:n
+        pr_target = output.data[target[j],j] + eps
+        nll -= log(pr_target)
+    end
+    isfinite(nll) || error("nll: $nll not finite")
+    return nll
+end
 
-# function cat{I<:Integer}(stack::BPStack, target::Vector{I}, output::Variable, eps::AbstractFloat=1e-20)
-#     @assert size(output, 2) == length(target)
+function categorical_cross_entropy{I<:Integer}(stack::CallbackStack, output::GradVariable, target::Vector{I}, eps::AbstractFloat=1e-20)
+    n = length(target)
+    size(output, 2) == n || throw(DimensionMismatch("output must be size Mx$n"))
 
-#     nll = 0.0
-#     for i = 1:size(output, 2)
-#         pr_target = output.data[target[i],i] + eps
-#         output.grad[target[i],i] -= 1 / pr_target
-#         nll -= log(pr_target)
-#     end
-#     isfinite(nll) || error("nll: $nll not finite")
-#     return nll
-# end
+    nll = 0.0
+    for j = 1:n
+        pr_target = output.data[target[j],j] + eps
+        output.grad[target[j],j] -= 1 / pr_target
+        nll -= log(pr_target)
+    end
+    isfinite(nll) || error("nll: $nll not finite")
+    return nll
+end

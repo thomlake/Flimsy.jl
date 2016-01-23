@@ -1,7 +1,7 @@
 
-type ReverseConcat{T<:GradVariable} <: ReverseOperation
-    y::T
-    xs::Vector{T}
+type ReverseConcat{Ty<:GradVariable,Tx<:GradVariable} <: ReverseOperation
+    y::Ty
+    xs::Vector{Tx}
 end
 
 function call(rop::ReverseConcat)
@@ -9,9 +9,11 @@ function call(rop::ReverseConcat)
     xs = rop.xs
     offset = 0
     for k = 1:length(xs)
-        for j = 1:size(xs[k], 2)
-            for i = 1:size(xs[k], 1)
-                xs[k].grad[i,j] += y.grad[offset + i,j]
+        if isa(xs[k], GradVariable)
+            for j = 1:size(xs[k], 2)
+                for i = 1:size(xs[k], 1)
+                    xs[k].grad[i,j] += y.grad[offset + i,j]
+                end
             end
         end
         offset += size(xs[k], 1)

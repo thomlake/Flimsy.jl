@@ -1,31 +1,35 @@
 using Flimsy
 using Base.Test
 
-m, n = 4, 3
-w = GradVariable(randn(m, n))
-x = GradVariable(randn(n))
-b = GradVariable(randn(m))
+function test_affine()
+    for (m, n, k) in [(4, 3, 1), (5, 10, 7)]
+        for wtype in [DataVariable, GradVariable]
+            for xtype in [DataVariable, GradVariable]
+                for btype in [DataVariable, GradVariable]
+                    w, x, b = wtype(randn(m, n)), xtype(randn(n, k)), btype(randn(m))
+                    y = affine(w, x, b)
+                    @test isa(y, DataVariable)
+                    @test size(y) == (m, k)
+                    @test_approx_eq w.data * x.data .+ b.data y.data
 
-y = affine(w, x, b)
-@test size(y) == (m, 1)
-@test all((w.data * x.data + b.data) .== y.data)
-test_op_grad_mse(affine, w, x, b, wrt=[w, x, b])
+                    w, x, b = wtype(randn(m, n)), xtype(randn(n, k)), btype(randn(m))
+                    y = affine(CallbackStack(), w, x, b)
+                    @test isa(y, anygrads(wtype, xtype, btype) ? GradVariable : DataVariable)
+                    @test size(y) == (m, k)
+                    @test_approx_eq w.data * x.data .+ b.data y.data
 
-m, n, k = 5, 10, 7
-w = GradVariable(randn(m, n))
-x = GradVariable(randn(n, k))
-b = GradVariable(randn(m))
-y = affine(w, x, b)
-@test size(y) == (m, k)
-@test all((w.data * x.data .+ b.data) .== y.data)
-test_op_grad_mse(affine, w, x, b, wrt=[w, x, b])
+                    if anygrads(wtype, xtype, btype)
+                        w, x, b = wtype(randn(m, n)), xtype(randn(n, k)), btype(randn(m))
+                        wrt = []
+                        isa(w, GradVariable) && push!(wrt, w)
+                        isa(x, GradVariable) && push!(wrt, x)
+                        isa(b, GradVariable) && push!(wrt, b) 
+                        test_op_grad_mse(affine, w, x, b, wrt=wrt)
+                    end
 
-w = GradVariable(randn(m, n))
-x = GradVariable(randn(n, k))
-b = GradVariable(randn(m + 1))
-@test_throws OperationError affine(w, x, b)
-
-w = GradVariable(randn(m, n + 1))
-x = GradVariable(randn(n, k))
-b = GradVariable(randn(m))
-@test_throws DimensionMismatch affine(w, x, b)
+                end
+            end
+        end
+    end
+end
+test_affine()

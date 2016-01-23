@@ -1,15 +1,20 @@
 using Flimsy
 using Base.Test
 
+function test_identity()
+    for sz in [(1, 3), (3, 1), (5, 6)]
+        for typ in [DataVariable, GradVariable]
+            x = typ(randn(sz))
+            y = identity(x)
+            @test isa(y, typ)
+            @test size(y) == sz
+            @test_approx_eq x.data y.data
 
-m, n = 6, 1
-x = GradVariable(randn(m))
-y = identity(x)
-@test all(x.data .== y.data)
-test_op_grad_mse(identity, x, wrt=x)
-
-m, n = 3, 9
-x = GradVariable(randn(m, n))
-y = identity(x)
-@test all(x.data .== y.data)
-test_op_grad_mse(identity, x, wrt=x)
+            if typ <: GradVariable
+                x = typ(randn(sz))
+                test_op_grad_mse(identity, x, wrt=x)
+            end
+        end
+    end
+end
+test_identity()

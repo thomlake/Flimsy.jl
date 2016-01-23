@@ -3,26 +3,25 @@
 
 using Flimsy
 using Flimsy.Components
-# using FastAnonymous
-using RDatasets
-using MLBase
+import Flimsy.Extras: zscore
+import RDatasets: dataset
+import MLBase: labelmap, labelencode
+
+Params(n_labels, n_features) = LogisticRegression(
+    w=rand(Normal(0, 0.01), n_labels, n_features),
+    b=zeros(n_labels),
+)
 
 function check()
     n_sample = 2
-    n_labels, n_feature = 3, 10
-    X = randn(n_feature, n_sample)
+    n_labels, n_features = 3, 10
+    X = randn(n_features, n_sample)
     Y = rand(1:n_labels, n_sample)
-
-    params = SoftmaxRegression(
-        w=rand(Normal(0, 0.01), n_labels, n_feature),
-        b=zeros(n_labels),
-    )
-    grads = GradComponent(params)
+    params = Params(n_labels, n_features)
     g = () -> gradient!(cost, params, Input(X), Y)
     c = () -> cost(params, Input(X), Y)
-    check_gradients(g, c, grads)
+    check_gradients(g, c, params)
 end
-
 
 function demo()
     srand(123)
@@ -31,13 +30,13 @@ function demo()
     response = [:Species]
     explanatory = [:SepalLength, :SepalWidth, :PetalLength, :PetalWidth]
 
-    features = Flimsy.Extras.zscore(convert(Array{Float64}, df[:, explanatory]).')
+    features = zscore(convert(Array{Float64}, df[:, explanatory]).')
     labelstrings = vec(convert(Array{ASCIIString}, df[:, response]))
     lmap = labelmap(labelstrings)
     labels = labelencode(lmap, labelstrings)
 
     n_sample = size(features, 2)
-    n_feature = length(explanatory)
+    n_features = length(explanatory)
     n_labels = length(lmap)
 
     trainmask = rand(n_sample) .< 0.75
@@ -49,27 +48,26 @@ function demo()
     n_test = length(Y_te)
 
     println("[Info]")
-    println("  number of features      => ", n_feature)
+    println("  number of features      => ", n_features)
     println("  number of labels        => ", n_labels)
     println("  number of samples       => ", n_sample)
     println("  number of train samples => ", n_train)
     println("  number of test samples  => ", n_test)
-    params = LogisticRegression(n_labels, n_feature)
-    # theta = LogisticRegression(n_labels, n_feature)
-    opt = optimizer(GradientDescent, grads, learning_rate=0.01)
-    progress = Progress(theta, patience=1, max_epochs=200)
+    params = Params(n_labels, n_features)
+    opt = optimizer(GradientDescent, params, learning_rate=0.01)
+    progress = Flimsy.Progress(params, patience=1, max_epochs=200)
 
     # Fit parameters
     start(progress)
     while !quit(progress)
-        nll = gradient!(cost, theta, X_tr, Y_tr)
-        update!(opt, theta)
+        nll = gradient!(cost, params, Input(X_tr), Y_tr)
+        update!(opt, params)
         step(progress, nll)
     end
     done(progress)
 
-    Yhat_tr = predict(theta, X_tr)
-    Yhat_te = predict(theta, X_te)
+    Yhat_tr = predict(params, Input(X_tr))
+    Yhat_te = predict(params, Input(X_te))
 
     println("[Results]")
     println("  number of epochs => ", progress.epoch)
@@ -80,4 +78,4 @@ function demo()
 end
 
 check()
-# demo()
+demo()

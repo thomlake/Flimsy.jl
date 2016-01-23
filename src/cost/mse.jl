@@ -6,7 +6,7 @@ function mse end
 
 # 1x1
 function mse(stack::CallbackStack, output::GradVariable, target::Real)
-    is_scalar(output) || error("mse: output must be 1x1 for scalar target, got $(size(output))")
+    is_scalar(output) || throw(DimensionMismatch("mse: output must be 1x1 for scalar target, got $(size(output))"))
     delta = output.data[1] - target
     output.grad[1] += delta
     sse = delta * delta
@@ -14,7 +14,7 @@ function mse(stack::CallbackStack, output::GradVariable, target::Real)
 end
 
 function mse(output::Variable, target::Real)
-    is_scalar(output) || error("mse: output must be 1x1 for scalar target, got $(size(output))")
+    is_scalar(output) || throw(DimensionMismatch("mse: output must be 1x1 for scalar target, got $(size(output))"))
     delta = output.data[1] - target
     sse = delta * delta
     return 0.5 * sse
@@ -22,7 +22,7 @@ end
 
 # Mx1
 function mse(stack::CallbackStack, output::Variable, target::AbstractVector)
-    is_column_vector(output) || error("mse: output must be Mx1 for vector target, got $(size(output))")
+    is_column_vector(output) || throw(DimensionMismatch("mse: output must be Mx1 for vector target, got $(size(output))"))
     sse = 0
     for i in eachindex(target)
         delta = output.data[i] - target[i]
@@ -33,7 +33,7 @@ function mse(stack::CallbackStack, output::Variable, target::AbstractVector)
 end
 
 function mse(output::Variable, target::AbstractVector)
-    is_column_vector(output) || error("mse: output must be Mx1 for vector target, got $(size(output))")
+    is_column_vector(output) || throw(DimensionMismatch("mse: output must be Mx1 for vector target, got $(size(output))"))
     sse = 0
     for i in eachindex(target)
         delta = output.data[i] - target[i]
@@ -44,7 +44,7 @@ end
 
 # MxN
 function mse(stack::CallbackStack, output::Variable, target::AbstractMatrix)
-    size(output) == size(target) || error("mse: output and target sizes must match, got $(size(output)) and $(size(target))")
+    size(output) == size(target) || throw(DimensionMismatch("mse: output and target sizes must match, got $(size(output)) and $(size(target))"))
     sse = 0
     for i in eachindex(target)
         delta = output.data[i] - target[i]
@@ -55,7 +55,7 @@ function mse(stack::CallbackStack, output::Variable, target::AbstractMatrix)
 end
 
 function mse(output::Variable, target::AbstractMatrix)
-    size(output) == size(target) || error("mse: output and target sizes must match, got $(size(output)) and $(size(target))")
+    size(output) == size(target) || throw(DimensionMismatch("mse: output and target sizes must match, got $(size(output)) and $(size(target))"))
     sse = 0
     for i in eachindex(target)
         delta = output.data[i] - target[i]

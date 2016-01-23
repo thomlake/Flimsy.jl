@@ -4,13 +4,16 @@ module Components
 using .. Flimsy
 
 export score,
+       predict,
        probs,
        cost
 
 export ValueComponent,
-       SoftmaxRegression
+       LinearModel,
+       LinearRegression,
+       LogisticRegression
 
 include("components/value_component.jl")
-include("components/softmax_regression.jl")
+include("components/linear_model.jl")
 
 end

@@ -24,6 +24,9 @@ export Variable,
        is_row_vector,
        is_scalar
 
+export argmax,
+       argmaxneq
+
 export getparams,
        getnamedparams
 
@@ -32,6 +35,18 @@ export CallbackStack,
        backprop!,
        gradient!
 
+export glorot,
+       orthonormal
+
+export GradientDescent,
+       Momentum,
+       Nesterov,
+       RMSProp,
+       AdaDelta,
+       Adam,
+       update!,
+       optimizer
+
 export check_gradients
 
 export Cost
@@ -39,16 +54,23 @@ export Cost
 export Components
 
 abstract Component{T}
+
 abstract ReverseOperation
 
 include("component_macro.jl")
 include("variable.jl")
+include("component_constructor.jl")
+include("argmax.jl")
 include("getparams.jl")
 include("callback_stack.jl")
 include("ops.jl")
+include("initialization.jl")
+include("fit.jl")
 include("check_gradients.jl")
 include("cost.jl")
 include("components.jl")
+include("extras.jl")
+include("progress.jl")
 include("demo.jl")
 
 

@@ -1,4 +1,4 @@
 
-type ValueComponent{V<:Variable} <: Component
+immutable ValueComponent{V<:Variable} <: Component
     value::V
 end

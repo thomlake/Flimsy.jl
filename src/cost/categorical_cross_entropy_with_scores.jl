@@ -1,4 +1,13 @@
-"""Categorical Cross Entropy from unnormalized scores.
+"""
+**Categorical Cross Entropy From Scores**
+
+Compute categorical cross entropy from scores by first normalizing.
+Equivalent to `categorical_cross_entropy(softmax(scores))` but more efficient.
+Categorical cross entropy is equivalent to the negative log likelihood of a categorical random variable.
+
+`categorical_cross_entropy_with_scores(output::Variable, target::Union{Integer, Vector{Integer}})`
+
+`categorical_cross_entropy_with_scores(output::Variable, target::Union{Integer, Vector{Integer}}, weight::Real)`
 """
 function categorical_cross_entropy_with_scores end
 

@@ -1,6 +1,10 @@
-"""Mean squared error function. MSE is proportional to the negative log likelihood of a Gaussian random variable.
+"""
+**Mean squared Error**
+
+MSE is proportional to the negative log likelihood of a Gaussian random variable.
 
 mse(output::Variable, target::Union{Real,AbstractVector,AbstractMatrix})
+mse(output::Variable, target::Union{Real,AbstractVector,AbstractMatrix}, weight::Real)
 """
 function mse end
 

@@ -1,4 +1,14 @@
-"""Categorical Cross Entropy, i.e., negative log likelihood of a categorical random variable.
+"""
+**Categorical Cross Entropy**
+
+If `target` is an integer `output` should be a vector which sums to 1.
+If `target` is a vector of integers `output` should be a matrix with columns that sum to 1.
+Sum contraints are *not* checked at runtime.
+Categorical cross entropy is equivalent to the negative log likelihood of a categorical random variable.
+
+`categorical_cross_entropy(output::Variable, target::Union{Integer, Vector{Integer}})`
+
+`categorical_cross_entropy(output::Variable, target::Union{Integer, Vector{Integer}}, weight::Real)`
 """
 function categorical_cross_entropy end
 

@@ -90,8 +90,8 @@ function check()
     n_samples, n_classes, n_features = 5, 3, 20
     X, Y = rand(Flimsy.Demo.MoG(n_classes, n_features), n_samples)
     θ = Params(n_classes, n_features)
-    g() = gradient!(cost, θ, Input(X), Y)
-    c() = cost(θ, Input(X), Y)
+    g = () -> gradient!(cost, θ, Input(X), Y)
+    c = () -> cost(θ, Input(X), Y)
     check_gradients(g, c, θ)
 end
 

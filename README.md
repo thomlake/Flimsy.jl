@@ -1,5 +1,5 @@
 # DANGER! 
-This recently underwent a significant refactor. 
+This package recently underwent a significant refactor. 
 Some links in this README are currently broken, but most things are working and stable now.
 
 # Flimsy.jl

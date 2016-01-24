@@ -47,29 +47,29 @@ An example Logistic Regression implementation is given below. This and several o
 ```julia
 using Flimsy
 
-# model parameters
-immutable Params{T,M,N} <: Component
-    w::Variable{T,M,N}
-    b::Variable{T,M,1}
+# model definition
+immutable Params{V<:Variable} <: Component{V}
+    w::V
+    b::V
 end
 
 # default constructor
-Params(m, n) = Params(Variable(randn(m, n)), Variable(zeros(m)))
+Params(m, n) = Params(w=randn(m, n), b=zeros(m))
 
 # computation the model performs
-@flimsy score(θ::Params, x::Variable) = affine(θ.w, x, θ.b)
-@flimsy predict(θ::Params, x::Variable) = Flimsy.Extras.argmax(score(θ, x))
-@flimsy probs(θ::Params, x::Variable) = softmax(score(θ, x))
-@flimsy cost(θ::Params, x::Variable, y) = Flimsy.Cost.cat(y, probs(θ, x))
+@component score(θ::Params, x::Variable) = affine(θ.w, x, θ.b)
+@component predict(θ::Params, x::Variable) = argmax(score(θ, x))
+@component probs(θ::Params, x::Variable) = softmax(score(θ, x))
+@component cost(θ::Params, x::Variable, y) = Cost.categorical_cross_entropy_with_scores(score(θ, x), y)
 
-# check gradients
+# check gradients using finite differences
 function check()
     n_samples, n_classes, n_features = 5, 3, 20
     X, Y = rand(Flimsy.Demo.MoG(n_classes, n_features), n_samples)
     θ = Params(n_classes, n_features)
-    g() = gradient!(cost, θ, X, Y)
-    c() = cost(θ, X, Y)
-    gradcheck(g, c, θ)
+    g() = gradient!(cost, θ, Input(X), Y)
+    c() = cost(θ, Input(X), Y)
+    check_gradients(g, c, θ)
 end
 
 # train and test
@@ -83,12 +83,12 @@ function main()
     θ = Params(n_classes, n_features)
     opt = optimizer(RMSProp, θ, learning_rate=0.01, decay=0.9)
     for i = 1:100
-        nll = gradient!(cost, θ, X_train, Y_train)
+        nll = gradient!(cost, θ, Input(X_train), Y_train)
         update!(opt, θ)
         i % 10 == 0 && println("epoch => $i, nll => $nll")
     end
-    println("train error => ", sum(Y_train .!= predict(θ, X_train)) / n_train)
-    println("test error  => ", sum(Y_test .!= predict(θ, X_test)) / n_test)
+    println("train error => ", sum(Y_train .!= predict(θ, Input(X_train))) / n_train)
+    println("test error  => ", sum(Y_test .!= predict(θ, Input(X_test))) / n_test)
 end
 
 any(f -> f in ARGS, ("-c", "--check")) && check()

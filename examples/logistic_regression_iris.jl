@@ -25,7 +25,7 @@ end
 
 function demo()
     srand(123)
-
+    # Load and preprocess data
     df = dataset("datasets", "iris")
     response = [:Species]
     explanatory = [:SepalLength, :SepalWidth, :PetalLength, :PetalWidth]
@@ -53,29 +53,33 @@ function demo()
     println("  number of samples       => ", n_sample)
     println("  number of train samples => ", n_train)
     println("  number of test samples  => ", n_test)
+
+    # Setup parameters, optimizer, and progress
     params = Params(n_labels, n_features)
     opt = optimizer(GradientDescent, params, learning_rate=0.01)
-    progress = Flimsy.Progress(params, patience=1, max_epochs=200)
-
+    progress = Progress(params, patience=1, max_epochs=200)
+    
     # Fit parameters
     start(progress)
-    while !quit(progress)
+    while !converged(progress)
         nll = gradient!(cost, params, Input(X_tr), Y_tr)
         update!(opt, params)
-        step(progress, nll)
+        progress(nll)
     end
-    done(progress)
+    stop(progress)
 
-    Yhat_tr = predict(params, Input(X_tr))
-    Yhat_te = predict(params, Input(X_te))
+    # Get the best parameter values
+    best_params = best(progress)
+    Yhat_tr = predict(best_params, Input(X_tr))
+    Yhat_te = predict(best_params, Input(X_te))
 
     println("[Results]")
-    println("  number of epochs => ", progress.epoch)
+    println("  number of epochs => ", epoch(progress))
     println("  cpu time         => ", round(time(progress), 2), " seconds")
-    println("  final train nll  => ", progress.current_value)
+    println("  final train nll  => ", criteria(progress))
     println("  train error      => ", sum(Y_tr .!= Yhat_tr) / n_train)
     println("  test error       => ", sum(Y_te .!= Yhat_te) / n_test)
 end
 
-check()
+("-c" in ARGS || "--check" in ARGS) && check()
 demo()

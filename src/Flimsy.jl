@@ -53,6 +53,13 @@ export Cost
 
 export Components
 
+export Progress,
+       converged,
+       stop,
+       criteria,
+       epoch,
+       best
+
 abstract Component{T}
 
 abstract ReverseOperation

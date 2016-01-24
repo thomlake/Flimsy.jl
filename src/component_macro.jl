@@ -88,8 +88,18 @@ function insert_stack(expr::Expr, blacklist::Vector)
     # Special cases: line numbers and directives
     if head == :line
         return expr, blacklist
-    elseif head == :macrocall && expr.args[1] == symbol("@blacklist")
-        return nothing, [blacklist..., expr.args[2:end]...]
+    elseif head == :macrocall && args[1] == symbol("@blacklist")
+        if all(a -> isa(a, Symbol), args[2:end])
+            return nothing, [blacklist..., args[2:end]...]
+        else
+            throw(ComponentParseError("Malformed @blacklist directive: $args"))
+        end
+    elseif head == :macrocall && args[1] == symbol("@similar_variable_type")
+        if length(args) == 3 && isa(args[2], Symbol) && isa(args[3], Symbol)
+            return :($(args[2]) = GradVariable{eltype($(args[3]))}), blacklist
+        else
+            throw(ComponentParseError("Malformed @vartype directive: $args"))
+        end
     end
 
     if head == :call
@@ -125,6 +135,12 @@ function remove_directives(expr::Expr)
 
     if head == :macrocall && expr.args[1] == symbol("@blacklist")
         return nothing
+    elseif head == :macrocall && args[1] == symbol("@similar_variable_type")
+        if length(args) == 3 && isa(args[2], Symbol) && isa(args[3], Symbol)
+            return :($(args[2]) = DataVariable{eltype($(args[3]))})
+        else
+            throw(ComponentParseError("Malformed @vartype directive: $args"))
+        end
     end
 
     for arg in args

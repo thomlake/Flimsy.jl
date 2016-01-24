@@ -71,7 +71,7 @@ function fit()
 
     params = Params(n_out, n_hid, n_in)
     opt = optimizer(GradientDescent, params, learning_rate=0.05, clip=5.0, clipping_type=:scale)
-
+    progress
     indices = collect(1:n_train)
     tic()
     for epoch = 1:500

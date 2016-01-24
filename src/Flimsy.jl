@@ -53,10 +53,15 @@ export Cost
 
 export Components
 
-export Progress,
+export ExternalEvaluation,
+       FunctionEvaluation,
+       NoImprovement,
+       Patience,
+       Progress,
        converged,
-       stop,
-       criteria,
+       timer_start,
+       timer_stop,
+       evaluate,
        epoch,
        best
 

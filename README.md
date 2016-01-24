@@ -1,4 +1,6 @@
-# DANGER! This package is in a state of flux and is currently broken.
+# DANGER! 
+This recently underwent a significant refactor. 
+Some links in this README are currently broken, but most things are working and stable now.
 
 # Flimsy.jl
 Flimsy.jl is a Julia package for expressing and training a rich class of machine learning 

@@ -68,13 +68,21 @@ function fit()
     n_train = 20
     xortask = XORTask(20)
     D = collect(zip(rand(xortask, n_train)...))
+    indices = collect(1:n_train)
 
     params = Params(n_out, n_hid, n_in)
     opt = optimizer(GradientDescent, params, learning_rate=0.05, clip=5.0, clipping_type=:scale)
-    progress
-    indices = collect(1:n_train)
-    tic()
-    for epoch = 1:500
+
+    fe = FunctionEvaluation(; minimize=true) do
+        errors = 0
+        for (x, y) in D
+            errors += sequence_error_count(predict(params, map(Input, x)), y)
+        end
+        return errors
+    end
+    progress = Progress(params, fe, IsEqual(0), max_epochs=500, frequency=10)
+    
+    while !converged(progress)
         shuffle!(indices)
         nll = 0.0
         for i in indices
@@ -82,17 +90,8 @@ function fit()
             nll += gradient!(cost, params, map(Input, x), y)
             update!(opt, params)
         end
-        epoch += 1
-        if epoch % 10 == 0
-            errors = 0
-            for (x, y) in D
-                errors += sequence_error_count(predict(params, map(Input, x)), y)
-            end
-            println("[$epoch] errors: $errors, cost: $nll")
-            errors == 0 && break
-        end
+        progress() && println(progress)
     end
-    toc()
 end
 
 check()

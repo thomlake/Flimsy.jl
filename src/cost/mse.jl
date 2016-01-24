@@ -4,7 +4,16 @@ mse(output::Variable, target::Union{Real,AbstractVector,AbstractMatrix})
 """
 function mse end
 
-# 1x1
+# -------- #
+# 1x1 Real #
+# -------- #
+function mse(output::Variable, target::Real)
+    is_scalar(output) || throw(DimensionMismatch("mse: output must be 1x1 for scalar target, got $(size(output))"))
+    delta = output.data[1] - target
+    sse = delta * delta
+    return 0.5 * sse
+end
+
 function mse(stack::CallbackStack, output::GradVariable, target::Real)
     is_scalar(output) || throw(DimensionMismatch("mse: output must be 1x1 for scalar target, got $(size(output))"))
     delta = output.data[1] - target
@@ -13,14 +22,30 @@ function mse(stack::CallbackStack, output::GradVariable, target::Real)
     return 0.5 * sse
 end
 
-function mse(output::Variable, target::Real)
+mse(output::Variable, target::Real, weight::Real) = weight * mse(output, target)
+
+function mse(stack::CallbackStack, output::GradVariable, target::Real, weight::Real)
     is_scalar(output) || throw(DimensionMismatch("mse: output must be 1x1 for scalar target, got $(size(output))"))
     delta = output.data[1] - target
+    output.grad[1] += weight * delta
     sse = delta * delta
+    return 0.5 * weight * sse
+end
+
+
+# ---------------- #
+# Mx1 Vector{Real} #
+# ---------------- #
+function mse(output::Variable, target::AbstractVector)
+    is_column_vector(output) || throw(DimensionMismatch("mse: output must be Mx1 for vector target, got $(size(output))"))
+    sse = 0
+    for i in eachindex(target)
+        delta = output.data[i] - target[i]
+        sse += delta * delta
+    end
     return 0.5 * sse
 end
 
-# Mx1
 function mse(stack::CallbackStack, output::Variable, target::AbstractVector)
     is_column_vector(output) || throw(DimensionMismatch("mse: output must be Mx1 for vector target, got $(size(output))"))
     sse = 0
@@ -32,8 +57,25 @@ function mse(stack::CallbackStack, output::Variable, target::AbstractVector)
     return 0.5 * sse
 end
 
-function mse(output::Variable, target::AbstractVector)
+mse(output::Variable, target::AbstractVector, weight::Real) = weight * mse(output, target)
+
+function mse(stack::CallbackStack, output::Variable, target::AbstractVector, weight::Real)
     is_column_vector(output) || throw(DimensionMismatch("mse: output must be Mx1 for vector target, got $(size(output))"))
+    sse = 0
+    for i in eachindex(target)
+        delta = output.data[i] - target[i]
+        output.grad[i] += weight * delta
+        sse += delta * delta
+    end
+    return 0.5 * weight * sse
+end
+
+
+# ---------------- #
+# Mx1 Matrix{Real} #
+# ---------------- #
+function mse(output::Variable, target::AbstractMatrix)
+    size(output) == size(target) || throw(DimensionMismatch("mse: output and target sizes must match, got $(size(output)) and $(size(target))"))
     sse = 0
     for i in eachindex(target)
         delta = output.data[i] - target[i]
@@ -42,7 +84,6 @@ function mse(output::Variable, target::AbstractVector)
     return 0.5 * sse
 end
 
-# MxN
 function mse(stack::CallbackStack, output::Variable, target::AbstractMatrix)
     size(output) == size(target) || throw(DimensionMismatch("mse: output and target sizes must match, got $(size(output)) and $(size(target))"))
     sse = 0
@@ -54,15 +95,19 @@ function mse(stack::CallbackStack, output::Variable, target::AbstractMatrix)
     return 0.5 * sse
 end
 
-function mse(output::Variable, target::AbstractMatrix)
+mse(output::Variable, target::AbstractMatrix, weight::Real) = weight * mse(output, target)
+
+function mse(stack::CallbackStack, output::Variable, target::AbstractMatrix, weight::Real)
     size(output) == size(target) || throw(DimensionMismatch("mse: output and target sizes must match, got $(size(output)) and $(size(target))"))
     sse = 0
     for i in eachindex(target)
         delta = output.data[i] - target[i]
+        output.grad[i] += weight * delta
         sse += delta * delta
     end
-    return 0.5 * sse
+    return 0.5 * weight * sse
 end
+
 
 # # Bernoulli negative log likelihood loss function
 # function bern{T,M,N}(target::AbstractArray{Bool}, output::Variable{T,M,N}, eps::AbstractFloat=1e-20)

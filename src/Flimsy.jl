@@ -56,6 +56,7 @@ export Components
 export ExternalEvaluation,
        FunctionEvaluation,
        NoImprovement,
+       IsEqual,
        Patience,
        Progress,
        converged,

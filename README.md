@@ -26,8 +26,8 @@ can be easily expressed using Flimsy.jl
 Flimsy.jl is primarily an experiment in interface design for neural network centric machine learning libraries. 
 It aims to overcome what I see as the biggest interface drawbacks of popular libraries such as 
 [Theano](http://deeplearning.net/software/theano/), 
-[Torch](http://torch.ch/), 
-and [TensorFlow](https://www.tensorflow.org/).<br>
+[Torch](http://torch.ch/), and 
+[TensorFlow](https://www.tensorflow.org/).<br>
 **N.B.** I'm much less familiar with the other libararies listed above than Theano, 
 which I have worked with extensively for several years. 
 As such the below criticism may or may not be applicable to all the libraries listed above.

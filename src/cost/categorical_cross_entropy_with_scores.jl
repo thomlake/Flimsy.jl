@@ -1,5 +1,5 @@
 """
-**Categorical Cross Entropy From Scores**
+**Categorical Cross Entropy With Scores**
 
 Compute categorical cross entropy from scores by first normalizing.
 Equivalent to `categorical_cross_entropy(softmax(scores))` but more efficient.

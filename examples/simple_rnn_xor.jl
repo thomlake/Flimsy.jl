@@ -7,7 +7,7 @@ import Flimsy.Components: cost, predict
 import Flimsy.Demo: XORTask
 
 immutable Params{T} <: Component{T}
-    clf::LogisticRegression{T}
+    clf::SoftmaxRegression{T}
     rnn::SimpleRecurrent{T}
 end
 
@@ -23,7 +23,7 @@ end
 end
 
 Params(n_out::Int, n_hid::Int, n_in::Int) = Params(
-    clf=LogisticRegression(
+    clf=SoftmaxRegression(
         w=rand(Normal(0, 0.01), n_out, n_hid),
         b=zeros(n_out),
     ),
@@ -94,5 +94,5 @@ function fit()
     end
 end
 
-check()
+("-c" in ARGS || "--check" in ARGS) && check()
 fit()

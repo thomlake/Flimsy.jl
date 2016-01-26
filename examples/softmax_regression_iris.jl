@@ -1,5 +1,5 @@
 # Flimsy.jl
-# Logistic Regression
+# Softmax/Logistic Regression
 
 using Flimsy
 using Flimsy.Components
@@ -7,7 +7,7 @@ import Flimsy.Extras: zscore
 import RDatasets: dataset
 import MLBase: labelmap, labelencode
 
-Params(n_labels, n_features) = LogisticRegression(
+Params(n_labels, n_features) = SoftmaxRegression(
     w=rand(Normal(0, 0.01), n_labels, n_features),
     b=zeros(n_labels),
 )

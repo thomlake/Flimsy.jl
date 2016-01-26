@@ -113,54 +113,6 @@ function mse(stack::CallbackStack, output::Variable, target::AbstractMatrix, wei
 end
 
 
-# # Bernoulli negative log likelihood loss function
-# function bern{T,M,N}(target::AbstractArray{Bool}, output::Variable{T,M,N}, eps::AbstractFloat=1e-20)
-#     @assert size(target) == (M, N)
-
-#     nll = 0.0
-#     for i in eachindex(target)
-#         pr_target = target[i] ? output.data[i] : 1 - output.data[i]
-#         pr_target = max(eps, pr_target)
-#         nll -= log(pr_target)
-#     end
-#     isfinite(nll) || error("nll: $nll not finite")
-#     return nll
-# end
-
-# function bern{T,M,N}(stack::BPStack, target::AbstractArray{Bool}, output::Variable{T,M,N}, eps::AbstractFloat=1e-20)
-#     @assert size(target) == (M, N)
-#     nll = 0.0
-#     for i in eachindex(target)
-#         pr_target = if target[i]
-#             p = output.data[i]
-#             p = max(eps, p)
-#             output.grad[i] -= 1 / p
-#             p
-#         else
-#             p = 1 - output.data[i]
-#             p = max(eps, p)
-#             output.grad[i] += 1 / p
-#             p
-#         end
-#         nll -= log(pr_target)
-#     end
-#     isfinite(nll) || error("nll: $nll not finite")
-#     return nll
-# end
-
-# bern{T}(target::Bool, output::Variable{T,1,1}, eps=AbstractFloat=1e-20) = bern(fill(target, 1, 1), output, eps)
-# bern{T}(stack::BPStack, target::Bool, output::Variable{T,1,1}, eps=AbstractFloat=1e-20) = bern(stack, fill(target, 1, 1), output, eps)
-
-# bern{T}(target::AbstractVector{Bool}, output::Variable{T,1,1}, eps=AbstractFloat=1e-20) = bern(reshape(target, 1, 1), output, eps)
-# bern{T}(stack::BPStack, target::AbstractVector{Bool}, output::Variable{T,1,1}, eps=AbstractFloat=1e-20) = bern(stack, reshape(target, 1, 1), output, eps)
-
-# bern{T,M}(target::AbstractVector{Bool}, output::Variable{T,M,1}, eps=AbstractFloat=1e-20) = bern(reshape(target, M, 1), output, eps)
-# bern{T,M}(stack::BPStack, target::AbstractVector{Bool}, output::Variable{T,M,1}, eps=AbstractFloat=1e-20) = bern(stack, reshape(target, M, 1), output, eps)
-
-# bern{T,N}(target::AbstractVector{Bool}, output::Variable{T,1,N}, eps=AbstractFloat=1e-20) = bern(reshape(target, 1, N), output, eps)
-# bern{T,N}(stack::BPStack, target::AbstractVector{Bool}, output::Variable{T,1,N}, eps=AbstractFloat=1e-20) = bern(stack, reshape(target, 1, N), output, eps)
-
-
 # # Max Margin loss
 # function margin{T,M}(target::Integer, output::Variable{T,M,1}, m::Real=1)
 #     k = Flimsy.Extras.argmaxneq(output, [target])

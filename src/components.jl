@@ -15,7 +15,9 @@ export ValueComponent
 
 export LinearModel,
        LinearRegression,
-       LogisticRegression
+       SoftmaxRegression,
+       SigmoidRegression
+
 
 export SimpleRecurrent
 

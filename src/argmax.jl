@@ -1,5 +1,5 @@
 
-argmax(x::Vector) = indmax(x)
+argmax(x::Vector) = [indmax(x)]
 
 function argmax(x::Matrix)
     n_rows, n_cols = size(x)

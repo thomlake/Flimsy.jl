@@ -18,7 +18,8 @@ export LinearModel,
        SoftmaxRegression,
        SigmoidRegression,
        SimpleRecurrent,
-       GatedRecurrent
+       GatedRecurrent,
+       LSTM
 
 abstract RecurrentComponent{T} <: Component{T}
 
@@ -27,5 +28,6 @@ include("components/value_component.jl")
 include("components/linear_model.jl")
 include("components/simple_recurrent.jl")
 include("components/gated_recurrent.jl")
+include("components/lstm.jl")
 
 end

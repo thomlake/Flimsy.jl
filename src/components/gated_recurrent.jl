@@ -26,7 +26,7 @@ GatedRecurrent(m::Int, n::Int) = GatedRecurrent(
 )
 
 
-@component function Base.step(params::GatedRecurrent, x::Variable, htm1)
+@component function Base.step(params::GatedRecurrent, x::Variable, htm1::Variable)
     r = sigmoid(plus(linear(params.wr, x), linear(params.ur, htm1), params.br))
     z = sigmoid(plus(linear(params.wz, x), linear(params.uz, htm1), params.bz))
     c = tanh(plus(linear(params.wc, x), mult(r, linear(params.uc, htm1)), params.bc))

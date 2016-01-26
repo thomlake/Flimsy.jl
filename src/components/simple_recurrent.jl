@@ -5,6 +5,13 @@ immutable SimpleRecurrent{V<:Variable} <: RecurrentComponent{V}
     u::V
     b::V
     h0::V
+    function SimpleRecurrent(f, w, u, b, h0)
+        m, n = size(w)
+        size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
+        size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
+        size(h0) == (m, 1) || throw(DimensionMismatch("Bad size(h0) == $(size(h0)) != ($m, 1)"))
+        return new(f, w, u, b, h0)
+    end
 end
 
 SimpleRecurrent(f::Function, m::Int, n::Int) = SimpleRecurrent(

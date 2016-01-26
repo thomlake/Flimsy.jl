@@ -72,7 +72,7 @@ abstract ReverseOperation
 
 include("component_macro.jl")
 include("variable.jl")
-include("component_constructor.jl")
+# include("component_constructor.jl")
 include("argmax.jl")
 include("getparams.jl")
 include("callback_stack.jl")

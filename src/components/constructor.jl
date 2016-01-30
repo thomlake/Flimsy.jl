@@ -10,6 +10,8 @@ function call{T<:Component}(::Type{T}; kwargs...)
             push!(args, typeof(value) <: Variable ? value : GradVariable(value))
         elseif ftype <: AbstractArray && eltype(ftype) <: Variable
             push!(args, eltype(value) <: Variable ? value : map(GradVariable, value))
+        elseif ftype <: AbstractArray && length(ftype.parameters) > 0 && ftype.parameters[1].ub <: Variable
+            push!(args, eltype(value) <: Variable ? value : map(GradVariable, value))
         else
             push!(args, value)
         end

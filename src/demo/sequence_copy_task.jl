@@ -18,26 +18,30 @@ Base.length(copytask::SequenceCopyTask) = copytask.dim
 
 SequenceCopyTask(t::Int) = SequenceCopyTask(10, 10:10, t:t)
 
-function Base.rand(copytask::SequenceCopyTask)
-    t1 = rand(copytask.prefix_range)
-    t2 = rand(copytask.suffix_range)
-    prefix = rand(1:copytask.dim - 2, t1)
-    suffix = vcat(copytask.dim - 1, rand(1:copytask.dim - 2, t2 - 2), copytask.dim, fill(copytask.dim - 1, t1))
-    xs = vcat(prefix, suffix)
-    ys = vcat(fill(copytask.dim - 1, t1 + t2), prefix)
-    return [Flimsy.Extras.onehot(x, copytask.dim) for x in xs], ys
-end
-
 # function Base.rand(copytask::SequenceCopyTask)
 #     t1 = rand(copytask.prefix_range)
 #     t2 = rand(copytask.suffix_range)
 #     prefix = rand(1:copytask.dim - 2, t1)
-#     suffix = vcat(fill(copytask.dim - 1, t2 - 1), copytask.dim, fill(copytask.dim - 1, t1))
-#     # suffix = vcat(copytask.dim - 1, rand(1:copytask.dim - 2, t2 - 2), copytask.dim, fill(copytask.dim - 1, t1))
+#     suffix = vcat(copytask.dim - 1, rand(1:copytask.dim - 2, t2 - 2), copytask.dim, fill(copytask.dim - 1, t1))
 #     xs = vcat(prefix, suffix)
-#     ys = vcat(rand(1:copytask.dim - 2, t1 + t2), prefix)
+#     ys = vcat(fill(copytask.dim - 1, t1 + t2), prefix)
 #     return [Flimsy.Extras.onehot(x, copytask.dim) for x in xs], ys
 # end
+
+function Base.rand(copytask::SequenceCopyTask)
+    t1 = rand(copytask.prefix_range)
+    t2 = rand(copytask.suffix_range)
+    
+    prefix = rand(1:copytask.dim - 2, t1)   # numbers to remember
+    blanks = fill(copytask.dim - 1, t2 - 1) # blanks
+    flag = copytask.dim                     # flag indicating recall should begin
+    suffix = fill(copytask.dim - 1, t1)     # blanks
+    
+    xs = vcat(prefix, blanks, flag, suffix)
+    ys = vcat(fill(copytask.dim - 1, t1 + t2), prefix)
+    
+    return [Flimsy.Extras.onehot(x, copytask.dim) for x in xs], ys
+end
 
 function Base.rand(copytask::SequenceCopyTask, n::Int)
     x, y = rand(copytask)

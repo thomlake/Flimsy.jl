@@ -1,6 +1,10 @@
 # DANGER! 
 This package recently underwent a significant refactor. 
-Some links in this README are currently broken, but most things are working and stable now.
+Some links in this README are currently broken, but most of the library is stable.
+
+Unfortunately it appears Julia's GC isn't working correctly, resulting in monotonically
+increasing memory usage in long running training loops. Periodically calling `gc()` appears
+to fix this issue, I'm currently working on a fix.
 
 # Flimsy.jl
 Flimsy.jl is a Julia package for expressing and training a rich class of machine learning 

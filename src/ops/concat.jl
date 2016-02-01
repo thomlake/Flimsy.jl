@@ -21,28 +21,47 @@ function call(rop::ReverseConcat)
     return nothing
 end
 
-concat{T<:AbstractArray}(xs::Vector{T}) = vcat(xs...)
-
-function concat{V<:Variable}(xs::Vector{V})
-    n = size(xs[1], 2)
-    for i = 2:length(xs)
-        n == size(xs[i], 2) || throw(OperationError("can only concatenate vectors with members having the same number of columns"))
+function concat!{T<:AbstractArray}(y::T, xs::Vector{T})
+    offset = 0
+    for k = 1:length(xs)
+        for j = 1:size(xs[k], 2)
+            for i = 1:size(xs[k], 1)
+                y[offset + i,j] = xs[k][i,j]
+            end
+        end
+        offset += size(xs[k], 1)
     end
-    return DataVariable(concat([x.data for x in xs]))
-end
-
-concat{T<:DataVariable}(stack::CallbackStack, xs::Vector{T}) = concat(xs)
-
-function concat{T<:GradVariable}(stack::CallbackStack, xs::Vector{T})
-    n = size(xs[1], 2)
-    for i = 2:length(xs)
-        n == size(xs[i], 2) || throw(OperationError("can only concatenate vectors with members having the same number of columns"))
-    end
-    y = GradVariable(concat([x.data for x in xs]))
-    push!(stack, ReverseConcat(y, xs))
     return y
 end
 
-concat{V<:Variable}(xs::V...) = concat([x for x in xs])
+concat{T<:AbstractArray}(xs::Vector{T}) = vcat(xs...)
 
-concat{V<:Variable}(stack::CallbackStack, xs::V...) = concat(stack, [x for x in xs])
+function concat{T<:Variable}(scope::Scope, xs::Vector{T})
+    m, n = size(xs[1])
+    for i = 2:length(xs)
+        m_i, n_i = size(xs[i])
+        m += m_i
+        n == n_i || throw(OperationError("can only concatenate vectors with members having the same number of columns"))
+    end
+    xs_data = [x.data for x in xs]
+    ys_data = allocate(scope, eltype(xs[1].data), (m, n))
+
+    return DataVariable(concat!(ys_data, xs_data))
+end
+
+function concat{T<:GradVariable}(scope::GradScope, xs::Vector{T})
+    m, n = size(xs[1])
+    for i = 2:length(xs)
+        m_i, n_i = size(xs[i])
+        m += m_i
+        n == n_i || throw(OperationError("can only concatenate vectors with members having the same number of columns"))
+    end
+    xs_data = [x.data for x in xs]
+    ys_data = allocate(scope, eltype(xs[1].data), (m, n))
+
+    y = GradVariable(concat!(ys_data, xs_data), similar(scope, ys_data, 0))
+    push_callback!(scope, ReverseConcat(y, xs))
+    return y
+end
+
+concat{V<:Variable}(scope, xs::V...) = concat(scope, [x for x in xs])

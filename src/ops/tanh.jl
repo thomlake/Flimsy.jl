@@ -13,36 +13,20 @@ function call(rop::ReverseTanh)
     return nothing
 end
 
-# Base.tanh(x::Variable) = DataVariable(tanh(x.data))
-
-# Base.tanh(stack::CallbackStack, x::DataVariable) = tanh(x)
-
-# function Base.tanh(stack::CallbackStack, x::GradVariable)
-#     y = GradVariable(tanh(x.data))
-#     push!(stack, ReverseTanh(y, x))
-#     return y
-# end
-
 function tanh!(y::AbstractArray, x::AbstractArray)
     for i in eachindex(x)
         y[i] = tanh(x[i])
     end
+    return y
 end
 
-Base.tanh(x::Variable) = DataVariable(tanh(x.data))
+Base.tanh(scope::Scope, x::Variable) = DataVariable(tanh!(similar(scope, x.data), x.data))
 
-function Base.tanh(scope::Scope, x::DataVariable)
+function Base.tanh(scope::GradScope, x::GradVariable)
     y_data = similar(scope, x.data)
-    tanh!(y_data, x.data)
-    return DataVariable(y_data)
-end
-
-function Base.tanh(scope::Scope, x::GradVariable)
-    y_data = similar(scope, x.data)
-    y_grad = similar(scope, x.data)
-    
+    y_grad = similar(scope, y_data, 0)
     tanh!(y_data, x.data)
     y = GradVariable(y_data, y_grad)
-    push!(scope.stack, ReverseTanh(y, x))
+    push_callback!(scope, ReverseTanh(y, x))
     return y
 end

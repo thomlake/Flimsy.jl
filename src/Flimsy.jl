@@ -30,10 +30,17 @@ export argmax,
 export getparams,
        getnamedparams
 
-export CallbackStack,
-       push_callback!,
+export Scope,
+       GradScope,
+       DynamicScope,
+       DynamicGradScope,
+       StaticScope,
+       StaticGradScope,
+       CallbackStack,
        backprop!,
-       gradient!
+       gradient!,
+       reset!,
+       allocate
 
 export glorot,
        orthonormal
@@ -66,16 +73,17 @@ export ExternalEvaluation,
        epoch,
        best
 
+const FLIMSY_DEFAULT_HEAP_SIZE = 10000
+
 abstract Component{T}
 
 abstract ReverseOperation
 
 include("component_macro.jl")
 include("variable.jl")
-# include("component_constructor.jl")
 include("argmax.jl")
 include("getparams.jl")
-include("callback_stack.jl")
+include("scope.jl")
 include("ops.jl")
 include("initialization.jl")
 include("fit.jl")

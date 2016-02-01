@@ -21,9 +21,8 @@ function call(rop::ReverseSoftmax)
     return nothing
 end
 
-function softmax(x::AbstractArray)
+function softmax!(y::AbstractArray, x::AbstractArray)
     xmax = maximum(x, 1)
-    y = zero(x)
     Z = zero(xmax)
     for j = 1:size(x, 2)
         for i = 1:size(x, 1)
@@ -39,12 +38,15 @@ function softmax(x::AbstractArray)
     return y
 end
 
-softmax(x::Variable) = DataVariable(softmax(x.data))
+softmax(x::AbstractArray) = softmax!(similar(x), x)
 
-softmax(stack::CallbackStack, x::DataVariable) = DataVariable(softmax(x.data))
+softmax(scope::Scope, x::Variable) = DataVariable(softmax!(similar(scope, x.data), x.data))
 
-function softmax(stack::CallbackStack, x::GradVariable)
-    y = GradVariable(softmax(x.data))
-    push!(stack, ReverseSoftmax(y, x))
+function softmax(scope::GradScope, x::GradVariable)
+    y_data = similar(scope, x.data)
+    y_grad = similar(scope, y_data, 0)
+    softmax!(y_data, x.data)
+    y = GradVariable(y_data, y_grad)
+    push_callback!(scope, ReverseSoftmax(y, x))
     return y
 end

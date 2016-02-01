@@ -25,7 +25,7 @@ function call(rop::ReverseVectorSoftmax)
 end
 
 
-function softmax{T<:AbstractMatrix}(xs::Vector{T})
+function softmax!{T<:AbstractMatrix}(ys::Vector{T}, xs::Vector{T})
     m = length(xs)
     k, n = size(xs[1])
     k == 1 || throw(OperationError("softmax can only be applied over a vector of 1xN matrices"))
@@ -39,7 +39,6 @@ function softmax{T<:AbstractMatrix}(xs::Vector{T})
         end
     end
     
-    ys = [zero(x) for x in xs]
     Z = zero(xmax)
     for i = 1:m
         for j = 1:n
@@ -55,12 +54,20 @@ function softmax{T<:AbstractMatrix}(xs::Vector{T})
     return ys
 end
 
-softmax{T<:Variable}(xs::Vector{T}) = map(DataVariable, softmax([x.data for x in xs]))
+softmax{T<:AbstractMatrix}(xs::Vector{T}) = softmax!([zero(x) for x in xs], xs)
 
-softmax{V<:DataVariable}(stack::CallbackStack, xs::Vector{V}) = softmax(xs)
+function softmax{T<:Variable}(scope::Scope, xs::Vector{T})
+    xs_data = [x.data for x in xs]
+    ys_data = [similar(scope, x_data) for x_data in xs_data]
+    softmax!(ys_data, xs_data)
+    return map(DataVariable, ys_data)
+end
 
-function softmax{V<:GradVariable}(stack::CallbackStack, xs::Vector{V})
-    ys = map(GradVariable, softmax([x.data for x in xs]))
-    push!(stack, ReverseVectorSoftmax(ys, xs))
+function softmax{T<:GradVariable}(scope::GradScope, xs::Vector{T})
+    xs_data = [x.data for x in xs]
+    ys_data = [similar(scope, x_data) for x_data in xs_data]
+    softmax!(ys_data, xs_data)
+    ys = [GradVariable(y_data, similar(scope, y_data, 0)) for y_data in ys_data]
+    push_callback!(scope, ReverseVectorSoftmax(ys, xs))
     return ys
 end

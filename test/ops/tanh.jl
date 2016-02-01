@@ -1,66 +1,76 @@
-using Flimsy
-using Base.Test
 
-function test_tanh()
-    x = GradVariable(randn(10))
-    test_op_grad_mse(tanh, x, wrt=x)
+facts("tanh") do
+    context("Mx1") do
+        m, n = 3, 1
+        context("Scope") do
+            scope = DynamicScope()
+            x = DataVariable(randn(m))
+            y = tanh(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y) --> (m, n) 
+            @fact y.data --> roughly(tanh(x.data))
 
-    # # Mx1
-    # m, n = 3, 1
-    # x = DataVariable(randn(m))
-    # y = tanh(x)
-    # @test isa(y, DataVariable)
-    # @test size(y) == (m, n)
-    # @test all(tanh(x.data) .== y.data)
+            x = GradVariable(randn(m))
+            y = tanh(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y) --> (m, n)
+            @fact y.data --> roughly(tanh(x.data))
+        end
 
-    # x = GradVariable(randn(m))
-    # y = tanh(x)
-    # @test isa(y, DataVariable)
-    # @test size(y) == (m, n)
-    # @test all(tanh(x.data) .== y.data)
+        context("GradScope") do
+            scope = GradScope(DynamicScope())
+            x = DataVariable(randn(m))
+            y = tanh(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y) --> (m, n)
+            @fact y.data --> roughly(tanh(x.data))
 
-    # x = DataVariable(randn(m))
-    # y = tanh(CallbackStack(), x)
-    # @test isa(y, DataVariable)
-    # @test size(y) == (m, n)
-    # @test all(tanh(x.data) .== y.data)
+            x = GradVariable(randn(m))
+            y = tanh(scope, x)
+            @fact isa(y, GradVariable) --> true
+            @fact size(y) --> (m, n)
+            @fact y.data --> roughly(tanh(x.data))
+        end
 
-    # x = GradVariable(randn(m))
-    # y = tanh(CallbackStack(), x)
-    # @test isa(y, GradVariable)
-    # @test size(y) == (m, n)
-    # @test all(tanh(x.data) .== y.data)
+        context("Gradient") do
+            x = GradVariable(randn(m))
+            test_op_grad_mse(tanh, x, wrt=x)
+        end
+    end
 
-    # x = GradVariable(randn(m))
-    # test_op_grad_mse(tanh, x, wrt=x)
+    context("MxN") do
+        m, n = 5, 8
+        context("Scope") do
+            scope = DynamicScope()
+            x = DataVariable(randn(m, n))
+            y = tanh(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y) --> (m, n)
+            @fact y.data --> roughly(tanh(x.data))
 
-    # # MxN
-    # m, n = 5, 8
-    # x = DataVariable(randn(m, n))
-    # y = tanh(x)
-    # @test isa(y, DataVariable)
-    # @test size(y) == (m, n)
-    # @test all(tanh(x.data) .== y.data)
+            x = GradVariable(randn(m, n))
+            y = tanh(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y) --> (m, n)
+            @fact y.data --> roughly(tanh(x.data))
+        end
 
-    # x = GradVariable(randn(m, n))
-    # y = tanh(x)
-    # @test isa(y, DataVariable)
-    # @test size(y) == (m, n)
-    # @test all(tanh(x.data) .== y.data)
+        context("GradScope") do
+            scope = GradScope(DynamicScope())
+            x = DataVariable(randn(m, n))
+            y = tanh(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y) --> (m, n)
+            @fact y.data --> roughly(tanh(x.data))
 
-    # x = DataVariable(randn(m, n))
-    # y = tanh(CallbackStack(), x)
-    # @test isa(y, DataVariable)
-    # @test size(y) == (m, n)
-    # @test all(tanh(x.data) .== y.data)
+            x = GradVariable(randn(m, n))
+            y = tanh(scope, x)
+            @fact isa(y, GradVariable) --> true
+            @fact size(y) --> (m, n)
+            @fact y.data --> roughly(tanh(x.data))
+        end
 
-    # x = GradVariable(randn(m, n))
-    # y = tanh(CallbackStack(), x)
-    # @test isa(y, GradVariable)
-    # @test size(y) == (m, n)
-    # @test all(tanh(x.data) .== y.data)
-
-    # x = GradVariable(randn(m, n))
-    # test_op_grad_mse(tanh, x, wrt=x)
+        x = GradVariable(randn(m, n))
+        test_op_grad_mse(tanh, x, wrt=x)
+    end
 end
-test_tanh()

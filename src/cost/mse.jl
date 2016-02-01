@@ -11,14 +11,14 @@ function mse end
 # -------- #
 # 1x1 Real #
 # -------- #
-function mse(output::Variable, target::Real)
+function mse(scope::Scope, output::Variable, target::Real)
     is_scalar(output) || throw(DimensionMismatch("mse: output must be 1x1 for scalar target, got $(size(output))"))
     delta = output.data[1] - target
     sse = delta * delta
     return 0.5 * sse
 end
 
-function mse(stack::CallbackStack, output::GradVariable, target::Real)
+function mse(scope::GradScope, output::GradVariable, target::Real)
     is_scalar(output) || throw(DimensionMismatch("mse: output must be 1x1 for scalar target, got $(size(output))"))
     delta = output.data[1] - target
     output.grad[1] += delta
@@ -26,9 +26,9 @@ function mse(stack::CallbackStack, output::GradVariable, target::Real)
     return 0.5 * sse
 end
 
-mse(output::Variable, target::Real, weight::Real) = weight * mse(output, target)
+mse(scope::Scope, output::Variable, target::Real, weight::Real) = weight * mse(output, target)
 
-function mse(stack::CallbackStack, output::GradVariable, target::Real, weight::Real)
+function mse(scope::GradScope, output::GradVariable, target::Real, weight::Real)
     is_scalar(output) || throw(DimensionMismatch("mse: output must be 1x1 for scalar target, got $(size(output))"))
     delta = output.data[1] - target
     output.grad[1] += weight * delta
@@ -40,7 +40,7 @@ end
 # ---------------- #
 # Mx1 Vector{Real} #
 # ---------------- #
-function mse(output::Variable, target::AbstractVector)
+function mse(scope::Scope, output::Variable, target::AbstractVector)
     is_column_vector(output) || throw(DimensionMismatch("mse: output must be Mx1 for vector target, got $(size(output))"))
     sse = 0
     for i in eachindex(target)
@@ -50,7 +50,7 @@ function mse(output::Variable, target::AbstractVector)
     return 0.5 * sse
 end
 
-function mse(stack::CallbackStack, output::Variable, target::AbstractVector)
+function mse(scope::GradScope, output::GradVariable, target::AbstractVector)
     is_column_vector(output) || throw(DimensionMismatch("mse: output must be Mx1 for vector target, got $(size(output))"))
     sse = 0
     for i in eachindex(target)
@@ -61,9 +61,9 @@ function mse(stack::CallbackStack, output::Variable, target::AbstractVector)
     return 0.5 * sse
 end
 
-mse(output::Variable, target::AbstractVector, weight::Real) = weight * mse(output, target)
+mse(scope::Scope, output::Variable, target::AbstractVector, weight::Real) = weight * mse(output, target)
 
-function mse(stack::CallbackStack, output::Variable, target::AbstractVector, weight::Real)
+function mse(scope::GradScope, output::GradVariable, target::AbstractVector, weight::Real)
     is_column_vector(output) || throw(DimensionMismatch("mse: output must be Mx1 for vector target, got $(size(output))"))
     sse = 0
     for i in eachindex(target)
@@ -78,7 +78,7 @@ end
 # ---------------- #
 # Mx1 Matrix{Real} #
 # ---------------- #
-function mse(output::Variable, target::AbstractMatrix)
+function mse(scope::Scope, output::Variable, target::AbstractMatrix)
     size(output) == size(target) || throw(DimensionMismatch("mse: output and target sizes must match, got $(size(output)) and $(size(target))"))
     sse = 0
     for i in eachindex(target)
@@ -88,7 +88,7 @@ function mse(output::Variable, target::AbstractMatrix)
     return 0.5 * sse
 end
 
-function mse(stack::CallbackStack, output::Variable, target::AbstractMatrix)
+function mse(scope::GradScope, output::GradVariable, target::AbstractMatrix)
     size(output) == size(target) || throw(DimensionMismatch("mse: output and target sizes must match, got $(size(output)) and $(size(target))"))
     sse = 0
     for i in eachindex(target)
@@ -99,9 +99,9 @@ function mse(stack::CallbackStack, output::Variable, target::AbstractMatrix)
     return 0.5 * sse
 end
 
-mse(output::Variable, target::AbstractMatrix, weight::Real) = weight * mse(output, target)
+mse(scope::Scope, output::Variable, target::AbstractMatrix, weight::Real) = weight * mse(output, target)
 
-function mse(stack::CallbackStack, output::Variable, target::AbstractMatrix, weight::Real)
+function mse(scope::GradScope, output::Variable, target::AbstractMatrix, weight::Real)
     size(output) == size(target) || throw(DimensionMismatch("mse: output and target sizes must match, got $(size(output)) and $(size(target))"))
     sse = 0
     for i in eachindex(target)

@@ -1,90 +1,113 @@
 using Flimsy
-using Base.Test
 
-function test_softmax()
-    # Mx1
-    m, n = 5, 1
-    x = randn(m)
-    y = softmax(x)
-    @test isa(y, Vector)
-    @test size(y) == (m,)
-    @test_approx_eq exp(x) / sum(exp(x)) y
-    @test_approx_eq sum(y) 1
+facts("softmax") do
+    context("Mx1") do
+        m, n = 5, 1
+        context("Array") do
+            x = randn(m)
+            y = softmax(x)
+            @fact isa(y, Vector) --> true
+            @fact size(y)        --> (m,)
+            @fact y              --> roughly(exp(x) / sum(exp(x)))
+            @fact sum(y)         --> roughly(1)
+        end
 
-    x = DataVariable(randn(m))
-    y = softmax(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test_approx_eq softmax(x.data) y.data
-    @test_approx_eq sum(y.data) 1
+        context("Scope") do
+            scope = DynamicScope()
+            
+            x = DataVariable(randn(m))
+            y = softmax(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y)              --> (m, n)
+            @fact y.data               --> roughly(softmax(x.data))
+            @fact sum(y.data)          --> roughly(1)
+            
+            x = GradVariable(randn(m))
+            y = softmax(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y)              --> (m, n)
+            @fact y.data               --> roughly(softmax(x.data))
+            @fact sum(y.data)          --> roughly(1)
+        end
 
-    x = GradVariable(randn(m))
-    y = softmax(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test_approx_eq softmax(x.data) y.data
-    @test_approx_eq sum(y.data) 1
+        context("GradScope") do
+            scope = GradScope(DynamicScope())
 
-    x = DataVariable(randn(m))
-    y = softmax(CallbackStack(), x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test_approx_eq softmax(x.data) y.data
-    @test_approx_eq sum(y.data) 1
+            x = DataVariable(randn(m))
+            y = softmax(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y)              --> (m, n)
+            @fact y.data               --> roughly(softmax(x.data))
+            @fact sum(y.data)          --> roughly(1)
 
-    x = GradVariable(randn(m))
-    y = softmax(CallbackStack(), x)
-    @test isa(y, GradVariable)
-    @test size(y) == (m, n)
-    @test_approx_eq softmax(x.data) y.data
-    @test_approx_eq sum(y.data) 1
+            x = GradVariable(randn(m))
+            y = softmax(scope, x)
+            @fact isa(y, GradVariable) --> true
+            @fact size(y)              --> (m, n)
+            @fact y.data               --> roughly(softmax(x.data))
+            @fact sum(y.data)          --> roughly(1)
+        end
 
-    x = GradVariable(randn(m))
-    test_op_grad_mse(softmax, x, wrt=x)
+        context("Gradient") do
+            x = GradVariable(randn(m))
+            test_op_grad_mse(softmax, x, wrt=x)
+        end
+    end
+    
 
-    # MxN
-    m, n = 4, 7
-    x = randn(m, n)
-    y = softmax(x)
-    @test isa(y, Matrix)
-    @test size(y) == (m, n)
-    @test_approx_eq exp(x) ./ sum(exp(x), 1) y
-    @test_approx_eq sum(y, 1) ones(n)
-    @test_approx_eq sum(y) n
+    context("MxN") do
+        m, n = 4, 7
+        context("Array") do
+            x = randn(m, n)
+            y = softmax(x)
+            @fact isa(y, Matrix) --> true
+            @fact size(y)        --> (m, n)
+            @fact y              --> roughly(exp(x) ./ sum(exp(x), 1))
+            @fact sum(y, 1)      --> roughly(ones(1, n))
+            @fact sum(y)         --> roughly(n)
+        end
 
-    x = DataVariable(randn(m, n))
-    y = softmax(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test_approx_eq softmax(x.data) y.data
-    @test_approx_eq sum(y.data, 1) ones(n)
-    @test_approx_eq sum(y.data) n
+        context("Scope") do
+            scope = DynamicScope()
+            x = DataVariable(randn(m, n))
+            y = softmax(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y)              --> (m, n)
+            @fact y.data               --> roughly(softmax(x.data))
+            @fact sum(y.data, 1)       --> roughly(ones(1, n))
+            @fact sum(y.data)          --> roughly(n)
 
-    x = GradVariable(randn(m, n))
-    y = softmax(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test_approx_eq softmax(x.data) y.data
-    @test_approx_eq sum(y.data, 1) ones(n)
-    @test_approx_eq sum(y.data) n
+            x = GradVariable(randn(m, n))
+            y = softmax(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y)              --> (m, n)
+            @fact y.data               --> roughly(softmax(x.data))
+            @fact sum(y.data, 1)       --> roughly(ones(1, n))
+            @fact sum(y.data)          --> roughly(n)
+        end
 
-    x = DataVariable(randn(m, n))
-    y = softmax(CallbackStack(), x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test_approx_eq softmax(x.data) y.data
-    @test_approx_eq sum(y.data, 1) ones(n)
-    @test_approx_eq sum(y.data) n
+        context("GradScope") do
+            scope = GradScope(DynamicScope())
+            x = DataVariable(randn(m, n))
+            y = softmax(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y)              --> (m, n)
+            @fact y.data               --> roughly(softmax(x.data))
+            @fact sum(y.data, 1)       --> roughly(ones(1, n))
+            @fact sum(y.data)          --> roughly(n)
 
-    x = GradVariable(randn(m, n))
-    y = softmax(CallbackStack(), x)
-    @test isa(y, GradVariable)
-    @test size(y) == (m, n)
-    @test_approx_eq softmax(x.data) y.data
-    @test_approx_eq sum(y.data, 1) ones(n)
-    @test_approx_eq sum(y.data) n
+            x = GradVariable(randn(m, n))
+            y = softmax(scope, x)
+            @fact isa(y, GradVariable) --> true
+            @fact size(y)              --> (m, n)
+            @fact y.data               --> roughly(softmax(x.data))
+            @fact sum(y.data, 1)       --> roughly(ones(1, n))
+            @fact sum(y.data)          --> roughly(n)
+        end
 
-    x = GradVariable(randn(m, n))
-    test_op_grad_mse(softmax, x, wrt=x)
+        context("Gradient") do
+            x = GradVariable(randn(m, n))
+            test_op_grad_mse(softmax, x, wrt=x)
+        end
+    end
 end
-test_softmax()

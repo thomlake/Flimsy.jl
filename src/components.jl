@@ -11,7 +11,8 @@ export score,
 
 export RecurrentComponent
 
-export ValueComponent
+export ValueComponent,
+       EmptyComponent
 
 export LinearModel,
        LinearRegression,

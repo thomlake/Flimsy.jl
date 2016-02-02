@@ -13,7 +13,7 @@ tests = [
     "ops/softmax.jl",
     "ops/softmax_vector.jl",
     # "ops/wta.jl",
-    # "ops/linear.jl",
+    "ops/linear.jl",
     # "ops/affine.jl",
     # "ops/plus.jl",
     # "ops/minus_scalar.jl",

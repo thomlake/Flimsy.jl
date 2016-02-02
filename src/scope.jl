@@ -44,7 +44,7 @@ abstract Scope{P}
 
 Base.similar(scope::Scope, x::AbstractArray, initial_value::Real) = fill!(similar(scope, x), initial_value)
 
-allocate(scope::Scope, T::DataType, sz, initial_value::Real) = fill!(allocate(scope, T, sz), initial_value)
+allocate(scope::Scope, T::DataType, sz::Tuple, initial_value::Real) = fill!(allocate(scope, T, sz), initial_value)
 
 # -------------- #
 # Gradient Scope #
@@ -60,9 +60,17 @@ function backprop!(scope::GradScope)
 end
 
 function gradient!(f::Function, scope::GradScope, args...)
-    y = f(scope, args...)
-    backprop!(stack)
+    y = f(scope, scope.params, args...)
+    backprop!(scope)
     reset!(scope)
+    return y
+end
+
+function gradient!(f::Function, scope::Scope, args...)
+    gscope = GradScope(scope)
+    y = f(gscope, scope.params, args...)
+    backprop!(gscope)
+    reset!(gscope)
     return y
 end
 
@@ -81,7 +89,7 @@ DynamicScope() = DynamicScope(Components.EmptyComponent())
 
 Base.similar(scope::DynamicScope, x::AbstractArray) = similar(x)
 
-allocate(scope::DynamicScope, T::DataType, sz) = zeros(T, sz)
+allocate(scope::DynamicScope, T::DataType, sz::Tuple) = zeros(T, sz)
 
 # ---------------------- #
 # Dynamic Gradient Scope #
@@ -95,7 +103,7 @@ GradScope(scope::DynamicScope) = DynamicGradScope(scope.params, CallbackStack())
 
 Base.similar(scope::DynamicGradScope, x::AbstractArray) = similar(x)
 
-allocate(scope::DynamicGradScope, T::DataType, sz) = zeros(T, sz)
+allocate(scope::DynamicGradScope, T::DataType, sz::Tuple) = zeros(T, sz)
 
 reset!(scope::DynamicGradScope) = nothing
 
@@ -115,7 +123,7 @@ Scope(params::Component, sz::Int=FLIMSY_DEFAULT_HEAP_SIZE) = StaticScope(params,
 
 Base.similar(scope::StaticScope, x::AbstractArray) = scope.heap(eltype(x), size(x))
 
-allocate(scope::StaticScope, T::DataType, sz) = scope.heap(T, sz)
+allocate(scope::StaticScope, T::DataType, sz::Tuple) = scope.heap(T, sz)
 
 reset!(scope::StaticScope) = reset!(scope.heap)
 
@@ -132,7 +140,7 @@ GradScope(scope::StaticScope) = StaticGradScope(scope.params, scope.heap, Callba
 
 Base.similar(scope::StaticGradScope, x::AbstractArray) = scope.heap(eltype(x), size(x))
 
-allocate(scope::StaticGradScope, T::DataType, sz) = scope.heap(T, sz)
+allocate(scope::StaticGradScope, T::DataType, sz::Tuple) = scope.heap(T, sz)
 
 reset!(scope::StaticGradScope) = reset!(scope.heap)
 

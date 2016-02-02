@@ -37,19 +37,26 @@ end
     return Expr(:block, stmts...)
 end
 
+linear!(y::AbstractArray, w::AbstractArray, x::AbstractArray) = A_mul_B!(y, w, x)
+
 linear(w::AbstractArray, x::AbstractArray) = w * x
 
-linear(w::Variable, x::Variable) = DataVariable(linear(w.data, x.data))
+# linear(w::Variable, x::Variable) = DataVariable(linear(w.data, x.data))
 
-@generated function linear{Tw<:Variable,Tx<:Variable}(stack::CallbackStack, w::Tw, x::Tx)
-    stmts = Any[]
-    if anygrads(Tw, Tx)
+@generated function linear{Tw<:Variable,Tx<:Variable}(scope::Scope, w::Tw, x::Tx)
+    if anygrads(Tw, Tx) && scope <: GradScope
         return quote
-            y = GradVariable(linear(w.data, x.data))
-            push!(stack, ReverseLinear(y, w, x))
+            y_data = allocate(scope, eltype(x.data), (size(w, 1), size(x, 2)))
+            linear!(y_data, w.data, x.data)
+            y = GradVariable(y_data, similar(scope, y_data, 0))
+            push_callback!(scope, ReverseLinear(y, w, x))
             return y
         end
     else
-        return :(linear(w, x))
+        return quote
+            y_data = allocate(scope, eltype(x.data), (size(w, 1), size(x, 2)))
+            linear!(y_data, w.data, x.data)
+            return DataVariable(y_data)
+        end
     end
 end

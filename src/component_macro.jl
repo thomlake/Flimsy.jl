@@ -63,22 +63,22 @@ const SUPPORTED_SYNTAX = [
 """
 Insert an AbstractScope as the first argument in a function signature.
 
-    f(x, y) => f(__callback_stack__::CallbackStack, x, y)
+    f(x, y) => f(__scope__::Scope, x, y)
 """
 function signature_with_stack(signature::Expr)
     new_signature = deepcopy(signature)
-    insert!(new_signature.args, 2, Expr(:(::), :__callback_stack__, :CallbackStack))
+    insert!(new_signature.args, 2, Expr(:(::), :__scope__, :Scope))
     return new_signature
 end
 
 """
 Recursively rewrite expr so all non-blacklisted 
-:call expression have __callback_stack___ as their first argument.
+:call expression have __scope___ as their first argument.
 
 For example, the following statment is tranformed as follows
     foo(a, b, c) ==  Expr(:call, :foo, :a, :b, :c)
-                 =>  Expr(:call, :foo, __callback_stack__, :a, :b, :c)
-                 ==  foo(__callback_stack__, a, b, c)
+                 =>  Expr(:call, :foo, __scope__, :a, :b, :c)
+                 ==  foo(__scope__, a, b, c)
 """
 function insert_stack(expr::Expr, blacklist::Vector)
     head = expr.head
@@ -105,7 +105,7 @@ function insert_stack(expr::Expr, blacklist::Vector)
     if head == :call
         if !in(args[1], blacklist)
             push!(newargs, shift!(args))
-            push!(newargs, :__callback_stack__)
+            push!(newargs, :__scope__)
         end
     elseif in(head, blacklist)
         pass

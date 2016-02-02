@@ -82,10 +82,13 @@ function test_op_grad_mse(f::Function, args...; wrt=nothing, eps=1e-6, tol=1e-6)
     # end
 end
 
-for tf in tests
-    if isfile(tf)
-        include(tf)
-    else
-        print_with_color(:blue, "* test $tf... no file\n")
+function runtests()
+    for tf in tests
+        if isfile(tf)
+            include(tf)
+        else
+            print_with_color(:blue, "* test $tf... no file\n")
+        end
     end
 end
+runtests()

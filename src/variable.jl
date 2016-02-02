@@ -1,9 +1,14 @@
 
 abstract Variable{T}
 
-type GradVariable{T<:AbstractMatrix} <: Variable{T}
-    data::T
-    grad::T
+# type GradVariable{T<:Matrix} <: Variable{T}
+#     data::T
+#     grad::T
+# end
+
+type GradVariable{T<:AbstractFloat} <: Variable{T}
+    data::Matrix{T}
+    grad::Matrix{T}
 end
 
 GradVariable{T}(x::Matrix{T}) = GradVariable(x, zero(x))
@@ -12,9 +17,12 @@ GradVariable{T}(x::Vector{T}) = GradVariable(reshape(x, length(x), 1))
 
 GradVariable(x::Real) = GradVariable([x])
 
+# type DataVariable{T<:Matrix} <: Variable{T}
+#     data::T
+# end
 
-type DataVariable{T<:AbstractMatrix} <: Variable{T}
-    data::T
+type DataVariable{T<:AbstractFloat} <: Variable{T}
+    data::Matrix{T}
 end
 
 DataVariable{T}(x::Vector{T}) = DataVariable(reshape(x, length(x), 1))

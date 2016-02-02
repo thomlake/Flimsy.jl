@@ -1,35 +1,18 @@
 
 abstract Variable{T}
 
-# type GradVariable{T<:Matrix} <: Variable{T}
-#     data::T
-#     grad::T
-# end
-
 type GradVariable{T<:AbstractFloat} <: Variable{T}
     data::Matrix{T}
     grad::Matrix{T}
 end
 
-GradVariable{T}(x::Matrix{T}) = GradVariable(x, zero(x))
-
-GradVariable{T}(x::Vector{T}) = GradVariable(reshape(x, length(x), 1))
-
-GradVariable(x::Real) = GradVariable([x])
-
-# type DataVariable{T<:Matrix} <: Variable{T}
-#     data::T
-# end
-
 type DataVariable{T<:AbstractFloat} <: Variable{T}
     data::Matrix{T}
 end
 
-DataVariable{T}(x::Vector{T}) = DataVariable(reshape(x, length(x), 1))
+Input(x::Matrix) = DataVariable(x)
 
-DataVariable(x::Real) = DataVariable([x])
-
-Input(x) = DataVariable(x)
+Input(x::Vector) = DataVariable(reshape(x, length(x), 1))
 
 Base.size(x::Variable) = size(x.data)
 
@@ -40,12 +23,6 @@ Base.eltype{T}(::Type{GradVariable{T}}) = T
 Base.eltype{T}(::Type{DataVariable{T}}) = T
 
 Base.eltype{V<:Variable}(x::V) = eltype(V)
-
-Base.zero{V<:Variable}(x::V) = V(zero(x.data))
-
-Base.zeros{V<:Variable,R}(::Type{V}, ::Type{R}, dims) = V(zeros(R, dims))
-
-Base.zeros{V<:Variable}(::Type{V}, dims) = V(zeros(dims))
 
 Base.eachindex(x::Variable) = eachindex(x.data)
 

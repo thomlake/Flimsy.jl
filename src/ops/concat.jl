@@ -37,27 +37,29 @@ end
 concat{T<:AbstractArray}(xs::Vector{T}) = vcat(xs...)
 
 function concat{T<:Variable}(scope::Scope, xs::Vector{T})
+    E = eltype(T)
     m, n = size(xs[1])
     for i = 2:length(xs)
         m_i, n_i = size(xs[i])
         m += m_i
         n == n_i || throw(OperationError("can only concatenate vectors with members having the same number of columns"))
     end
-    xs_data = [x.data for x in xs]
-    ys_data = allocate(scope, eltype(xs[1].data), (m, n))
+    xs_data = Matrix{E}[x.data for x in xs]
+    ys_data = allocate(scope, E, (m, n))
 
     return DataVariable(concat!(ys_data, xs_data))
 end
 
 function concat{T<:GradVariable}(scope::GradScope, xs::Vector{T})
+    E = eltype(T)
     m, n = size(xs[1])
     for i = 2:length(xs)
         m_i, n_i = size(xs[i])
         m += m_i
         n == n_i || throw(OperationError("can only concatenate vectors with members having the same number of columns"))
     end
-    xs_data = [x.data for x in xs]
-    ys_data = allocate(scope, eltype(xs[1].data), (m, n))
+    xs_data = Matrix{E}[x.data for x in xs]
+    ys_data = allocate(scope, E, (m, n))
 
     y = GradVariable(concat!(ys_data, xs_data), similar(scope, ys_data, 0))
     push_callback!(scope, ReverseConcat(y, xs))

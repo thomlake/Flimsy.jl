@@ -2,6 +2,7 @@
 facts("tanh") do
     for (m, n) in [(3, 1), (5, 8)]
         context("$(m)x$(n)") do
+            
             context("Scope") do
                 scope = DynamicScope()
                 x = DataVariable(randn(m, n))

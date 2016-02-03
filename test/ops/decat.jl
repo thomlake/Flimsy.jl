@@ -1,39 +1,70 @@
 using Flimsy
-using Base.Test
 
-function test_decat()
-    f(x) = concat(decat(x))
-    f(s, x) = concat(s, decat(s, x))
-
+facts("decat") do
     for (m, n) in [(6, 1), (3, 9)]
-        for typ in [DataVariable, GradVariable]
-            x = typ(randn(m, n))
-            y = decat(x)
-            @test isa(y, Vector)
-            @test eltype(y) <: DataVariable
-            for i = 1:m
-                @test size(y[i]) == (1, n)
-                for j = 1:n
-                    @test_approx_eq x.data[i,j] y[i].data[j]
+        context("$(m)x$(n)") do
+            context("DataVariable") do
+                scope = DynamicScope()
+                gradscope = GradScope(scope)
+
+                x = DataVariable(randn(m, n))
+                y = decat(scope, x)
+                @fact isa(y, Vector)            --> true
+                @fact eltype(y) <: DataVariable --> true
+                @fact length(y)                 --> m
+                for i = 1:m
+                    @fact size(y[i])       --> (1, n)
+                    for j = 1:n
+                        @fact y[i].data[j] --> roughly(x.data[i,j])
+                    end
+                end
+
+                x = DataVariable(randn(m, n))
+                y = decat(gradscope, x)
+                @fact isa(y, Vector)            --> true
+                @fact eltype(y) <: DataVariable --> true
+                @fact length(y)                 --> m
+                for i = 1:m
+                    @fact size(y[i])       --> (1, n)
+                    for j = 1:n
+                        @fact y[i].data[j] --> roughly(x.data[i,j])
+                    end
                 end
             end
 
-            x = typ(randn(m, n))
-            y = decat(CallbackStack(), x)
-            @test isa(y, Vector)
-            @test eltype(y) <: (typ <: GradVariable ? GradVariable : DataVariable)
-            for i = 1:m
-                @test size(y[i]) == (1, n)
-                for j = 1:n
-                    @test_approx_eq x.data[i,j] y[i].data[j]
+            context("GradVariable") do
+                scope = DynamicScope()
+                gradscope = GradScope(scope)
+
+                x = GradVariable(randn(m, n), zeros(m, n))
+                y = decat(scope, x)
+                @fact isa(y, Vector)            --> true
+                @fact eltype(y) <: DataVariable --> true
+                @fact length(y)                 --> m
+                for i = 1:m
+                    @fact size(y[i])       --> (1, n)
+                    for j = 1:n
+                        @fact y[i].data[j] --> roughly(x.data[i,j])
+                    end
+                end
+
+                x = GradVariable(randn(m, n), zeros(m, n))
+                y = decat(gradscope, x)
+                @fact isa(y, Vector)            --> true
+                @fact eltype(y) <: GradVariable --> true
+                @fact length(y)                 --> m
+                for i = 1:m
+                    @fact size(y[i])       --> (1, n)
+                    for j = 1:n
+                        @fact y[i].data[j] --> roughly(x.data[i,j])
+                    end
                 end
             end
 
-            if typ <: GradVariable
-                x = typ(randn(m, n))
-                test_op_grad_mse(f, x, wrt=x)
+            context("Gradient") do
+                x = GradVariable(randn(m, n), zeros(m, n))
+                test_op_grad_mse((s, x) -> concat(s, decat(s, x)), x, wrt=x)
             end
         end
     end
 end
-test_decat()

@@ -16,14 +16,32 @@ function call(rop::ReverseDecat)
     return nothing
 end
 
-decat(x::AbstractArray) = [x[i,:] for i = 1:size(x, 1)]
+function decat!{T}(ys::Vector{Matrix{T}}, x::Matrix{T})
+    for j = 1:size(x, 2)
+        for i = 1:size(x, 1)
+            ys[i][j] = x[i,j]
+        end
+    end
+    return ys
+end
 
-decat(x::Variable) = map(DataVariable, decat(x.data))
+decat(x::Matrix) = map(i -> x[i,:], 1:size(x, 1))
 
-decat(stack::CallbackStack, x::DataVariable) = decat(x)
+function decat(scope::Scope, x::Variable)
+    E = eltype(x)
+    m, n = size(x)
+    ys_data = Matrix{E}[allocate(scope, E, (1, n)) for i = 1:m]
+    decat!(ys_data, x.data)
+    ys = DataVariable{E}[DataVariable(y_data) for y_data in ys_data]
+    return ys
+end
 
-function decat(stack::CallbackStack, x::GradVariable)
-    ys = map(GradVariable, decat(x.data))
-    push!(stack, ReverseDecat(ys, x))
+function decat(scope::GradScope, x::GradVariable)
+    E = eltype(x)
+    m, n = size(x)
+    ys_data = Matrix{E}[allocate(scope, E, (1, n)) for i = 1:m]
+    decat!(ys_data, x.data)
+    ys = GradVariable{E}[GradVariable(y_data, similar(scope, y_data, 0)) for y_data in ys_data]
+    push_callback!(scope, ReverseDecat(ys, x))
     return ys
 end

@@ -14,15 +14,18 @@ function call(rop::ReverseScalarMinusMatrix)
     return nothing
 end
 
-minus(a::Real, x::AbstractArray) = a .- x
+function minus!(y::AbstractArray, a::Real, x::AbstractArray)
+    for i in eachindex(x)
+        y[i] = a - x[i]
+    end
+    return y
+end
 
-minus(a::Real, x::Variable) = DataVariable(minus(a, x.data))
+minus(scope::Scope, a::Real, x::Variable) = DataVariable(minus!(similar(scope, x.data), a, x.data))
 
-minus(stack::CallbackStack, a::Real, x::DataVariable) = DataVariable(minus(a, x.data))
-
-function minus(stack::CallbackStack, a::Real, x::GradVariable)
-    y = GradVariable(minus(a, x.data))
-    push!(stack, ReverseScalarMinusMatrix(y, x))
+function minus(scope::GradScope, a::Real, x::GradVariable)
+    y = GradVariable(minus!(similar(scope, x.data), a, x.data), similar(scope, x.data, 0))
+    push_callback!(scope, ReverseScalarMinusMatrix(y, x))
     return y
 end
 
@@ -41,14 +44,17 @@ function call(rop::ReverseMatrixMinusScalar)
     return nothing
 end
 
-minus(x::AbstractArray, a::Real) = x .- a
+function minus!(y::AbstractArray, x::AbstractArray, a::Real)
+    for i in eachindex(x)
+        y[i] = x[i] - a
+    end
+    return y
+end
 
-minus(x::Variable, a::Real) = DataVariable(minus(x.data, a))
+minus(scope::Scope, x::Variable, a::Real) = DataVariable(minus!(similar(scope, x.data), x.data, a))
 
-minus(stack::CallbackStack, x::DataVariable, a::Real) = DataVariable(minus(x.data, a))
-
-function minus(stack::CallbackStack, x::GradVariable, a::Real)
-    y = GradVariable(minus(x.data, a))
-    push!(stack, ReverseMatrixMinusScalar(y, x))
+function minus(scope::GradScope, x::GradVariable, a::Real)
+    y = GradVariable(minus!(similar(scope, x.data), x.data, a), similar(scope, x.data, 0))
+    push_callback!(scope, ReverseMatrixMinusScalar(y, x))
     return y
 end

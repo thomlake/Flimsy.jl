@@ -16,8 +16,7 @@ function call(rop::ReverseWTA)
     return nothing
 end
 
-function wta(x::AbstractMatrix)
-    y = zero(x)
+function wta!(y::AbstractMatrix, x::AbstractMatrix)
     xmax, imax = findmax(x, 1)
     for i = 1:endof(imax)
         y[imax[i]] = xmax[i]
@@ -25,12 +24,12 @@ function wta(x::AbstractMatrix)
     return y
 end
 
-wta(x::Variable) = DataVariable(wta(x.data))
+wta(x::AbstractMatrix) = wta!(zero(x), x)
 
-wta(stack::CallbackStack, x::DataVariable) = wta(x)
+wta(scope::Scope, x::Variable) = DataVariable(wta!(similar(scope, x.data, 0), x.data))
 
-function wta(stack::CallbackStack, x::GradVariable)
-    y = GradVariable(wta(x.data))
-    push!(stack, ReverseWTA(y, x))
+function wta(scope::GradScope, x::GradVariable)
+    y = GradVariable(wta!(similar(scope, x.data, 0), x.data), similar(scope, x.data, 0))
+    push_callback!(scope, ReverseWTA(y, x))
     return y
 end

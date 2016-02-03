@@ -15,14 +15,20 @@ function call(rop::ReverseRelu)
     return nothing
 end
 
+function relu!(y::AbstractArray, x::AbstractArray)
+    for i in eachindex(x)
+        y[i] = max(0, x[i])
+    end
+    return y
+end
+
 relu(x::AbstractArray) = max(0, x)
 
-relu(x::Variable) = DataVariable(relu(x.data))
 
-relu(stack::CallbackStack, x::DataVariable) = DataVariable(relu(x.data))
+relu(scope::Scope, x::Variable) = DataVariable(relu!(similar(scope, x.data), x.data))
 
-function relu(stack::CallbackStack, x::GradVariable)
-    y = GradVariable(relu(x.data))
-    push!(stack, ReverseRelu(y, x))
+function relu(scope::GradScope, x::GradVariable)
+    y = GradVariable(relu!(similar(scope, x.data), x.data), similar(scope, x.data, 0))
+    push_callback!(scope, ReverseRelu(y, x))
     return y
 end

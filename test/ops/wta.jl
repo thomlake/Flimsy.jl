@@ -1,71 +1,46 @@
 using Flimsy
-using Base.Test
 
-function test_wta()
-    # Mx1
-    m, n = 3, 1
-    x = DataVariable(randn(m))
-    y = wta(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(wta(x.data) .== y.data)
-    @test countnz(y.data) == n
+facts("wta") do
+    for (m, n) in [(3, 1), (5, 8)]
+        context("$(m)x$(n)") do
+            context("DataVariable") do
+                scope = DynamicScope()
+                gscope = GradScope(scope)
 
-    x = GradVariable(randn(m))
-    y = wta(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(wta(x.data) .== y.data)
-    @test countnz(y.data) == n
+                x = DataVariable(randn(m, n))
+                y = wta(scope, x)
+                @fact isa(y, DataVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(wta(x.data))
 
-    x = DataVariable(randn(m))
-    y = wta(CallbackStack(), x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(wta(x.data) .== y.data)
-    @test countnz(y.data) == n
+                x = DataVariable(randn(m, n))
+                y = wta(gscope, x)
+                @fact isa(y, DataVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(wta(x.data))
+            end
 
-    x = GradVariable(randn(m))
-    y = wta(CallbackStack(), x)
-    @test isa(y, GradVariable)
-    @test size(y) == (m, n)
-    @test all(wta(x.data) .== y.data)
-    @test countnz(y.data) == n
+            context("GradVariable") do
+                scope = DynamicScope()
+                gscope = GradScope(scope)
 
-    x = GradVariable(randn(m))
-    test_op_grad_mse(wta, x, wrt=x)
+                x = GradVariable(randn(m, n), zeros(m, n))
+                y = wta(scope, x)
+                @fact isa(y, DataVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(wta(x.data))
 
-    # MxN
-    m, n = 5, 8
-    x = DataVariable(randn(m, n))
-    y = wta(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(wta(x.data) .== y.data)
-    @test countnz(y.data) == n
+                x = GradVariable(randn(m, n), zeros(m, n))
+                y = wta(gscope, x)
+                @fact isa(y, GradVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(wta(x.data))
+            end
 
-    x = GradVariable(randn(m, n))
-    y = wta(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(wta(x.data) .== y.data)
-    @test countnz(y.data) == n
-
-    x = DataVariable(randn(m, n))
-    y = wta(CallbackStack(), x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(wta(x.data) .== y.data)
-    @test countnz(y.data) == n
-
-    x = GradVariable(randn(m, n))
-    y = wta(CallbackStack(), x)
-    @test isa(y, GradVariable)
-    @test size(y) == (m, n)
-    @test all(wta(x.data) .== y.data)
-    @test countnz(y.data) == n
-
-    x = GradVariable(randn(m, n))
-    test_op_grad_mse(wta, x, wrt=x)
+            context("Gradient") do
+                x = GradVariable(randn(m, n), zeros(m, n))
+                test_op_grad_mse(wta, x, wrt=x)
+            end
+        end
+    end
 end
-test_wta()

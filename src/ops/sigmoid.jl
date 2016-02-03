@@ -13,6 +13,13 @@ function call(rop::ReverseSigmoid)
     return nothing
 end
 
+function sigmoid!(y::AbstractArray, x::AbstractArray)
+    for i in eachindex(x)
+        y[i] = 1 / (1 + exp(-x[i]))
+    end
+    return y
+end
+
 function sigmoid(x::AbstractArray)
     y = zero(x)
     for i in eachindex(x)
@@ -21,12 +28,10 @@ function sigmoid(x::AbstractArray)
     return y
 end
 
-sigmoid(x::Variable) = DataVariable(sigmoid(x.data))
+sigmoid(scope::Scope, x::Variable) = DataVariable(sigmoid!(similar(scope, x.data), x.data))
 
-sigmoid(stack::CallbackStack, x::DataVariable) = DataVariable(sigmoid(x.data))
-
-function sigmoid(stack::CallbackStack, x::GradVariable)
-    y = GradVariable(sigmoid(x.data))
-    push!(stack, ReverseSigmoid(y, x))
+function sigmoid(scope::GradScope, x::GradVariable)
+    y = GradVariable(sigmoid!(similar(scope, x.data), x.data), similar(scope, x.data, 0))
+    push_callback!(scope, ReverseSigmoid(y, x))
     return y
 end

@@ -49,27 +49,41 @@ end
     return Expr(:block, stmts...)
 end
 
-function affine(w::AbstractMatrix, x::AbstractMatrix, b::AbstractMatrix)
-    size(b) == (size(w, 1), 1) || throw(OperationError("b must be a $(size(w, 1))x1 matrix"))
-    tmp = w * x
-    for j = 1:size(tmp, 2)
-        for i = 1:size(tmp, 1)
-            tmp[i,j] += b[i]
+function affine!(y::AbstractMatrix, w::AbstractMatrix, x::AbstractMatrix, b::AbstractMatrix)
+    ysz = size(y)
+    wsz = size(w)
+    xsz = size(x)
+    bsz = size(b)
+
+    bsz == (wsz[1], 1) || throw(OperationError("b must be a $(wsz[1])x1 matrix"))
+    ysz == (wsz[1], xsz[2]) || throw(OperationError("y must be a $(wsz[1])x$(xsz[2]) matrix"))
+
+    A_mul_B!(y, w, x)
+    for j = 1:xsz[2]
+        for i = 1:wsz[1]
+            y[i,j] += b[i]
         end
     end
-    return tmp
+    return y
 end
 
-affine(w::Variable, x::Variable, b::Variable) = DataVariable(affine(w.data, x.data, b.data))
+affine(w::AbstractArray, x::AbstractArray, b::AbstractArray) = affine!(zero(size(w, 1), size(x, 2)), w, x, b)
 
-@generated function affine{Tw<:Variable,Tx<:Variable,Tb<:Variable}(stack::CallbackStack, w::Tw, x::Tx, b::Tb)
-    if anygrads(Tw, Tx, Tb)
+@generated function affine{Tw<:Variable,Tx<:Variable,Tb<:Variable}(scope::Scope, w::Tw, x::Tx, b::Tb)
+    if anygrads(Tw, Tx, Tb) && scope <: GradScope
         return quote
-            y = GradVariable(affine(w.data, x.data, b.data))
-            push!(stack, ReverseAffine(y, w, x, b))
+            y_data = allocate(scope, eltype(x), (size(w, 1), size(x, 2)))
+            affine!(y_data, w.data, x.data, b.data)
+            y = GradVariable(y_data, similar(scope, y_data, 0))
+            push_callback!(scope, ReverseAffine(y, w, x, b))
             return y
         end
     else
-        return :(affine(w, x, b))
+        return quote
+            y_data = allocate(scope, eltype(x), (size(w, 1), size(x, 2)))
+            affine!(y_data, w.data, x.data, b.data)
+            y = DataVariable(y_data)
+            return y
+        end
     end
 end

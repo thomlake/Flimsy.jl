@@ -110,37 +110,109 @@ end
     end
 end
 
+function plus_elementwise!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
+    for i in eachindex(a)
+        c[i] = a[i] + b[i]
+    end
+    return c
+end
+
+function plus_row_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
+    for j = 1:size(b, 2)
+        for i = 1:size(b, 1)
+            c[i,j] = a[1,j] + b[i,j]
+        end
+    end
+    return c
+end
+
+function plus_column_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
+    for j = 1:size(b, 2)
+        for i = 1:size(b, 1)
+            c[i,j] = a[i] + b[i,j]
+        end
+    end
+    return c
+end
+
 plus(a::AbstractArray, b::AbstractArray) = a .+ b
 
-plus(a::Variable, b::Variable) = DataVariable(plus(a.data, b.data))
-
-@generated function plus{Ta<:Variable,Tb<:Variable}(stack::CallbackStack, a::Ta, b::Tb)
-    if anygrads(Ta, Tb)
+@generated function plus{Ta<:Variable,Tb<:Variable}(scope::Scope, a::Ta, b::Tb)
+    if anygrads(Ta, Tb) && scope <: GradScope
         return quote
-            c = GradVariable(plus(a.data, b.data))
             asz, bsz = size(a), size(b)
             if asz == bsz
-                push!(stack, ReversePlus(c, a, b))
+                c_data = similar(scope, b.data)
+                plus_elementwise!(c_data, a.data, b.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReversePlus(c, a, b))
+                return c
             elseif asz == (1, bsz[2])
-                push!(stack, ReverseRowBroadcastPlus(c, a, b))
+                c_data = similar(scope, b.data)
+                plus_row_broadcast!(c_data, a.data, b.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseRowBroadcastPlus(c, a, b))
+                return c
             elseif asz == (bsz[1], 1)
-                push!(stack, ReverseColBroadcastPlus(c, a, b))
+                c_data = similar(scope, b.data)
+                plus_column_broadcast!(c_data, a.data, b.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseColBroadcastPlus(c, a, b))
+                return c
             elseif bsz == (1, asz[2])
-                push!(stack, ReverseRowBroadcastPlus(c, b, a))
+                c_data = similar(scope, a.data)
+                plus_row_broadcast!(c_data, b.data, a.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseRowBroadcastPlus(c, b, a))
+                return c
             elseif bsz == (asz[1], 1)
-                push!(stack, ReverseColBroadcastPlus(c, b, a))
+                c_data = similar(scope, a.data)
+                plus_column_broadcast!(c_data, b.data, a.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseColBroadcastPlus(c, b, a))
+                return c
             else
-                throw(OperationError("no plus for sizes a: $(size(a)), b: $(size(b))"))
+                throw(OperationError("no plus for sizes a: $asz, b: $bsz"))
             end
             return c
         end
     else
-        return :(plus(a, b))
+        return quote
+            asz, bsz = size(a), size(b)
+            if asz == bsz
+                c_data = similar(scope, b.data)
+                plus_elementwise!(c_data, a.data, b.data)
+                c = DataVariable(c_data)
+                return c
+            elseif asz == (1, bsz[2])
+                c_data = similar(scope, b.data)
+                plus_row_broadcast!(c_data, a.data, b.data)
+                c = DataVariable(c_data)
+                return c
+            elseif asz == (bsz[1], 1)
+                c_data = similar(scope, b.data)
+                plus_column_broadcast!(c_data, a.data, b.data)
+                c = DataVariable(c_data)
+                return c
+            elseif bsz == (1, asz[2])
+                c_data = similar(scope, a.data)
+                plus_row_broadcast!(c_data, b.data, a.data)
+                c = DataVariable(c_data)
+                return c
+            elseif bsz == (asz[1], 1)
+                c_data = similar(scope, a.data)
+                plus_column_broadcast!(c_data, b.data, a.data)
+                c = DataVariable(c_data)
+                return c
+            else
+                throw(OperationError("no plus for sizes a: $asz, b: $bsz"))
+            end
+        end
     end
 end
 
 # -- Plus > 2 -- #
-function plus{V<:Variable}(xs::Vector{V})
+function plus{T<:AbstractArray}(xs::Vector{T})
     y = plus(xs[1], xs[2])
     for i = 3:length(xs)
         y = plus(y, xs[i])
@@ -148,15 +220,14 @@ function plus{V<:Variable}(xs::Vector{V})
     return y
 end
 
-function plus{V<:Variable}(stack::CallbackStack, xs::Vector{V})
-    y = plus(stack, xs[1], xs[2])
+function plus{V<:Variable}(scope::Scope, xs::Vector{V})
+    y = plus(scope, xs[1], xs[2])
     for i = 3:length(xs)
-        y = plus(stack, y, xs[i])
+        y = plus(scope, y, xs[i])
     end
     return y
 end
 
-plus(x1::Variable, x2::Variable, x3::Variable, xrest::Variable...) = plus([x1, x2, x3, xrest...])
+plus{T<:AbstractArray}(x1::T, x2::T, x3::T, xrest::T...) = plus([x1, x2, x3, xrest...])
 
-plus(stack::CallbackStack, x1::Variable, x2::Variable, x3::Variable, xrest::Variable...) = plus(stack, [x1, x2, x3, xrest...])
-
+plus{V<:Variable}(scope::Scope, x1::V, x2::V, x3::V, xrest::V...) = plus(scope, [x1, x2, x3, xrest...])

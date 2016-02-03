@@ -1,63 +1,46 @@
 using Flimsy
-using Base.Test
 
-function test_relu()
-    # Mx1
-    m, n = 3, 1
-    x = DataVariable(randn(m))
-    y = relu(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(relu(x.data) .== y.data)
+facts("relu") do
+    for (m, n) in [(3, 1), (5, 8)]
+        context("$(m)x$(n)") do
+            context("DataVariable") do
+                scope = DynamicScope()
+                gscope = GradScope(scope)
 
-    x = GradVariable(randn(m))
-    y = relu(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(relu(x.data) .== y.data)
+                x = DataVariable(randn(m, n))
+                y = relu(scope, x)
+                @fact isa(y, DataVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(relu(x.data))
 
-    x = DataVariable(randn(m))
-    y = relu(CallbackStack(), x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(relu(x.data) .== y.data)
+                x = DataVariable(randn(m, n))
+                y = relu(gscope, x)
+                @fact isa(y, DataVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(relu(x.data))
+            end
 
-    x = GradVariable(randn(m))
-    y = relu(CallbackStack(), x)
-    @test isa(y, GradVariable)
-    @test size(y) == (m, n)
-    @test all(relu(x.data) .== y.data)
+            context("GradVariable") do
+                scope = DynamicScope()
+                gscope = GradScope(scope)
 
-    x = GradVariable(randn(m))
-    test_op_grad_mse(relu, x, wrt=x)
+                x = GradVariable(randn(m, n), zeros(m, n))
+                y = relu(scope, x)
+                @fact isa(y, DataVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(relu(x.data))
 
-    # MxN
-    m, n = 5, 8
-    x = DataVariable(randn(m, n))
-    y = relu(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(relu(x.data) .== y.data)
+                x = GradVariable(randn(m, n), zeros(m, n))
+                y = relu(gscope, x)
+                @fact isa(y, GradVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(relu(x.data))
+            end
 
-    x = GradVariable(randn(m, n))
-    y = relu(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(relu(x.data) .== y.data)
-
-    x = DataVariable(randn(m, n))
-    y = relu(CallbackStack(), x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(relu(x.data) .== y.data)
-
-    x = GradVariable(randn(m, n))
-    y = relu(CallbackStack(), x)
-    @test isa(y, GradVariable)
-    @test size(y) == (m, n)
-    @test all(relu(x.data) .== y.data)
-
-    x = GradVariable(randn(m, n))
-    test_op_grad_mse(relu, x, wrt=x)
+            context("Gradient") do
+                x = GradVariable(randn(m, n), zeros(m, n))
+                test_op_grad_mse(relu, x, wrt=x)
+            end
+        end
+    end
 end
-test_relu()

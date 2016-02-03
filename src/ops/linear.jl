@@ -41,8 +41,6 @@ linear!(y::AbstractArray, w::AbstractArray, x::AbstractArray) = A_mul_B!(y, w, x
 
 linear(w::AbstractArray, x::AbstractArray) = w * x
 
-# linear(w::Variable, x::Variable) = DataVariable(linear(w.data, x.data))
-
 @generated function linear{Tw<:Variable,Tx<:Variable}(scope::Scope, w::Tw, x::Tx)
     if anygrads(Tw, Tx) && scope <: GradScope
         return quote

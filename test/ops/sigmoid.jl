@@ -1,63 +1,46 @@
 using Flimsy
-using Base.Test
 
-function test_sigmoid()
-    # Mx1
-    m, n = 3, 1
-    x = DataVariable(randn(m))
-    y = sigmoid(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(sigmoid(x.data) .== y.data)
+facts("sigmoid") do
+    for (m, n) in [(3, 1), (5, 8)]
+        context("$(m)x$(n)") do
+            context("DataVariable") do
+                scope = DynamicScope()
+                gscope = GradScope(scope)
 
-    x = GradVariable(randn(m))
-    y = sigmoid(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(sigmoid(x.data) .== y.data)
+                x = DataVariable(randn(m, n))
+                y = sigmoid(scope, x)
+                @fact isa(y, DataVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(sigmoid(x.data))
 
-    x = DataVariable(randn(m))
-    y = sigmoid(CallbackStack(), x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(sigmoid(x.data) .== y.data)
+                x = DataVariable(randn(m, n))
+                y = sigmoid(gscope, x)
+                @fact isa(y, DataVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(sigmoid(x.data))
+            end
 
-    x = GradVariable(randn(m))
-    y = sigmoid(CallbackStack(), x)
-    @test isa(y, GradVariable)
-    @test size(y) == (m, n)
-    @test all(sigmoid(x.data) .== y.data)
+            context("GradVariable") do
+                scope = DynamicScope()
+                gscope = GradScope(scope)
 
-    x = GradVariable(randn(m))
-    test_op_grad_mse(sigmoid, x, wrt=x)
+                x = GradVariable(randn(m, n), zeros(m, n))
+                y = sigmoid(scope, x)
+                @fact isa(y, DataVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(sigmoid(x.data))
 
-    # MxN
-    m, n = 5, 8
-    x = DataVariable(randn(m, n))
-    y = sigmoid(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(sigmoid(x.data) .== y.data)
+                x = GradVariable(randn(m, n), zeros(m, n))
+                y = sigmoid(gscope, x)
+                @fact isa(y, GradVariable) --> true
+                @fact size(y)              --> (m, n)
+                @fact y.data               --> roughly(sigmoid(x.data))
+            end
 
-    x = GradVariable(randn(m, n))
-    y = sigmoid(x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(sigmoid(x.data) .== y.data)
-
-    x = DataVariable(randn(m, n))
-    y = sigmoid(CallbackStack(), x)
-    @test isa(y, DataVariable)
-    @test size(y) == (m, n)
-    @test all(sigmoid(x.data) .== y.data)
-
-    x = GradVariable(randn(m, n))
-    y = sigmoid(CallbackStack(), x)
-    @test isa(y, GradVariable)
-    @test size(y) == (m, n)
-    @test all(sigmoid(x.data) .== y.data)
-
-    x = GradVariable(randn(m, n))
-    test_op_grad_mse(sigmoid, x, wrt=x)
+            context("Gradient") do
+                x = GradVariable(randn(m, n), zeros(m, n))
+                test_op_grad_mse(sigmoid, x, wrt=x)
+            end
+        end
+    end
 end
-test_sigmoid()

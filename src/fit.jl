@@ -1,25 +1,13 @@
 
-typealias CachePair{F} Tuple{Matrix{F},GradVariable{F}}
-
-paramdict(theta::Component) = [name => zero(param.data) for (name, param) in getnamedparams(theta)]
-
-function paired{F<:AbstractFloat}(theta::Component{GradVariable{F}})
-    pairs = CachePair{F}[]
-    for param in convert(Vector, theta)
-        push!(pairs, (zero(param.data), param))
-    end
-    return pairs
-end
-
-function gradnorm(theta::Component)
-    ss = 0.0
-    for param in getparams(theta)
-        for i in eachindex(param)
-            ss += abs2(param.grad[i])
-        end
-    end
-    return sqrt(ss)
-end
+# function gradnorm(theta::Component)
+#     ss = 0.0
+#     for param in getparams(theta)
+#         for i in eachindex(param)
+#             ss += abs2(param.grad[i])
+#         end
+#     end
+#     return sqrt(ss)
+# end
 
 function gradnorm{V<:GradVariable}(paramvec::Vector{V})
     ss = 0.0
@@ -31,6 +19,8 @@ function gradnorm{V<:GradVariable}(paramvec::Vector{V})
     return sqrt(ss)
 end
 
+Cache{F<:AbstractFloat}(paramvec::Vector{GradVariable{F}}) = Matrix{F}[zero(p.data) for p in paramvec]
+
 abstract Optimizer
 
 #######################################
@@ -38,9 +28,9 @@ abstract Optimizer
 #######################################
 abstract GradientDescent <: Optimizer
 
-type PlainGradientDescent{T<:AbstractFloat,V<:GradVariable} <: GradientDescent
+type PlainGradientDescent{T<:AbstractFloat,F<:AbstractFloat} <: GradientDescent
     learning_rate::T
-    paramvec::Vector{V}
+    paramvec::Vector{GradVariable{F}}
 end
 
 function update!(opt::GradientDescent)
@@ -53,17 +43,16 @@ function update!(opt::GradientDescent)
     end
 end
 
-type ScaledGradientDescent{T<:AbstractFloat,V<:GradVariable} <: GradientDescent
+type ScaledGradientDescent{T<:AbstractFloat,F<:AbstractFloat} <: GradientDescent
     learning_rate::T
     max_norm::T
-    paramvec::Vector{V}
+    paramvec::Vector{GradVariable{F}}
 end
 
 function update!(opt::ScaledGradientDescent)
     lr = opt.learning_rate
     gnorm = gradnorm(opt.paramvec)
     if gnorm > opt.max_norm
-        # println("clip $gnorm => $(opt.max_norm)")
         lr *= opt.max_norm / gnorm
     end
     for param in opt.paramvec
@@ -74,13 +63,13 @@ function update!(opt::ScaledGradientDescent)
     end
 end
 
-type ClippedGradientDescent{T<:AbstractFloat,V<:GradVariable} <: GradientDescent
+type ClippedGradientDescent{T<:AbstractFloat,F<:AbstractFloat} <: GradientDescent
     learning_rate::T
     clip::T
-    paramvec::Vector{V}
+    paramvec::Vector{GradVariable{F}}
 end
 
-function update!(opt::ClippedGradientDescent, theta::Component)
+function update!(opt::ClippedGradientDescent)
     lr = opt.learning_rate
     ub = opt.clip
     lb = -opt.clip
@@ -101,13 +90,16 @@ abstract Momentum <: Optimizer
 type PlainMomentum{T<:AbstractFloat,F<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
-    paired::Vector{CachePair{F}}
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
 end
 
-function update!(opt::Momentum, theta::Component)
+function update!(opt::Momentum)
     lr = opt.learning_rate
     mu = opt.momentum
-    for (cache, param) in opt.paired
+    for k = 1:length(opt.paramvec)
+        param = opt.paramvec[k]
+        cache = opt.cachevec[k]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             cache[i] = mu * cache[i] - lr * param.grad[i]
@@ -117,22 +109,24 @@ function update!(opt::Momentum, theta::Component)
     end
 end
 
-type ScaledMomentum{T<:AbstractFloat,V<:GradVariable} <: Momentum
+type ScaledMomentum{T<:AbstractFloat,F<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
     max_norm::T
-    cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
 end
 
-function update!(opt::ScaledMomentum, theta::Component)
+function update!(opt::ScaledMomentum)
     lr = opt.learning_rate
     mu = opt.momentum
-    gnorm = gradnorm(theta)
+    gnorm = gradnorm(opt.paramvec)
     if gnorm > opt.max_norm
         lr *= opt.max_norm / gnorm
     end
-    for (name, param) in getnamedparams(theta)
-        cache = opt.cache[name]
+    for k = 1:length(opt.paramvec)
+        param = opt.paramvec[k]
+        cache = opt.cachevec[k]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             cache[i] = mu * cache[i] - lr * param.grad[i]
@@ -142,20 +136,22 @@ function update!(opt::ScaledMomentum, theta::Component)
     end
 end
 
-type ClippedMomentum{T<:AbstractFloat,V<:GradVariable} <: Momentum
+type ClippedMomentum{T<:AbstractFloat,F<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
     clip::T
-    cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
 end
 
-function update!(opt::ClippedMomentum, theta::Component)
+function update!(opt::ClippedMomentum)
     lr = opt.learning_rate
     mu = opt.momentum
     ub = opt.clip
     lb = -opt.clip
-    for (name, param) in getnamedparams(theta)
-        cache = opt.cache[name]
+    for k = 1:length(opt.paramvec)
+        param = opt.paramvec[k]
+        cache = opt.cachevec[k]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             cache[i] = mu * cache[i] - lr * max(min(param.grad[i], ub), lb)
@@ -171,18 +167,20 @@ end
 #############################
 abstract Nesterov <: Optimizer
 
-type PlainNesterov{T<:AbstractFloat,V<:GradVariable} <: Nesterov
+type PlainNesterov{T<:AbstractFloat,F<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
-    cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
 end
 
-function update!(opt::Nesterov, theta::Component)
+function update!(opt::Nesterov)
     lr = opt.learning_rate
     mu = opt.momentum
     upmu = 1 + mu
-    for (name, param) in getnamedparams(theta)
-        cache = opt.cache[name]
+    for k = 1:length(opt.paramvec)
+        param = opt.paramvec[k]
+        cache = opt.cachevec[k]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             prev = cache[i]
@@ -193,23 +191,25 @@ function update!(opt::Nesterov, theta::Component)
     end
 end
 
-type ScaledNesterov{T<:AbstractFloat,V<:GradVariable} <: Nesterov
+type ScaledNesterov{T<:AbstractFloat,F<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
     max_norm::T
-    cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
 end
 
-function update!(opt::ScaledNesterov, theta::Component)
+function update!(opt::ScaledNesterov)
     lr = opt.learning_rate
     mu = opt.momentum
     upmu = 1 + mu
-    gnorm = gradnorm(theta)
+    gnorm = gradnorm(opt.paramvec)
     if gnorm > opt.max_norm
         lr *= opt.max_norm / gnorm
     end
-    for (name, param) in getnamedparams(theta)
-        cache = opt.cache[name]
+    for k = 1:length(opt.paramvec)
+        param = opt.paramvec[k]
+        cache = opt.cachevec[k]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             prev = cache[i]
@@ -220,21 +220,23 @@ function update!(opt::ScaledNesterov, theta::Component)
     end
 end
 
-type ClippedNesterov{T<:AbstractFloat,V<:GradVariable} <: Nesterov
+type ClippedNesterov{T<:AbstractFloat,F<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
     clip::T
-    cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
 end
 
-function update!(opt::ClippedNesterov, theta::Component)
+function update!(opt::ClippedNesterov)
     lr = opt.learning_rate
     mu = opt.momentum
     upmu = 1 + mu
     ub = opt.clip
     lb = -opt.clip
-    for (name, param) in getnamedparams(theta)
-        cache = opt.cache[name]
+    for k = 1:length(opt.paramvec)
+        param = opt.paramvec[k]
+        cache = opt.cachevec[k]
         @assert size(param) == size(cache)
         for i in eachindex(param)
             prev = cache[i]
@@ -254,14 +256,17 @@ abstract RMSProp <: Optimizer
 type PlainRMSProp{T<:AbstractFloat,F<:AbstractFloat} <: RMSProp
     learning_rate::T
     decay::T
-    pairs::Vector{CachePair{F}}
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
 end
 
 function update!(opt::RMSProp)
     lr = opt.learning_rate
     decay = opt.decay
     umdecay = 1 - decay
-    for (cache, param) in opt.pairs
+    for k = 1:length(opt.paramvec)
+        param = opt.paramvec[k]
+        cache = opt.cachevec[k]
         @assert size(param) == size(cache)
         for i in eachindex(cache)
             cache[i] = decay * cache[i] + umdecay * param.grad[i] * param.grad[i]
@@ -272,21 +277,24 @@ function update!(opt::RMSProp)
     end
 end
 
-type ScaledRMSProp{T<:AbstractFloat,V<:GradVariable} <: RMSProp
+type ScaledRMSProp{T<:AbstractFloat,F<:AbstractFloat} <: RMSProp
     learning_rate::T
     decay::T
     max_norm::T
-    cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
 end
 
-function update!(opt::ScaledRMSProp, theta::Component)
+function update!(opt::ScaledRMSProp)
     lr = opt.learning_rate
     decay = opt.decay
     umdecay = 1 - decay
-    gnorm = gradnorm(theta)
+    gnorm = gradnorm(opt.paramvec)
     scale = gnorm > opt.max_norm ? opt.max_norm / gnorm : 1.0
-    for (name, param) in getnamedparams(theta)
-        cache = opt.cache[name]
+    
+    for k = 1:length(opt.paramvec)
+        param = opt.paramvec[k]
+        cache = opt.cachevec[k]
         @assert size(param) == size(cache)
         for i in eachindex(cache)
             grad = scale * param.grad[i]
@@ -298,14 +306,15 @@ function update!(opt::ScaledRMSProp, theta::Component)
     end
 end
 
-type ClippedRMSProp{T<:AbstractFloat,V<:GradVariable} <: RMSProp
+type ClippedRMSProp{T<:AbstractFloat,F<:AbstractFloat} <: RMSProp
     learning_rate::T
     decay::T
     clip::T
-    cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
 end
 
-function update!(opt::ClippedRMSProp, theta::Component)
+function update!(opt::ClippedRMSProp)
     lr = opt.learning_rate
     decay = opt.decay
     umdecay = 1 - decay
@@ -329,18 +338,20 @@ end
 ####################
 abstract AdaDelta <: Optimizer
 
-type PlainAdaDelta{T<:AbstractFloat,V<:GradVariable} <: AdaDelta
+type PlainAdaDelta{T<:AbstractFloat,F<:AbstractFloat} <: AdaDelta
     decay::T
-    grad_cache::Dict
-    delta_cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
+    deltavec::Vector{Matrix{F}}
 end
 
-function update!(opt::AdaDelta, theta::Component)
+function update!(opt::AdaDelta)
     decay = opt.decay
     umdecay = 1 - decay
-    for (name, param) in getnamedparams(theta)
-        g2_tm1 = opt.grad_cache[name]
-        d2_tm1 = opt.delta_cache[name]
+    for i in eachindex(opt.paramvec)
+        param = opt.paramvec[i]
+        g2_tm1 = opt.cachevec[i]
+        d2_tm1 = opt.deltavec[i]
         @assert size(param) == size(g2_tm1) == size(d2_tm1)
         for i in eachindex(param)
             g = param.grad[i]
@@ -355,21 +366,24 @@ function update!(opt::AdaDelta, theta::Component)
     end
 end
 
-type ScaledAdaDelta{T<:AbstractFloat,V<:GradVariable} <: AdaDelta
+type ScaledAdaDelta{T<:AbstractFloat,F<:AbstractFloat} <: AdaDelta
     decay::T
     max_norm::T
-    grad_cache::Dict
-    delta_cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
+    deltavec::Vector{Matrix{F}}
 end
 
-function update!(opt::ScaledAdaDelta, theta::Component)
+function update!(opt::ScaledAdaDelta)
     decay = opt.decay
     umdecay = 1 - decay
-    gnorm = gradnorm(theta)
+    gnorm = gradnorm(opt.paramvec)
     scale = gnorm > opt.max_norm ? opt.max_norm / gnorm : 1.0
-    for (name, param) in getnamedparams(theta)
-        g2_tm1 = opt.grad_cache[name]
-        d2_tm1 = opt.delta_cache[name]
+
+    for i in eachindex(opt.paramvec)
+        param = opt.paramvec[i]
+        g2_tm1 = opt.cachevec[i]
+        d2_tm1 = opt.deltavec[i]
         @assert size(param) == size(g2_tm1) == size(d2_tm1)
         for i in eachindex(param)
             g = scale * param.grad[i]
@@ -384,21 +398,24 @@ function update!(opt::ScaledAdaDelta, theta::Component)
     end
 end
 
-type ClippedAdaDelta{T<:AbstractFloat,V<:GradVariable} <: AdaDelta
+type ClippedAdaDelta{T<:AbstractFloat,F<:AbstractFloat} <: AdaDelta
     decay::T
     clip::T
-    grad_cache::Dict
-    delta_cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
+    deltavec::Vector{Matrix{F}}
 end
 
-function update!(opt::ClippedAdaDelta, theta::Component)
+function update!(opt::ClippedAdaDelta)
     decay = opt.decay
     umdecay = 1 - decay
     ub = opt.clip
     lb = -opt.clip
-    for (name, param) in getnamedparams(theta)
-        g2_tm1 = opt.grad_cache[name]
-        d2_tm1 = opt.delta_cache[name]
+
+    for i in eachindex(opt.paramvec)
+        param = opt.paramvec[i]
+        g2_tm1 = opt.cachevec[i]
+        d2_tm1 = opt.deltavec[i]
         @assert size(param) == size(g2_tm1) == size(d2_tm1)
         for i in eachindex(param)
             g = max(min(param.grad[i], ub), lb)
@@ -418,17 +435,18 @@ end
 ################
 abstract Adam <: Optimizer
 
-type PlainAdam{T<:AbstractFloat,V<:GradVariable} <: Adam
+type PlainAdam{T<:AbstractFloat,F<:AbstractFloat} <: Adam
     learning_rate::T
     moment1_decay::T
     moment2_decay::T
     epsilon::T
     timestep::Int
-    moment1_cache::Dict
-    moment2_cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    moment1_vec::Vector{Matrix{F}}
+    moment2_vec::Vector{Matrix{F}}
 end
 
-function update!(opt::Adam, theta::Component)
+function update!(opt::Adam)
     opt.timestep += 1
     lr = opt.learning_rate
     b1 = opt.moment1_decay
@@ -440,9 +458,10 @@ function update!(opt::Adam, theta::Component)
     umb1sqr = 1 - (b1 * b1)
     umb2sqr = 1 - (b2 * b2)
 
-    for (name, param) in getnamedparams(theta)
-        m1 = opt.moment1_cache[name]
-        m2 = opt.moment2_cache[name]
+    for i in eachindex(opt.paramvec)
+        param = opt.paramvec[i]
+        m1 = opt.moment1_vec[i]
+        m2 = opt.moment2_vec[i]
         @assert size(param) == size(m1) == size(m2)
         for i in eachindex(param)
             g = param.grad[i]
@@ -456,18 +475,19 @@ function update!(opt::Adam, theta::Component)
     end
 end
 
-type ScaledAdam{T<:AbstractFloat,V<:GradVariable} <: Adam
+type ScaledAdam{T<:AbstractFloat,F<:AbstractFloat} <: Adam
     learning_rate::T
     moment1_decay::T
     moment2_decay::T
     epsilon::T
     max_norm::T
     timestep::Int
-    moment1_cache::Dict
-    moment2_cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    moment1_vec::Vector{Matrix{F}}
+    moment2_vec::Vector{Matrix{F}}
 end
 
-function update!(opt::ScaledAdam, theta::Component)
+function update!(opt::ScaledAdam)
     opt.timestep += 1
     lr = opt.learning_rate
     b1 = opt.moment1_decay
@@ -478,11 +498,13 @@ function update!(opt::ScaledAdam, theta::Component)
     umb2 = 1 - b2
     umb1sqr = 1 - (b1 * b1)
     umb2sqr = 1 - (b2 * b2)
-    gnorm = gradnorm(theta)
+    gnorm = gradnorm(opt.paramvec)
     scale = gnorm > opt.max_norm ? opt.max_norm / gnorm : 1.0
-    for (name, param) in getnamedparams(theta)
-        m1 = opt.moment1_cache[name]
-        m2 = opt.moment2_cache[name]
+
+    for i in eachindex(opt.paramvec)
+        param = opt.paramvec[i]
+        m1 = opt.moment1_vec[i]
+        m2 = opt.moment2_vec[i]
         @assert size(param) == size(m1) == size(m2)
         for i in eachindex(param)
             g = scale * param.grad[i]
@@ -496,18 +518,19 @@ function update!(opt::ScaledAdam, theta::Component)
     end
 end
 
-type ClippedAdam{T<:AbstractFloat,V<:GradVariable} <: Adam
+type ClippedAdam{T<:AbstractFloat,F<:AbstractFloat} <: Adam
     learning_rate::T
     moment1_decay::T
     moment2_decay::T
     epsilon::T
     clip::T
     timestep::Int
-    moment1_cache::Dict
-    moment2_cache::Dict
+    paramvec::Vector{GradVariable{F}}
+    moment1_vec::Vector{Matrix{F}}
+    moment2_vec::Vector{Matrix{F}}
 end
 
-function update!(opt::ClippedAdaDelta, theta::Component)
+function update!(opt::ClippedAdaDelta)
     opt.timestep += 1
     lr = opt.learning_rate
     b1 = opt.moment1_decay
@@ -520,9 +543,11 @@ function update!(opt::ClippedAdaDelta, theta::Component)
     umb2sqr = 1 - (b2 * b2)
     ub = opt.clip
     lb = -opt.clip
-    for (name, param) in getnamedparams(theta)
-        m1 = opt.moment1_cache[name]
-        m2 = opt.moment2_cache[name]
+
+    for i in eachindex(opt.paramvec)
+        param = opt.paramvec[i]
+        m1 = opt.moment1_vec[i]
+        m2 = opt.moment2_vec[i]
         @assert size(param) == size(m1) == size(m2)
         for i in eachindex(param)
             g = max(min(param.grad[i], ub), lb)
@@ -560,52 +585,64 @@ function optimizer{O<:Optimizer}(::Type{O}, theta::Component;
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end
     elseif O <: Momentum
+        paramvec = convert(Vector, theta)
+        cachevec = Cache(paramvec)
         if clipping_type == :none
-            return PlainMomentum(learning_rate, momentum, paramdict(theta))
+            return PlainMomentum(learning_rate, momentum, paramvec, cachevec)
         elseif clipping_type == :scale
-            return ScaledMomentum(learning_rate, momentum, clip, paramdict(theta))
+            return ScaledMomentum(learning_rate, momentum, clip, paramvec, cachevec)
         elseif clipping_type == :clip
-            return ClippedMomentum(learning_rate, momentum, clip, paramdict(theta))
+            return ClippedMomentum(learning_rate, momentum, clip, paramvec, cachevec)
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end
     elseif O <: Nesterov
+        paramvec = convert(Vector, theta)
+        cachevec = Cache(paramvec)
         if clipping_type == :none
-            return PlainNesterov(learning_rate, momentum, paramdict(theta))
+            return PlainNesterov(learning_rate, momentum, paramvec, cachevec)
         elseif clipping_type == :scale
-            return ScaledNesterov(learning_rate, momentum, clip, paramdict(theta))
+            return ScaledNesterov(learning_rate, momentum, clip, paramvec, cachevec)
         elseif clipping_type == :clip
-            return ClippedNesterov(learning_rate, momentum, clip, paramdict(theta))
+            return ClippedNesterov(learning_rate, momentum, clip, paramvec, cachevec)
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end
     elseif O <: RMSProp
+        paramvec = convert(Vector, theta)
+        cachevec = Cache(paramvec)
         if clipping_type == :none
-            return PlainRMSProp(learning_rate, decay, paired(theta))
+            return PlainRMSProp(learning_rate, decay, paramvec, cachevec)
         elseif clipping_type == :scale
-            return ScaledRMSProp(learning_rate, decay, clip, paramdict(theta))
+            return ScaledRMSProp(learning_rate, decay, clip, paramvec, cachevec)
         elseif clipping_type == :clip
-            return ClippedRMSProp(learning_rate, decay, clip, paramdict(theta))
+            return ClippedRMSProp(learning_rate, decay, clip, paramvec, cachevec)
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end
     elseif O <: AdaDelta
+        paramvec = convert(Vector, theta)
+        cachevec = Cache(paramvec)
+        deltavec = Cache(paramvec)
         if clipping_type == :none
-            return PlainAdaDelta(decay, paramdict(theta), paramdict(theta))
+            return PlainAdaDelta(decay, paramvec, cachevec, deltavec)
         elseif clipping_type == :scale
-            return ScaledAdaDelta(decay, clip, paramdict(theta), paramdict(theta))
+            return ScaledAdaDelta(decay, clip, paramvec, cachevec, deltavec)
         elseif clipping_type == :clip
-            return ClippedAdaDelta(decay, clip, paramdict(theta), paramdict(theta))
+            return ClippedAdaDelta(decay, clip, paramvec, cachevec, deltavec)
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end
     elseif O <: Adam
+        paramvec = convert(Vector, theta)
+        moment1_vec = Cache(paramvec)
+        moment2_vec = Cache(paramvec)
         if clipping_type == :none
-            return PlainAdam(learning_rate, moment1_decay, moment2_decay, epsilon, 0, paramdict(theta), paramdict(theta))
+            return PlainAdam(learning_rate, moment1_decay, moment2_decay, epsilon, 0, paramvec, moment1_vec, moment2_vec)
         elseif clipping_type == :scale
-            return ScaledAdam(learning_rate, moment1_decay, moment2_decay, epsilon, clip, 0, paramdict(theta), paramdict(theta))
+            return ScaledAdam(learning_rate, moment1_decay, moment2_decay, epsilon, clip, 0, paramvec, moment1_vec, moment2_vec)
         elseif clipping_type == :clip
-            return ClippedAdam(learning_rate, moment1_decay, moment2_decay, epsilon, clip, 0, paramdict(theta), paramdict(theta))
+            return ClippedAdam(learning_rate, moment1_decay, moment2_decay, epsilon, clip, 0, paramvec, moment1_vec, moment2_vec)
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end

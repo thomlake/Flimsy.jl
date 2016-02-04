@@ -16,5 +16,5 @@ function call{T<:Component}(::Type{T}; kwargs...)
             push!(args, value)
         end
     end
-    return T{GradVariable}(args...)
+    return T{GradVariable{Float64}}(args...)
 end

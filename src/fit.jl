@@ -17,13 +17,14 @@ abstract Optimizer
 #######################################
 abstract GradientDescent <: Optimizer
 
-type PlainGradientDescent{T<:AbstractFloat} <: GradientDescent
+type PlainGradientDescent{T<:AbstractFloat,V<:GradVariable} <: GradientDescent
     learning_rate::T
+    paramvec::Vector{V}
 end
 
-function update!(opt::GradientDescent, theta::Component)
+function update!(opt::GradientDescent)
     lr = opt.learning_rate
-    for param in getparams(theta)
+    for param in opt.paramvec
         for i in eachindex(param)
             param.data[i] -= lr * param.grad[i]
         end
@@ -529,7 +530,7 @@ function optimizer{O<:Optimizer}(::Type{O}, theta::Component;
     )
     if O <: GradientDescent
         if clipping_type == :none
-            return PlainGradientDescent(learning_rate)
+            return PlainGradientDescent(learning_rate, convert(Vector, theta))
         elseif clipping_type == :scale
             return ScaledGradientDescent(learning_rate, clip)
         elseif clipping_type == :clip

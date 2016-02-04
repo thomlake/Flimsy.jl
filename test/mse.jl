@@ -11,11 +11,11 @@ facts("mse") do
         else
             randn(m, n)
         end
-        p = ValueComponent(x)
-        scope = Scope(p)
-        @component cost(params) = Cost.mse(params.value, target)
-        c = () -> cost(p)
-        g = () -> gradient!(cost, scope)
-        check_gradients(g, c, scope, verbose=false)
+        params = ValueComponent(x)
+        scope = Scope(params)
+        @component cost(p) = Cost.mse(p.value, target)
+        c = () -> cost(scope, params)
+        g = () -> gradient!(cost, scope, params)
+        @fact check_gradients(g, c, params, verbose=false) --> true
     end
 end

@@ -61,11 +61,11 @@ const SUPPORTED_SYNTAX = [
 ]
 
 """
-Insert an AbstractScope as the first argument in a function signature.
+Insert a Scope type as the first argument in a function signature.
 
     f(x, y) => f(__scope__::Scope, x, y)
 """
-function signature_with_stack(signature::Expr)
+function signature_with_scope(signature::Expr)
     new_signature = deepcopy(signature)
     insert!(new_signature.args, 2, Expr(:(::), :__scope__, :Scope))
     return new_signature
@@ -80,7 +80,7 @@ For example, the following statment is tranformed as follows
                  =>  Expr(:call, :foo, __scope__, :a, :b, :c)
                  ==  foo(__scope__, a, b, c)
 """
-function insert_stack(expr::Expr, blacklist::Vector)
+function insert_scope(expr::Expr, blacklist::Vector)
     head = expr.head
     args = expr.args
     newargs = Any[]
@@ -117,7 +117,7 @@ function insert_stack(expr::Expr, blacklist::Vector)
 
     for arg in args
         if typeof(arg) <: Expr
-            newarg, inner_blacklist = insert_stack(arg, inner_blacklist)
+            newarg, inner_blacklist = insert_scope(arg, inner_blacklist)
             if newarg != nothing
                 push!(newargs, newarg)
             end
@@ -167,11 +167,9 @@ function create_component_functions(f::Expr)
     signature = f.args[1]
     body = f.args[2]
 
-    stack_signature = signature_with_stack(signature)
-    stack_body, _ = insert_stack(deepcopy(body), DEFAULT_BLACKLIST)
-    g1 = Expr(f.head, signature, remove_directives(body))
-    g2 = Expr(f.head, stack_signature, stack_body)
-    return Expr(:block, g1, g2)
+    new_signature = signature_with_scope(signature)
+    new_body, _ = insert_scope(body, DEFAULT_BLACKLIST)
+    return Expr(f.head, new_signature, new_body)
 end
 
 macro component(x::Expr)

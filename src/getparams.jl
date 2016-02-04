@@ -1,6 +1,6 @@
 
-function getparams(theta::Component)
-    params = Variable[]
+function getparams{V<:Variable}(theta::Component{V})
+    params = V[]
     for f in fieldnames(theta)
         T = fieldtype(typeof(theta), f)
         if T <: Variable
@@ -19,8 +19,10 @@ function getparams(theta::Component)
     return params
 end
 
-function getnamedparams(theta::Component)
-    params = Tuple{Any,Variable}[]
+Base.convert{V<:Variable}(::Type{Vector}, params::Component{V}) = getparams(params)
+
+function getnamedparams{V<:Variable}(theta::Component{V})
+    params = Tuple{Any,V}[]
     for name in fieldnames(theta)
         T = fieldtype(typeof(theta), name)
         if T <: Variable
@@ -45,3 +47,5 @@ function getnamedparams(theta::Component)
     end
     return params
 end
+
+Base.convert(::Type{Dict}, params::Component) = Dict(getnamedparams(params))

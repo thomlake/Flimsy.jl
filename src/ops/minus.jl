@@ -110,27 +110,102 @@ end
     end
 end
 
+function minus_elementwise!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
+    for i in eachindex(c)
+        c[i] = a[i] - b[i]
+    end
+    return c
+end
+
+function minus_row_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
+    for j = 1:size(b, 2)
+        for i = 1:size(b, 1)
+            c[i,j] = a[1,j] - b[i,j]
+        end
+    end
+    return c
+end
+
+function minus_column_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
+    for j = 1:size(b, 2)
+        for i = 1:size(b, 1)
+            c[i,j] = a[i] - b[i,j]
+        end
+    end
+    return c
+end
+
 minus(a::AbstractArray, b::AbstractArray) = a .- b
 
-minus(a::Variable, b::Variable) = DataVariable(minus(a.data, b.data))
-
-@generated function minus{Ta<:Variable,Tb<:Variable}(stack::CallbackStack, a::Ta, b::Tb)
-    if anygrads(Ta, Tb)
+@generated function minus{Ta<:Variable,Tb<:Variable}(scope::Scope, a::Ta, b::Tb)
+    if anygrads(Ta, Tb) && scope <: GradScope
         return quote
-            c = GradVariable(minus(a.data, b.data))
             asz, bsz = size(a), size(b)
             if asz == bsz
-                push!(stack, ReverseMinus(c, a, b))
+                c_data = similar(scope, b.data)
+                minus_elementwise!(c_data, a.data, b.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseMinus(c, a, b))
+                return c
             elseif asz == (1, bsz[2])
-                push!(stack, ReverseRowBroadcastMinus(c, a, b))
+                c_data = similar(scope, b.data)
+                minus_row_broadcast!(c_data, a.data, b.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseRowBroadcastMinus(c, a, b))
+                return c
             elseif asz == (bsz[1], 1)
-                push!(stack, ReverseColBroadcastMinus(c, a, b))
+                c_data = similar(scope, b.data)
+                minus_column_broadcast!(c_data, a.data, b.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseColBroadcastMinus(c, a, b))
+                return c
             else
-                throw(OperationError("no minus for sizes a: $(size(a)), b: $(size(b))"))
+                throw(OperationError("no minus for sizes a: $asz, b: $bsz"))
             end
             return c
         end
     else
-        return :(minus(a, b))
+        return quote
+            asz, bsz = size(a), size(b)
+            if asz == bsz
+                c_data = similar(scope, b.data)
+                minus_elementwise!(c_data, a.data, b.data)
+                c = DataVariable(c_data)
+                return c
+            elseif asz == (1, bsz[2])
+                c_data = similar(scope, b.data)
+                minus_row_broadcast!(c_data, a.data, b.data)
+                c = DataVariable(c_data)
+                return c
+            elseif asz == (bsz[1], 1)
+                c_data = similar(scope, b.data)
+                minus_column_broadcast!(c_data, a.data, b.data)
+                c = DataVariable(c_data)
+                return c
+            else
+                throw(OperationError("no minus for sizes a: $asz, b: $bsz"))
+            end
+        end
     end
 end
+
+# @generated function minus{Ta<:Variable,Tb<:Variable}(scope::Scope, a::Ta, b::Tb)
+#     if anygrads(Ta, Tb) && scope <: GradScope
+#         return quote
+#             c = GradVariable(minus(a.data, b.data))
+#             asz, bsz = size(a), size(b)
+#             if asz == bsz
+#                 push!(stack, ReverseMinus(c, a, b))
+#             elseif asz == (1, bsz[2])
+#                 push!(stack, ReverseRowBroadcastMinus(c, a, b))
+#             elseif asz == (bsz[1], 1)
+#                 push!(stack, ReverseColBroadcastMinus(c, a, b))
+#             else
+#                 throw(OperationError("no minus for sizes a: $(size(a)), b: $(size(b))"))
+#             end
+#             return c
+#         end
+#     else
+#         return :(minus(a, b))
+#     end
+# end

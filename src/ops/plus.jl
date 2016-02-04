@@ -174,7 +174,6 @@ plus(a::AbstractArray, b::AbstractArray) = a .+ b
             else
                 throw(OperationError("no plus for sizes a: $asz, b: $bsz"))
             end
-            return c
         end
     else
         return quote

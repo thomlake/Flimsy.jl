@@ -110,31 +110,104 @@ end
     end
 end
 
+function mult_elementwise!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
+    for i in eachindex(a)
+        c[i] = a[i] * b[i]
+    end
+    return c
+end
+
+function mult_row_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
+    for j = 1:size(b, 2)
+        for i = 1:size(b, 1)
+            c[i,j] = a[1,j] * b[i,j]
+        end
+    end
+    return c
+end
+
+function mult_column_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
+    for j = 1:size(b, 2)
+        for i = 1:size(b, 1)
+            c[i,j] = a[i] * b[i,j]
+        end
+    end
+    return c
+end
+
 mult(a::AbstractArray, b::AbstractArray) = a .* b
 
 mult(a::Variable, b::Variable) = DataVariable(mult(a.data, b.data))
 
-@generated function mult{Ta<:Variable,Tb<:Variable}(stack::CallbackStack, a::Ta, b::Tb)
-    if anygrads(Ta, Tb)
+@generated function mult{Ta<:Variable,Tb<:Variable}(scope::Scope, a::Ta, b::Tb)
+    if anygrads(Ta, Tb) && scope <: GradScope
         return quote
-            c = GradVariable(mult(a.data, b.data))
             asz, bsz = size(a), size(b)
             if asz == bsz
-                push!(stack, ReverseMult(c, a, b))
+                c_data = similar(scope, b.data)
+                mult_elementwise!(c_data, a.data, b.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseMult(c, a, b))
+                return c
             elseif asz == (1, bsz[2])
-                push!(stack, ReverseRowBroadcastMult(c, a, b))
+                c_data = similar(scope, b.data)
+                mult_row_broadcast!(c_data, a.data, b.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseRowBroadcastMult(c, a, b))
+                return c
             elseif asz == (bsz[1], 1)
-                push!(stack, ReverseColBroadcastMult(c, a, b))
+                c_data = similar(scope, b.data)
+                mult_column_broadcast!(c_data, a.data, b.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseColBroadcastMult(c, a, b))
+                return c
             elseif bsz == (1, asz[2])
-                push!(stack, ReverseRowBroadcastMult(c, b, a))
+                c_data = similar(scope, a.data)
+                mult_row_broadcast!(c_data, b.data, a.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseRowBroadcastMult(c, b, a))
+                return c
             elseif bsz == (asz[1], 1)
-                push!(stack, ReverseColBroadcastMult(c, b, a))
+                c_data = similar(scope, a.data)
+                mult_column_broadcast!(c_data, b.data, a.data)
+                c = GradVariable(c_data, similar(scope, c_data, 0))
+                push_callback!(scope, ReverseColBroadcastMult(c, b, a))
+                return c
             else
                 throw(OperationError("no mult for sizes a: $(size(a)), b: $(size(b))"))
             end
-            return c
         end
     else
-        return :(mult(a, b))
+        return quote
+            asz, bsz = size(a), size(b)
+            if asz == bsz
+                c_data = similar(scope, b.data)
+                mult_elementwise!(c_data, a.data, b.data)
+                c = DataVariable(c_data)
+                return c
+            elseif asz == (1, bsz[2])
+                c_data = similar(scope, b.data)
+                mult_row_broadcast!(c_data, a.data, b.data)
+                c = DataVariable(c_data)
+                return c
+            elseif asz == (bsz[1], 1)
+                c_data = similar(scope, b.data)
+                mult_column_broadcast!(c_data, a.data, b.data)
+                c = DataVariable(c_data)
+                return c
+            elseif bsz == (1, asz[2])
+                c_data = similar(scope, a.data)
+                mult_row_broadcast!(c_data, b.data, a.data)
+                c = DataVariable(c_data)
+                return c
+            elseif bsz == (asz[1], 1)
+                c_data = similar(scope, a.data)
+                mult_column_broadcast!(c_data, b.data, a.data)
+                c = DataVariable(c_data)
+                return c
+            else
+                throw(OperationError("no mult for sizes a: $(size(a)), b: $(size(b))"))
+            end
+        end
     end
 end

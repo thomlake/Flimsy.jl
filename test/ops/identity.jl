@@ -1,20 +1,23 @@
 using Flimsy
-using Base.Test
 
-function test_identity()
-    for sz in [(1, 3), (3, 1), (5, 6)]
-        for typ in [DataVariable, GradVariable]
-            x = typ(randn(sz))
-            y = identity(x)
-            @test isa(y, typ)
-            @test size(y) == sz
-            @test_approx_eq x.data y.data
+facts("identity") do
+    for (m, n) in [(1, 3), (3, 1), (5, 6)]
+        context("$(m)x$(n)") do
+            scope = DynamicScope()
+            x = DataVariable(randn(m, n))
+            y = identity(scope, x)
+            @fact isa(y, DataVariable) --> true
+            @fact size(y)              --> (m, n)
+            @fact y.data               --> x.data 
 
-            if typ <: GradVariable
-                x = typ(randn(sz))
-                test_op_grad_mse(identity, x, wrt=x)
-            end
+            x = GradVariable(randn(m, n), zeros(m, n))
+            y = identity(scope, x)
+            @fact isa(y, GradVariable) --> true
+            @fact size(y)              --> (m, n)
+            @fact y.data               --> x.data
+
+            x = GradVariable(randn(m, n), zeros(m, n))
+            test_op_grad_mse(identity, x, wrt=x)
         end
     end
 end
-test_identity()

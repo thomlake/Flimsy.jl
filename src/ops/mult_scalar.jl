@@ -15,18 +15,21 @@ function call(rop::ReverseScalarMult)
     return nothing
 end
 
-mult(a::Real, b::AbstractArray) = a .* b
-
-mult(a::Real, b::Variable) = DataVariable(mult(a, b.data))
-
-mult(stack::CallbackStack, a::Real, b::DataVariable) = mult(a, b)
-
-function mult(stack::CallbackStack, a::Real, b::GradVariable)
-    y = GradVariable(mult(a, b.data))
-    push!(stack, ReverseScalarMult(y, a, b))
-    return y
+function mult!(c::AbstractArray, a::Real, b::AbstractArray)
+    for i in eachindex(b)
+        c[i] = a * b[i]
+    end
+    return c
 end
 
-mult(b::Variable, a::Real) = mult(a, b)
+mult(a::Real, b::AbstractArray) = a .* b
 
-mult(stack::CallbackStack, b::Variable, a::Real) = mult(stack, a, b)
+mult(scope::Scope, a::Real, b::Variable) = DataVariable(mult!(similar(scope, b.data), a, b.data))
+
+function mult(scope::GradScope, a::Real, b::GradVariable)
+    c = GradVariable(mult!(similar(scope, b.data), a, b.data), similar(scope, b.data, 0))
+    push_callback!(scope, ReverseScalarMult(c, a, b))
+    return c
+end
+
+mult(scope::Scope, b::Variable, a::Real) = mult(scope, a, b)

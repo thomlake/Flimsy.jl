@@ -1,2 +1,2 @@
 
-Base.identity(stack::CallbackStack, x) = x
+Base.identity(scope::Scope, x::Variable) = x

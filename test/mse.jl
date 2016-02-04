@@ -1,10 +1,9 @@
 using Flimsy
 import Flimsy.Components: ValueComponent
-using Base.Test
 
-function test_mse()
+facts("mse") do
     for (m, n) in [(1,1), (3, 1), (4, 5)]
-        x = GradVariable(randn(m, n))
+        x = GradVariable(randn(m, n), zeros(m, n))
         target = if (m, n) == (1, 1)
             randn()
         elseif n == 1
@@ -13,9 +12,10 @@ function test_mse()
             randn(m, n)
         end
         p = ValueComponent(x)
-        @component cost() = Cost.mse(p.value, target)
-        grad = () -> gradient!(cost)
-        check_gradients(grad, cost, p, verbose=false)
+        scope = Scope(p)
+        @component cost(params) = Cost.mse(params.value, target)
+        c = () -> cost(p)
+        g = () -> gradient!(cost, scope)
+        check_gradients(g, c, scope, verbose=false)
     end
 end
-test_mse()

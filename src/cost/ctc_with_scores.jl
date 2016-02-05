@@ -1,7 +1,7 @@
 import ..Flimsy: CTC
 
 # Connectionist Temporal Classification loss
-function ctc_with_scores{V<:Variable, I<:Int}(output::Vector{V}, target::Vector{I}, blank::Int)
+function ctc_with_scores{V<:Variable, I<:Integer}(scope::Scope, output::Vector{V}, target::Vector{I}, blank::Int)
     ys = CTC.expand(target, blank)
     T = length(output)
     S = size(output[1], 1)
@@ -12,7 +12,7 @@ function ctc_with_scores{V<:Variable, I<:Int}(output::Vector{V}, target::Vector{
     return -ll
 end
 
-function ctc_with_scores{V<:GradVariable,I<:Integer}(stack::CallbackStack, output::Vector{V}, target::Vector{I}, blank::Int)
+function ctc_with_scores{V<:GradVariable,I<:Integer}(scope::GradScope, output::Vector{V}, target::Vector{I}, blank::Int)
     ys = CTC.expand(target, blank)
     T = length(output)
     S = size(output[1], 1)

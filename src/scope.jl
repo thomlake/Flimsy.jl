@@ -49,7 +49,7 @@ allocate(scope::Scope, T::DataType, sz::Tuple, initial_value::Real) = fill!(allo
 # -------------- #
 # Gradient Scope #
 # -------------- #
-abstract GradScope{P} <: Scope{P}
+abstract GradScope <: Scope
 
 function backprop!(scope::GradScope)
     stack = scope.stack
@@ -75,11 +75,7 @@ end
 # ------------- #
 # Dynamic Scope #
 # ------------- #
-type DynamicScope{P<:Component} <: Scope{P}
-    params::P
-end
-
-DynamicScope() = DynamicScope(Components.EmptyComponent())
+type DynamicScope <: Scope end
 
 Base.similar(scope::DynamicScope, x::AbstractArray) = similar(x)
 
@@ -88,12 +84,11 @@ allocate(scope::DynamicScope, T::DataType, sz::Tuple) = zeros(T, sz)
 # ---------------------- #
 # Dynamic Gradient Scope #
 # ---------------------- #
-type DynamicGradScope{P<:Component} <: GradScope{P}
-    params::P
+type DynamicGradScope <: GradScope
     stack::CallbackStack
 end
 
-GradScope(scope::DynamicScope) = DynamicGradScope(scope.params, CallbackStack())
+GradScope(scope::DynamicScope) = DynamicGradScope(CallbackStack())
 
 Base.similar(scope::DynamicGradScope, x::AbstractArray) = similar(x)
 
@@ -104,16 +99,13 @@ reset!(scope::DynamicGradScope) = nothing
 # ------------ #
 # Static Scope #
 # ------------ #
-type StaticScope{P<:Component} <: Scope{P}
-    params::P
+type StaticScope <: Scope
     heap::Heap
 end
 
-StaticScope(params::Component, sz::Int=FLIMSY_DEFAULT_HEAP_SIZE) = StaticScope(params, Heap(sz))
+StaticScope(sz::Int=FLIMSY_DEFAULT_HEAP_SIZE) = StaticScope(Heap(sz))
 
-StaticScope(sz::Int=FLIMSY_DEFAULT_HEAP_SIZE) = StaticScope(Components.EmptyComponent(), sz)
-
-Scope(params::Component, sz::Int=FLIMSY_DEFAULT_HEAP_SIZE) = StaticScope(params, sz)
+Scope(sz::Int=FLIMSY_DEFAULT_HEAP_SIZE) = StaticScope(sz)
 
 Base.similar(scope::StaticScope, x::AbstractArray) = scope.heap(eltype(x), size(x))
 
@@ -124,13 +116,12 @@ reset!(scope::StaticScope) = reset!(scope.heap)
 # --------------------- #
 # Static Gradient Scope #
 # --------------------- #
-type StaticGradScope{P<:Component} <: GradScope{P}
-    params::P
+type StaticGradScope <: GradScope
     heap::Heap
     stack::CallbackStack
 end
 
-GradScope(scope::StaticScope) = StaticGradScope(scope.params, scope.heap, CallbackStack())
+GradScope(scope::StaticScope) = StaticGradScope(scope.heap, CallbackStack())
 
 Base.similar(scope::StaticGradScope, x::AbstractArray) = scope.heap(eltype(x), size(x))
 

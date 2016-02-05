@@ -12,7 +12,7 @@ facts("mse") do
         end
 
         params = ValueComponent(value=randn(m, n))
-        scope = DynamicScope(params)
+        scope = DynamicScope()
         @component cost() = Cost.mse(params.value, target)
         g = () -> gradient!(cost, scope)
         c = () -> cost(scope)

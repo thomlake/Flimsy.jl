@@ -6,7 +6,7 @@ facts("categorical_cross_entropy_with_scores") do
     context("$(K)x1") do
         for k = 1:K
             params = ValueComponent(value=randn(K, 1))
-            scope = DynamicScope(params)
+            scope = DynamicScope()
             @component cost() = Cost.categorical_cross_entropy_with_scores(params.value, k)
             g = () -> gradient!(cost, scope)
             c = () -> cost(scope)
@@ -18,7 +18,7 @@ facts("categorical_cross_entropy_with_scores") do
     context("$(K)x$(n)") do
         targets = rand(1:K, n)
         params = ValueComponent(value=randn(K, n))
-        scope = DynamicScope(params)
+        scope = DynamicScope()
         @component cost() = Cost.categorical_cross_entropy_with_scores(params.value, targets)
         g = () -> gradient!(cost, scope)
         c = () -> cost(scope)

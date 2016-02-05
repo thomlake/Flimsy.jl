@@ -1,27 +1,27 @@
 using Flimsy
 using FactCheck
 
-# FactCheck.setstyle(:compact)
+FactCheck.setstyle(:compact)
 
 tests = [
     # "var.jl",
     # "getparams.jl",
-    # "ops/identity.jl",
-    # "ops/tanh.jl",
-    # "ops/sigmoid.jl",
-    # "ops/relu.jl",
-    # "ops/softmax.jl",
-    # "ops/softmax_vector.jl",
-    # "ops/wta.jl",
-    # "ops/linear.jl",
-    # "ops/affine.jl",
-    # "ops/plus.jl",
-    # "ops/minus_scalar.jl",
-    # "ops/minus.jl",
-    # "ops/mult_scalar.jl",
-    # "ops/mult.jl",
-    # "ops/concat.jl",
-    # "ops/decat.jl",
+    "ops/identity.jl",
+    "ops/tanh.jl",
+    "ops/sigmoid.jl",
+    "ops/relu.jl",
+    "ops/softmax.jl",
+    "ops/softmax_vector.jl",
+    "ops/wta.jl",
+    "ops/linear.jl",
+    "ops/affine.jl",
+    "ops/plus.jl",
+    "ops/minus_scalar.jl",
+    "ops/minus.jl",
+    "ops/mult_scalar.jl",
+    "ops/mult.jl",
+    "ops/concat.jl",
+    "ops/decat.jl",
     # "ops/dropout.jl",
     "mse.jl",
     "categorical_cross_entropy.jl",
@@ -29,7 +29,7 @@ tests = [
     # "ndembed.jl",
     # "logistic_regression.jl",
     # "multilabel_classifier.jl",
-    # "ctc.jl",
+    "ctc.jl",
 ]
 
 srand(sum(map(Int, collect("Flimsy"))))

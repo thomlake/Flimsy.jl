@@ -32,7 +32,7 @@ function check_gradients end
 function check_gradients(g, c, theta::Component; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
     g()
     passed = true
-    for (name, param) in getnamedparams(theta)
+    for (name, param) in convert(Dict, theta)
         for j = 1:size(param, 2)
             for i = 1:size(param, 1)
                 xij = param.data[i,j]

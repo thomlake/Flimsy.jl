@@ -1,23 +1,27 @@
 using Flimsy
 import Flimsy.Components: ValueComponent
-using Base.Test
 
-function test_categorical_cross_entropy_with_scores()
+facts("categorical_cross_entropy_with_scores") do
     K = 4
-    for k = 1:K
-        x = GradVariable(randn(K))
-        p = ValueComponent(x)
-        @component cost() = Cost.categorical_cross_entropy_with_scores(p.value, k)
-        grad = () -> gradient!(cost)
-        check_gradients(grad, cost, p, verbose=false)
+    context("$(K)x1") do
+        for k = 1:K
+            params = ValueComponent(value=randn(K, 1))
+            scope = DynamicScope(params)
+            @component cost() = Cost.categorical_cross_entropy_with_scores(params.value, k)
+            g = () -> gradient!(cost, scope)
+            c = () -> cost(scope)
+            @fact check_gradients(g, c, params, verbose=false) --> true
+        end
     end
 
     n = 7
-    targets = rand(1:K, n)
-    x = GradVariable(randn(K, n))
-    p = ValueComponent(x)
-    @component cost() = Cost.categorical_cross_entropy_with_scores(p.value, targets)
-    grad = () -> gradient!(cost)
-    check_gradients(grad, cost, p, verbose=false)
+    context("$(K)x$(n)") do
+        targets = rand(1:K, n)
+        params = ValueComponent(value=randn(K, n))
+        scope = DynamicScope(params)
+        @component cost() = Cost.categorical_cross_entropy_with_scores(params.value, targets)
+        g = () -> gradient!(cost, scope)
+        c = () -> cost(scope)
+        @fact check_gradients(g, c, params, verbose=false) --> true
+    end
 end
-test_categorical_cross_entropy_with_scores()

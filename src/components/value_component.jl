@@ -1,5 +1,5 @@
 
-immutable ValueComponent{V<:Variable} <: Component
+immutable ValueComponent{V<:Variable} <: Component{V}
     value::V
 end
 

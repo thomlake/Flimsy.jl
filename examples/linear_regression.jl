@@ -9,20 +9,16 @@ using Flimsy.Components
 import Flimsy.Extras: zscore
 import RDatasets: dataset
 
-Params(n_targets, n_features) = LinearRegression(
-    w=rand(Normal(0, 0.01), n_targets, n_features),
-    b=zeros(n_targets),
-)
-
 function check()
     # check computed gradients using finite differences
     n_samples = 2
     n_targets, n_features = 3, 10
     X = randn(n_features, n_samples)
     Y = randn(n_targets, n_samples)
-    params = Params(n_targets, n_features)
-    g() = gradient!(cost, params, Input(X), Y)
-    c() = cost(params, Input(X), Y)
+    params = LinearRegression(n_targets, n_features)
+    scope = Scope()
+    g() = gradient!(cost, scope, params, Input(X), Y)
+    c() = cost(scope, params, Input(X), Y)
     check_gradients(g, c, params)
 end
 
@@ -44,7 +40,8 @@ function demo()
     n_samples = size(features, 2)
     n_features = length(expl)
     n_targets = length(resp)
-    params = Params(n_targets, n_features)
+    params = LinearRegression(n_targets, n_features)
+    scope = Scope()
 
     # Learning Algorithm
     opt = optimizer(GradientDescent, params, learning_rate=0.01 / n_samples)
@@ -54,8 +51,8 @@ function demo()
 
     # Main training loop.
     while !converged(progress)
-        nll = gradient!(cost, params, Input(features), targets)
-        update!(opt, params)
+        nll = gradient!(cost, scope, params, Input(features), targets)
+        update!(opt)
         progress(nll)
     end
     timer_stop(progress)

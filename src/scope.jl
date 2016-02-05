@@ -22,19 +22,25 @@ end
 
 function call(heap::Heap, t::DataType, dims)
     s = sizeof(t) * prod(dims)
-    curr = heap.curr
-    heap.curr = curr + s
-    if heap.curr > heap.tail
-        throw(HeapFullError(s, heap.tail - curr))
+    remain = available(heap)
+    if s > remain
+        throw(HeapFullError(s, remain))
     end
-    return pointer_to_array(Ptr{t}(curr), dims)
+    p = Ptr{t}(heap.curr)
+    heap.curr = heap.curr + s
+    return pointer_to_array(p, dims)
 end
+
+available(heap::Heap) = heap.tail - heap.curr
 
 function reset!(heap)
     heap.curr = heap.head
     return heap
 end
 
+# ------------- #
+# CallbackStack #
+# ------------- #
 typealias CallbackStack Array{ReverseOperation,1}
 
 # --------------- #
@@ -46,10 +52,14 @@ Base.similar(scope::Scope, x::AbstractArray, initial_value::Real) = fill!(simila
 
 allocate(scope::Scope, T::DataType, sz::Tuple, initial_value::Real) = fill!(allocate(scope, T, sz), initial_value)
 
+similartype{F<:AbstractFloat}(scope::Scope, ::Type{F}) = DataVariable{F}
+
 # -------------- #
 # Gradient Scope #
 # -------------- #
 abstract GradScope <: Scope
+
+similartype{F<:AbstractFloat}(scope::GradScope, ::Type{F}) = GradVariable{F}
 
 function backprop!(scope::GradScope)
     stack = scope.stack
@@ -81,6 +91,10 @@ Base.similar(scope::DynamicScope, x::AbstractArray) = similar(x)
 
 allocate(scope::DynamicScope, T::DataType, sz::Tuple) = zeros(T, sz)
 
+available(scope::DynamicScope) = Inf
+
+reset!(scope::DynamicScope) = scope
+
 # ---------------------- #
 # Dynamic Gradient Scope #
 # ---------------------- #
@@ -94,7 +108,9 @@ Base.similar(scope::DynamicGradScope, x::AbstractArray) = similar(x)
 
 allocate(scope::DynamicGradScope, T::DataType, sz::Tuple) = zeros(T, sz)
 
-reset!(scope::DynamicGradScope) = nothing
+available(scope::DynamicScope) = Inf
+
+reset!(scope::DynamicGradScope) = scope
 
 # ------------ #
 # Static Scope #
@@ -111,7 +127,9 @@ Base.similar(scope::StaticScope, x::AbstractArray) = scope.heap(eltype(x), size(
 
 allocate(scope::StaticScope, T::DataType, sz::Tuple) = scope.heap(T, sz)
 
-reset!(scope::StaticScope) = reset!(scope.heap)
+available(scope::StaticScope) = available(scope.heap)
+
+reset!(scope::StaticScope) = (reset!(scope.heap); scope)
 
 # --------------------- #
 # Static Gradient Scope #
@@ -127,5 +145,7 @@ Base.similar(scope::StaticGradScope, x::AbstractArray) = scope.heap(eltype(x), s
 
 allocate(scope::StaticGradScope, T::DataType, sz::Tuple) = scope.heap(T, sz)
 
-reset!(scope::StaticGradScope) = reset!(scope.heap)
+available(scope::StaticGradScope) = available(scope.heap)
+
+reset!(scope::StaticGradScope) = (reset!(scope.heap); scope)
 

@@ -11,6 +11,7 @@ import RDatasets: dataset
 
 function check()
     # check computed gradients using finite differences
+    println("checking gradients....")
     n_samples = 2
     n_targets, n_features = 3, 10
     X = randn(n_features, n_samples)
@@ -18,7 +19,7 @@ function check()
     params = LinearRegression(n_targets, n_features)
     scope = Scope()
     g() = gradient!(cost, scope, params, Input(X), Y)
-    c() = cost(scope, params, Input(X), Y)
+    c() = (reset!(scope); cost(scope, params, Input(X), Y))
     check_gradients(g, c, params)
 end
 

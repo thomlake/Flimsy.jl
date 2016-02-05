@@ -40,7 +40,9 @@ export Scope,
        backprop!,
        gradient!,
        reset!,
-       allocate
+       allocate,
+       available,
+       similartype
 
 export glorot,
        orthonormal

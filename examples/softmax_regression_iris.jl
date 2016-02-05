@@ -7,19 +7,15 @@ import Flimsy.Extras: zscore
 import RDatasets: dataset
 import MLBase: labelmap, labelencode
 
-Params(n_labels, n_features) = SoftmaxRegression(
-    w=rand(Normal(0, 0.01), n_labels, n_features),
-    b=zeros(n_labels),
-)
-
 function check()
     n_sample = 2
     n_labels, n_features = 3, 10
     X = randn(n_features, n_sample)
     Y = rand(1:n_labels, n_sample)
-    params = Params(n_labels, n_features)
-    g = () -> gradient!(cost, params, Input(X), Y)
-    c = () -> cost(params, Input(X), Y)
+    params = SoftmaxRegression(n_labels, n_features)
+    scope = Scope()
+    g = () -> gradient!(cost, scope, params, Input(X), Y)
+    c = () -> cost(reset!(scope), params, Input(X), Y)
     check_gradients(g, c, params)
 end
 
@@ -55,22 +51,24 @@ function demo()
     println("  number of test samples  => ", n_test)
 
     # Setup parameters, optimizer, and progress
-    params = Params(n_labels, n_features)
+    params = SoftmaxRegression(n_labels, n_features)
+    scope = Scope()
     opt = optimizer(GradientDescent, params, learning_rate=0.01)
     progress = Progress(params, ExternalEvaluation(tol=0.01), NoImprovement(), max_epochs=500)
     
     # Fit parameters
     while !converged(progress)
-        nll = gradient!(cost, params, Input(X_tr), Y_tr)
-        update!(opt, params)
+        nll = gradient!(cost, scope, params, Input(X_tr), Y_tr)
+        update!(opt)
         progress(nll)
     end
     timer_stop(progress)
 
     # Get the best parameter values
     best_params = best(progress)
-    Yhat_tr = predict(best_params, Input(X_tr))
-    Yhat_te = predict(best_params, Input(X_te))
+    Yhat_tr = predict(reset!(scope), best_params, Input(X_tr))
+    Yhat_te = predict(reset!(scope), best_params, Input(X_te))
+    reset!(scope)
 
     println("[Results]")
     println("  number of epochs => ", epoch(progress))

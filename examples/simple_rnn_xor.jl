@@ -6,9 +6,9 @@ using Flimsy.Components
 import Flimsy.Components: cost, predict
 import Flimsy.Demo: XORTask
 
-immutable Params{T} <: Component{T}
-    clf::SoftmaxRegression{T}
-    rnn::SimpleRecurrent{T}
+immutable Params{V<:Variable} <: Component{V}
+    clf::SoftmaxRegression{V}
+    rnn::SimpleRecurrent{V}
 end
 
 @component predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
@@ -25,7 +25,7 @@ end
 Params(n_out::Int, n_hid::Int, n_in::Int) = Params(
     clf=SoftmaxRegression(
         w=rand(Normal(0, 0.01), n_out, n_hid),
-        b=zeros(n_out),
+        b=zeros(n_out, 1),
     ),
     rnn=SimpleRecurrent(
         f=tanh,
@@ -33,8 +33,8 @@ Params(n_out::Int, n_hid::Int, n_in::Int) = Params(
         # u=rand(Normal(0, 0.1), n_hid, n_hid),
         w=orthonormal(1, n_hid, n_in),
         u=orthonormal(1, n_hid, n_hid),
-        b=zeros(n_hid),
-        h0=zeros(n_hid),
+        b=zeros(n_hid, 1),
+        h0=zeros(n_hid, 1),
     )
 )
 
@@ -46,8 +46,9 @@ function check()
     for (name, param) in getnamedparams(params)
         println("  $name => ", size(param))
     end
-    g = () -> gradient!(cost, params, map(Input, xs), ys)
-    c = () -> cost(params, map(Input, xs), ys)
+    scope = Scope(25000)
+    g = () -> gradient!(cost, scope, params, map(Input, xs), ys)
+    c = () -> cost(reset!(scope), params, map(Input, xs), ys)
     check_gradients(g, c, params)
 end
 
@@ -72,11 +73,12 @@ function fit()
 
     params = Params(n_out, n_hid, n_in)
     opt = optimizer(GradientDescent, params, learning_rate=0.05, clip=5.0, clipping_type=:scale)
+    scope = Scope(25000)
 
     fe = FunctionEvaluation(; minimize=true) do
         errors = 0
         for (x, y) in D
-            errors += sequence_error_count(predict(params, map(Input, x)), y)
+            errors += sequence_error_count(predict(reset!(scope), params, map(Input, x)), y)
         end
         return errors
     end
@@ -87,8 +89,8 @@ function fit()
         nll = 0.0
         for i in indices
             x, y = D[i]
-            nll += gradient!(cost, params, map(Input, x), y)
-            update!(opt, params)
+            nll += gradient!(cost, scope, params, map(Input, x), y)
+            update!(opt)
         end
         progress() && println(progress)
     end

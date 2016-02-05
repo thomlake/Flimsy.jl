@@ -3,7 +3,7 @@ immutable CTCOutput{V<:Variable} <: LinearModel{V}
     w::V
     b::V
     blank::Int
-    function CTCOutput(w, b, blank)
+    function CTCOutput(w::V, b::V, blank::Int)
         m, n = size(w)
         size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
         return new(w, b, blank)
@@ -11,7 +11,7 @@ immutable CTCOutput{V<:Variable} <: LinearModel{V}
 end
 
 function CTCOutput(n_output::Int, n_input::Int, blank::Int=1)
-    return CTCOutput(w=rand(Normal(0, 0.01), n_output, n_input), b=zeros(n_output), blank=blank)
+    return CTCOutput(w=rand(Normal(0, 0.01), n_output, n_input), b=zeros(n_output, 1), blank=blank)
 end
 
 @component score(params::CTCOutput, xs::Vector) = [score(params, x) for x in xs]

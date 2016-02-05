@@ -4,7 +4,7 @@ immutable GatedRecurrent{V<:Variable} <: RecurrentComponent{V}
     ur::V; uz::V; uc::V;
     br::V; bz::V; bc::V;
     h0::V
-    function GatedRecurrent(wr, wz, wc, ur, uz, uc, br, bz, bc, h0)
+    function GatedRecurrent(wr::V, wz::V, wc::V, ur::V, uz::V, uc::V, br::V, bz::V, bc::V, h0::V)
         m, n = size(wr)
         size(wz) == (m, n) || error("Bad size(wz) == $(size(wz)) != ($m, $n)")
         size(wc) == (m, n) || error("Bad size(wc) == $(size(wc)) != ($m, $n)")
@@ -22,7 +22,7 @@ end
 GatedRecurrent(m::Int, n::Int) = GatedRecurrent(
     wr=orthonormal(m, n), wz=orthonormal(m, n), wc=orthonormal(m, n),
     ur=orthonormal(m, m), uz=orthonormal(m, m), uc=orthonormal(m, m),
-    br=zeros(m), bz=zeros(m), bc=zeros(m), h0=zeros(m),
+    br=zeros(m, 1), bz=zeros(m, 1), bc=zeros(m, 1), h0=zeros(m, 1),
 )
 
 

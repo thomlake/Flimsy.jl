@@ -227,6 +227,24 @@ function plus{V<:Variable}(scope::Scope, xs::Vector{V})
     return y
 end
 
-plus{T<:AbstractArray}(x1::T, x2::T, x3::T, xrest::T...) = plus([x1, x2, x3, xrest...])
+function plus(x1, x2, x3, xrest...)
+    y = plus(x1, x2)
+    y = plus(y, x3)
+    for x in xrest
+        y = plus(y, x)
+    end
+    return y
+end
 
-plus{V<:Variable}(scope::Scope, x1::V, x2::V, x3::V, xrest::V...) = plus(scope, [x1, x2, x3, xrest...])
+function plus(scope::Scope, x1, x2, x3, xrest...)
+    y = plus(scope, x1, x2)
+    y = plus(scope, y, x3)
+    for x in xrest
+        y = plus(y, x)
+    end
+    return y
+end
+
+# plus{T<:AbstractArray}(x1::T, x2::T, x3::T, xrest::T...) = plus([x1, x2, x3, xrest...])
+
+# plus{V<:Variable}(scope::Scope, x1::V, x2::V, x3::V, xrest::V...) = plus(scope, [x1, x2, x3, xrest...])

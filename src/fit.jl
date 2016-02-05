@@ -575,12 +575,13 @@ function optimizer{O<:Optimizer}(::Type{O}, theta::Component;
     momentum::Real=0.87,
     )
     if O <: GradientDescent
+        paramvec = convert(Vector, theta)
         if clipping_type == :none
-            return PlainGradientDescent(learning_rate, convert(Vector, theta))
+            return PlainGradientDescent(learning_rate, paramvec)
         elseif clipping_type == :scale
-            return ScaledGradientDescent(learning_rate, clip)
+            return ScaledGradientDescent(learning_rate, clip, paramvec)
         elseif clipping_type == :clip
-            return ClippedGradientDescent(learning_rate, clip)
+            return ClippedGradientDescent(learning_rate, clip, paramvec)
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end

@@ -4,7 +4,7 @@ immutable LSTM{V<:Variable} <: RecurrentComponent{V}
     ui::V; uf::V; uc::V; uo::V; vo::V;
     bi::V; bf::V; bc::V; bo::V;
     h0::V; c0::V
-    function LSTM(wi, wf, wc, wo, ui, uf, uc, uo, vo, bi, bf, bc, bo, h0, c0)
+    function LSTM(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, vo::V, bi::V, bf::V, bc::V, bo::V, h0::V, c0::V)
         m, n = size(wi)
         size(wf) == (m, n) || error("Bad size(wf) == $(size(wf)) != ($m, $n)")
         size(wc) == (m, n) || error("Bad size(wc) == $(size(wc)) != ($m, $n)")
@@ -31,8 +31,8 @@ end
 LSTM(m::Int, n::Int) = LSTM(
     wi=orthonormal(m, n), wf=orthonormal(m, n), wc=orthonormal(m, n), wo=orthonormal(m, n),
     ui=orthonormal(m, m), uf=orthonormal(m, m), uc=orthonormal(m, m), uo=orthonormal(m, m), vo=orthonormal(m, m),
-    bi=zeros(m), bf=zeros(m), bc=zeros(m), bo=zeros(m),
-    h0=zeros(m), c0=zeros(m),
+    bi=zeros(m, 1), bf=zeros(m, 1), bc=zeros(m, 1), bo=zeros(m, 1),
+    h0=zeros(m, 1), c0=zeros(m, 1),
 )
 
 @component function Base.step(params::LSTM, x::Variable, state::Tuple{Variable,Variable})

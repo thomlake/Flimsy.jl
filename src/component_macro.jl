@@ -35,7 +35,9 @@ const DEFAULT_BLACKLIST = [
     :*=,
     :/=,
     :&&,
-    :||,   
+    :||,
+    :argmax,
+    :argmaxneq,   
 ]
 
 """Array of supported expression head elements"""

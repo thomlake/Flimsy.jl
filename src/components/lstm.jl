@@ -48,9 +48,8 @@ end
 @component Base.step(params::LSTM, x::Variable) = step(params, x, (params.h0, params.c0))
 
 @component function unfold{T<:Variable}(params::LSTM, x::Vector{T})
-    @similar_variable_type H T
-    h = Array(H, length(x))
-    c = Array(H, length(x))
+    h = Array(vartype(T), length(x))
+    c = Array(vartype(T), length(x))
     h[1], c[1] = step(params, x[1])
     for t = 2:length(x)
         h[t], c[t] = step(params, x[t], (h[t-1], c[t-1]))

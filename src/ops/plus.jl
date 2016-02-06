@@ -240,7 +240,7 @@ function plus(scope::Scope, x1, x2, x3, xrest...)
     y = plus(scope, x1, x2)
     y = plus(scope, y, x3)
     for x in xrest
-        y = plus(y, x)
+        y = plus(scope, y, x)
     end
     return y
 end

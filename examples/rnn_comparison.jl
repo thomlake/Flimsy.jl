@@ -1,5 +1,5 @@
 # Flimsy.jl
-# RNN Comparison
+# Recurrent Neural Netwrks Comparison
 #
 # Comparison of SRNN, LSTM, and GRU hidden layers
 # on sequential xor task. Demonstrates how to build
@@ -18,7 +18,7 @@ immutable Params{V<:Variable} <: Component{V}
     rnn::RecurrentComponent{V}
 end
 
-@component predict(params::Params, xs::Vector) = [predict(params.clf, h)[1] for h in unfold(params.rnn, xs)]
+@component predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
 
 @component function cost{I<:Integer}(params::Params, xs::Vector, ys::Vector{I})
     nll = 0.0
@@ -33,13 +33,14 @@ Params{R<:RecurrentComponent}(::Type{R}, n_out::Int, n_hid::Int, n_in::Int) = Pa
     rnn=R(n_hid, n_out),
 )
 
-const recurrent_layer_types = (SimpleRecurrent, GatedRecurrent, LSTM)
+const recurrent_layer_types = [SimpleRecurrent, GatedRecurrent, LSTM]
 
 function check()
     n_out, n_hid, n_in = 2, 5, 2
     xs, ys = rand(XORTask(20))
+    scope = Scope()
     for R in recurrent_layer_types
-        println("$R")
+        println(R.name)
         println("  params [")
         params = Params(R, n_out, n_hid, n_in)
         param_count = 0
@@ -50,10 +51,21 @@ function check()
         println("  ]")
         println("  count: $param_count")
         print("  ")
-        g = () -> gradient!(cost, params, map(Input, xs), ys)
-        c = () -> cost(params, map(Input, xs), ys)
+        g = () -> gradient!(cost, reset!(scope), params, map(Input, xs), ys)
+        c = () -> cost(reset!(scope), params, map(Input, xs), ys)
         check_gradients(g, c, params)
     end
+end
+
+function error_count(scope, params, X, Y)
+    errors = 0
+    for (xs, y_true) in zip(X, Y)
+        y_pred = predict(reset!(scope), params, map(Input, xs))
+        for t = 1:length(y_true)
+            errors += y_true[t] == y_pred[t][1] ? 0 : 1
+        end
+    end
+    return errors
 end
 
 function fit()
@@ -76,33 +88,26 @@ function fit()
 
     models = [R => Params(R, n_out, n_hid, n_in) for R in recurrent_layer_types]
     info = Dict()
-
-    for (name, params) in models
-        println(name)
+    scope = Scope()
+    for (R, params) in models
+        println(R.name)
         indices = collect(1:n_train)
         opt = optimizer(GradientDescent, params, learning_rate=0.1, clip=1.0, clipping_type=:scale)
-        evaluate = FunctionEvaluation() do
-            errors = 0
-            for (xs, y_true) in zip(X_valid, Y_valid)
-                y_pred = predict(params, map(Input, xs))
-                for t = 1:length(y_true)
-                    errors += y_pred[t] == y_true[t][1] ? 0 : 1
-                end
-            end
-            return errors
-        end
+        evaluate = FunctionEvaluation(() -> error_count(scope, params, X_valid, Y_valid))
         progress = Progress(params, evaluate, Patience(Inf), min_epochs=30, max_epochs=30, frequency=5)
+        
         while !converged(progress)
             shuffle!(indices)
             for i in indices
                 xs, ys = X_train[i], Y_train[i]
-                gradient!(cost, params, map(Input, xs), ys)
-                update!(opt, params)
+                gradient!(cost, reset!(scope), params, map(Input, xs), ys)
+                update!(opt)
             end
             progress(save=true) && println(progress)
         end
         timer_stop(progress)
-        info[name] = progress
+        
+        info[R] = progress
         println()
     end
 
@@ -118,17 +123,11 @@ function fit()
     println("  number timesteps => ", n_test_timesteps)
     println("  min seq length   => ", minlen)
     println("  max seq length   => ", maxlen)
-    for (name, progress) in info
+    for (R, progress) in info
         params = progress.best_model
-        errors = 0
-        for (xs, y_true) in zip(X_valid, Y_valid)
-            y_pred = predict(params, map(Input, xs))
-            for t = 1:length(y_true)
-                errors += y_pred[t] == y_true[t][1] ? 0 : 1
-            end
-        end
+        errors = error_count(scope, params, X_test, Y_test)
         param_count = sum([prod(size(p)) for p in getparams(params)])
-        println(name)
+        println(R.name)
         println("  params    => ", param_count)
         println("  cpu time  => ", time(progress))
         println("  sum error => ", errors)

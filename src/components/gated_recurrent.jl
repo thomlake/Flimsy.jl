@@ -36,8 +36,7 @@ end
 @component Base.step(params::GatedRecurrent, x::Variable) = step(params, x, params.h0)
 
 @component function unfold{T<:Variable}(params::GatedRecurrent, x::Vector{T})
-    @similar_variable_type H T
-    h = Array(H, length(x))
+    h = Array(vartype(T), length(x))
     h[1] = step(params, x[1])
     for t = 2:length(x)
         h[t] = step(params, x[t], h[t-1])

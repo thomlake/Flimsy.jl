@@ -42,7 +42,7 @@ export Scope,
        reset!,
        allocate,
        available,
-       similartype
+       vartype
 
 export glorot,
        orthonormal
@@ -75,7 +75,7 @@ export ExternalEvaluation,
        epoch,
        best
 
-const FLIMSY_DEFAULT_HEAP_SIZE = 10000
+const FLIMSY_DEFAULT_HEAP_SIZE = 1_073_741_824
 
 abstract Component{T}
 

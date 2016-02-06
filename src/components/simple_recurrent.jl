@@ -29,8 +29,7 @@ SimpleRecurrent(m::Int, n::Int) = SimpleRecurrent(tanh, m, n)
 @component Base.step(p::SimpleRecurrent, x::Variable) = step(p, x, p.h0)
 
 @component function unfold{T<:Variable}(p::SimpleRecurrent, x::Vector{T})
-    # @similar_variable_type H T
-    h = Array(similartype(eltype(x[1])), length(x))
+    h = Array(vartype(T), length(x))
     h[1] = step(p, x[1])
     for t = 2:length(x)
         h[t] = step(p, x[t], h[t-1])

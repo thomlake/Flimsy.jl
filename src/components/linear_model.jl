@@ -63,7 +63,10 @@ immutable SigmoidRegression{V<:Variable} <: LinearModel{V}
     end
 end
 
-@component predict(params::SigmoidRegression, x::Variable, threshold::Real=0.5) = score(params, x).data .> log(threshold / (1 - threshold))
+@component function predict(params::SigmoidRegression, x::Variable, threshold::Real=0.5)
+    @blacklist log
+    return score(params, x).data .> log(threshold / (1 - threshold))
+end
 @component probs(params::SigmoidRegression, x::Variable) = sigmoid(score(params, x))
 @component cost(params::SigmoidRegression, x::Variable, y) = Cost.bernoulli_cross_entropy_with_scores(score(params, x), y)
 @component cost(params::SigmoidRegression, x::Variable, y, weight::Real) = Cost.bernoulli_cross_entropy_with_scores(score(params, x), y, weight)

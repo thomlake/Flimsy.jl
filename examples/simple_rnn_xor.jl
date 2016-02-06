@@ -46,7 +46,7 @@ function check()
     for (name, param) in getnamedparams(params)
         println("  $name => ", size(param))
     end
-    scope = Scope(25000)
+    scope = Scope()
     g = () -> gradient!(cost, scope, params, map(Input, xs), ys)
     c = () -> cost(reset!(scope), params, map(Input, xs), ys)
     check_gradients(g, c, params)
@@ -73,7 +73,7 @@ function fit()
 
     params = Params(n_out, n_hid, n_in)
     opt = optimizer(GradientDescent, params, learning_rate=0.05, clip=5.0, clipping_type=:scale)
-    scope = Scope(25000)
+    scope = Scope()
 
     fe = FunctionEvaluation(; minimize=true) do
         errors = 0

@@ -46,20 +46,33 @@ typealias CallbackStack Array{ReverseOperation,1}
 # --------------- #
 # Base Scope Type #
 # --------------- #
-abstract Scope{P}
+abstract Scope
 
 Base.similar(scope::Scope, x::AbstractArray, initial_value::Real) = fill!(similar(scope, x), initial_value)
 
 allocate(scope::Scope, T::DataType, sz::Tuple, initial_value::Real) = fill!(allocate(scope, T, sz), initial_value)
 
-similartype{F<:AbstractFloat}(scope::Scope, ::Type{F}) = DataVariable{F}
+vartype{F<:AbstractFloat}(scope::Scope, ::Type{DataVariable{F}}) = DataVariable{F}
+
+vartype{F<:AbstractFloat}(scope::Scope, x::DataVariable{F}) = DataVariable{F}
+
+vartype{F<:AbstractFloat}(scope::Scope, ::Type{GradVariable{F}}) = DataVariable{F}
+
+vartype{F<:AbstractFloat}(scope::Scope, x::GradVariable{F}) = DataVariable{F}
 
 # -------------- #
 # Gradient Scope #
 # -------------- #
 abstract GradScope <: Scope
 
-similartype{F<:AbstractFloat}(scope::GradScope, ::Type{F}) = GradVariable{F}
+# similartype{F<:AbstractFloat}(scope::GradScope, ::Type{F}) = GradVariable{F}
+vartype{F<:AbstractFloat}(scope::GradScope, ::Type{DataVariable{F}}) = GradVariable{F}
+
+vartype{F<:AbstractFloat}(scope::GradScope, x::DataVariable{F}) = GradVariable{F}
+
+vartype{F<:AbstractFloat}(scope::GradScope, ::Type{GradVariable{F}}) = GradVariable{F}
+
+vartype{F<:AbstractFloat}(scope::GradScope, x::GradVariable{F}) = GradVariable{F}
 
 function backprop!(scope::GradScope)
     stack = scope.stack

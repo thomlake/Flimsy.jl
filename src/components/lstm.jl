@@ -1,10 +1,10 @@
 
-immutable LSTM{V<:Variable} <: RecurrentComponent{V}
+immutable Lstm{V<:Variable} <: RecurrentComponent{V}
     wi::V; wf::V; wc::V; wo::V;
     ui::V; uf::V; uc::V; uo::V; vo::V;
     bi::V; bf::V; bc::V; bo::V;
     h0::V; c0::V
-    function LSTM(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, vo::V, bi::V, bf::V, bc::V, bo::V, h0::V, c0::V)
+    function Lstm(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, vo::V, bi::V, bf::V, bc::V, bo::V, h0::V, c0::V)
         m, n = size(wi)
         size(wf) == (m, n) || error("Bad size(wf) == $(size(wf)) != ($m, $n)")
         size(wc) == (m, n) || error("Bad size(wc) == $(size(wc)) != ($m, $n)")
@@ -28,14 +28,14 @@ immutable LSTM{V<:Variable} <: RecurrentComponent{V}
     end
 end
 
-LSTM(m::Int, n::Int) = LSTM(
+Lstm(m::Int, n::Int) = Lstm(
     wi=orthonormal(m, n), wf=orthonormal(m, n), wc=orthonormal(m, n), wo=orthonormal(m, n),
     ui=orthonormal(m, m), uf=orthonormal(m, m), uc=orthonormal(m, m), uo=orthonormal(m, m), vo=orthonormal(m, m),
     bi=zeros(m, 1), bf=zeros(m, 1), bc=zeros(m, 1), bo=zeros(m, 1),
     h0=zeros(m, 1), c0=zeros(m, 1),
 )
 
-@component function Base.step(params::LSTM, x::Variable, state::Tuple{Variable,Variable})
+@component function Base.step(params::Lstm, x::Variable, state::Tuple{Variable,Variable})
     htm1, ctm1 = state
     i = sigmoid(plus(linear(params.wi, x), linear(params.ui, htm1), params.bi))
     f = sigmoid(plus(linear(params.wf, x), linear(params.uf, htm1), params.bf))
@@ -45,9 +45,9 @@ LSTM(m::Int, n::Int) = LSTM(
     return (mult(o, tanh(c)), c)
 end
 
-@component Base.step(params::LSTM, x::Variable) = step(params, x, (params.h0, params.c0))
+@component Base.step(params::Lstm, x::Variable) = step(params, x, (params.h0, params.c0))
 
-@component function unfold{T<:Variable}(params::LSTM, x::Vector{T})
+@component function unfold{T<:Variable}(params::Lstm, x::Vector{T})
     h = Array(vartype(T), length(x))
     c = Array(vartype(T), length(x))
     h[1], c[1] = step(params, x[1])

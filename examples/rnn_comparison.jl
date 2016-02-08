@@ -33,7 +33,7 @@ Params{R<:RecurrentComponent}(::Type{R}, n_out::Int, n_hid::Int, n_in::Int) = Pa
     rnn=R(n_hid, n_out),
 )
 
-const recurrent_layer_types = [SimpleRecurrent, GatedRecurrent, LSTM]
+const recurrent_layer_types = [SimpleRecurrent, GatedRecurrent, Lstm]
 
 function check()
     n_out, n_hid, n_in = 2, 5, 2

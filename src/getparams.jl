@@ -48,4 +48,27 @@ function getnamedparams{V<:Variable}(theta::Component{V})
     return params
 end
 
-Base.convert(::Type{Dict}, params::Component) = Dict(getnamedparams(params))
+function getdictparams{C<:Component}(params::C, prefix::ASCIIString=string(C.name))
+    dict = Dict{ASCIIString,Any}()
+
+    for name in fieldnames(params)
+        T = fieldtype(typeof(params), name)
+        if T <: Variable
+            key = join([prefix, name], ".")
+            dict[key] = getfield(params, name)
+        elseif T <: AbstractArray && eltype(T) <: Variable
+            key = join([prefix, name], ".")
+            dict[key] = getfield(params, name)
+        elseif T <: Component
+            key = join([prefix, name], ".")
+            dict[key] = getdictparams(getfield(params, name), key)
+        elseif T <: AbstractArray && eltype(T) <: Component
+            key = join([prefix, name], ".")
+            field = getfield(params, name)
+            dict[key] = [getdictparams(field[i], key) for i = 1:endof(field)] 
+        end
+    end
+    return (C, dict)
+end
+
+Base.convert(::Type{Dict}, params::Component) = getdictparams(params)

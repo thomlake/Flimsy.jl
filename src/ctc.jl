@@ -1,7 +1,7 @@
 """
 Support fuctions for Connectionist Temporal Classification (CTC) cost function.
 """
-module CTC
+module Ctc
 
 using .. Flimsy
 using Iterators
@@ -51,12 +51,12 @@ function bruteforce(xs::Vector{Int}, lpmat::Matrix, symbols::Vector{Int}, blank:
     return lpsum
 end
 
-type CTCError <: Exception
+type CtcError <: Exception
     dsc::ASCIIString
     msg::ASCIIString
 end
 
-Base.showerror(io::IO, e::CTCError) = print(io, "CTCError(", e.dsc, "): ", e.msg)
+Base.showerror(io::IO, e::CtcError) = print(io, "CtcError(", e.dsc, "): ", e.msg)
 
 type DPTable
     matrix::Matrix{Float64}

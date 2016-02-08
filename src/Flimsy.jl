@@ -2,6 +2,7 @@ module Flimsy
 
 using Distributions
 using FastAnonymous
+using HDF5
 
 # Distributions exports
 export Normal,
@@ -50,11 +51,13 @@ export glorot,
 export GradientDescent,
        Momentum,
        Nesterov,
-       RMSProp,
+       RmsProp,
        AdaDelta,
        Adam,
        update!,
        optimizer
+
+export GradientNoise
 
 export check_gradients
 
@@ -75,6 +78,11 @@ export ExternalEvaluation,
        epoch,
        best
 
+export readType,
+       writeType,
+       readVariables,
+       writeVariables
+
 const FLIMSY_DEFAULT_HEAP_SIZE = 1_073_741_824
 
 abstract Component{T}
@@ -89,6 +97,7 @@ include("scope.jl")
 include("ops.jl")
 include("initialization.jl")
 include("fit.jl")
+include("gradient_noise.jl")
 include("check_gradients.jl")
 include("ctc.jl")
 include("cost.jl")
@@ -96,7 +105,6 @@ include("components.jl")
 include("extras.jl")
 include("progress.jl")
 include("demo.jl")
-
-
+include("io.jl")
 
 end

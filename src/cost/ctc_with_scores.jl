@@ -1,27 +1,27 @@
-import ..Flimsy: CTC
+import ..Flimsy: Ctc
 
 # Connectionist Temporal Classification loss
 function ctc_with_scores{V<:Variable, I<:Integer}(scope::Scope, output::Vector{V}, target::Vector{I}, blank::Int)
-    ys = CTC.expand(target, blank)
+    ys = Ctc.expand(target, blank)
     T = length(output)
     S = size(output[1], 1)
 
-    lpmat = CTC.make_lpmat(output)
-    fmat = CTC.forward(ys, lpmat, blank)
+    lpmat = Ctc.make_lpmat(output)
+    fmat = Ctc.forward(ys, lpmat, blank)
     ll = Flimsy.Extras.logsumexp(fmat[end, end], fmat[end-1, end])
     return -ll
 end
 
 function ctc_with_scores{V<:GradVariable,I<:Integer}(scope::GradScope, output::Vector{V}, target::Vector{I}, blank::Int)
-    ys = CTC.expand(target, blank)
+    ys = Ctc.expand(target, blank)
     T = length(output)
     S = size(output[1], 1)
 
-    length(ys) <= T || throw(CTC.CTCError("INPUT ERROR", "number of expanded outputs > number of timesteps"))
+    length(ys) <= T || throw(Ctc.CtcError("INPUT ERROR", "number of expanded outputs > number of timesteps"))
 
-    lpmat = CTC.make_lpmat(output)
-    fmat = CTC.forward(ys, lpmat, blank)
-    bmat = CTC.backward(ys, lpmat, blank)
+    lpmat = Ctc.make_lpmat(output)
+    fmat = Ctc.forward(ys, lpmat, blank)
+    bmat = Ctc.backward(ys, lpmat, blank)
     fbmat = fmat + bmat
     ll = Flimsy.Extras.logsumexp(fmat[end, end], fmat[end-1, end])
 
@@ -30,7 +30,7 @@ function ctc_with_scores{V<:GradVariable,I<:Integer}(scope::GradScope, output::V
             "ll not finite ($ll, $(length(target)), $(length(output)))",
             "forward entries: (fmat[end, end],fmat[end-1, end]) = $((fmat[end,end], fmat[end-1, end]))",
         ]
-        throw(CTC.CTCError("NOT FINITE", join(msg, "\n")))
+        throw(Ctc.CtcError("NOT FINITE", join(msg, "\n")))
     end
 
     for t = 1:T
@@ -40,7 +40,7 @@ function ctc_with_scores{V<:GradVariable,I<:Integer}(scope::GradScope, output::V
                 total = Flimsy.Extras.logsumexp(total, fbmat[s, t])
             end
             g = exp(lpmat[k,t]) - exp(total - ll)
-            isfinite(g) || throw(CTC.CTCError("NOT FINITE", "gradient not finite: $g"))
+            isfinite(g) || throw(Ctc.CtcError("NOT FINITE", "gradient not finite: $g"))
             output[t].grad[k] += g 
         end
     end

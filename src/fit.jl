@@ -251,16 +251,16 @@ end
 ####################
 # --- RMS Prop --- #
 ####################
-abstract RMSProp <: Optimizer
+abstract RmsProp <: Optimizer
 
-type PlainRMSProp{T<:AbstractFloat,F<:AbstractFloat} <: RMSProp
+type PlainRmsProp{T<:AbstractFloat,F<:AbstractFloat} <: RmsProp
     learning_rate::T
     decay::T
     paramvec::Vector{GradVariable{F}}
     cachevec::Vector{Matrix{F}}
 end
 
-function update!(opt::RMSProp)
+function update!(opt::RmsProp)
     lr = opt.learning_rate
     decay = opt.decay
     umdecay = 1 - decay
@@ -277,7 +277,7 @@ function update!(opt::RMSProp)
     end
 end
 
-type ScaledRMSProp{T<:AbstractFloat,F<:AbstractFloat} <: RMSProp
+type ScaledRmsProp{T<:AbstractFloat,F<:AbstractFloat} <: RmsProp
     learning_rate::T
     decay::T
     max_norm::T
@@ -285,7 +285,7 @@ type ScaledRMSProp{T<:AbstractFloat,F<:AbstractFloat} <: RMSProp
     cachevec::Vector{Matrix{F}}
 end
 
-function update!(opt::ScaledRMSProp)
+function update!(opt::ScaledRmsProp)
     lr = opt.learning_rate
     decay = opt.decay
     umdecay = 1 - decay
@@ -306,7 +306,7 @@ function update!(opt::ScaledRMSProp)
     end
 end
 
-type ClippedRMSProp{T<:AbstractFloat,F<:AbstractFloat} <: RMSProp
+type ClippedRmsProp{T<:AbstractFloat,F<:AbstractFloat} <: RmsProp
     learning_rate::T
     decay::T
     clip::T
@@ -314,14 +314,15 @@ type ClippedRMSProp{T<:AbstractFloat,F<:AbstractFloat} <: RMSProp
     cachevec::Vector{Matrix{F}}
 end
 
-function update!(opt::ClippedRMSProp)
+function update!(opt::ClippedRmsProp)
     lr = opt.learning_rate
     decay = opt.decay
     umdecay = 1 - decay
     ub = opt.clip
     lb = -opt.clip
-    for (name, param) in getnamedparams(theta)
-        cache = opt.cache[name]
+    for k = 1:length(opt.paramvec)
+        param = opt.paramvec[k]
+        cache = opt.cachevec[k]
         @assert size(param) == size(cache)
         for i in eachindex(cache)
             grad = max(min(param.grad[i], ub), lb)
@@ -446,8 +447,10 @@ type PlainAdam{T<:AbstractFloat,F<:AbstractFloat} <: Adam
     moment2_vec::Vector{Matrix{F}}
 end
 
-function update!(opt::Adam)
-    opt.timestep += 1
+function update!(opt::Adam, increment::Bool=false)
+    if increment
+        opt.timestep += 1
+    end
     lr = opt.learning_rate
     b1 = opt.moment1_decay
     b2 = opt.moment2_decay
@@ -455,8 +458,8 @@ function update!(opt::Adam)
     t = opt.timestep
     umb1 = 1 - b1
     umb2 = 1 - b2
-    umb1sqr = 1 - (b1 * b1)
-    umb2sqr = 1 - (b2 * b2)
+    umb1sqr = 1 - (b1 * b1)^t
+    umb2sqr = 1 - (b2 * b2)^t
 
     for i in eachindex(opt.paramvec)
         param = opt.paramvec[i]
@@ -487,8 +490,10 @@ type ScaledAdam{T<:AbstractFloat,F<:AbstractFloat} <: Adam
     moment2_vec::Vector{Matrix{F}}
 end
 
-function update!(opt::ScaledAdam)
-    opt.timestep += 1
+function update!(opt::ScaledAdam, increment::Bool=false)
+    if increment
+        opt.timestep += 1
+    end
     lr = opt.learning_rate
     b1 = opt.moment1_decay
     b2 = opt.moment2_decay
@@ -496,8 +501,8 @@ function update!(opt::ScaledAdam)
     t = opt.timestep
     umb1 = 1 - b1
     umb2 = 1 - b2
-    umb1sqr = 1 - (b1 * b1)
-    umb2sqr = 1 - (b2 * b2)
+    umb1sqr = 1 - (b1 * b1)^t
+    umb2sqr = 1 - (b2 * b2)^t
     gnorm = gradnorm(opt.paramvec)
     scale = gnorm > opt.max_norm ? opt.max_norm / gnorm : 1.0
 
@@ -530,8 +535,10 @@ type ClippedAdam{T<:AbstractFloat,F<:AbstractFloat} <: Adam
     moment2_vec::Vector{Matrix{F}}
 end
 
-function update!(opt::ClippedAdaDelta)
-    opt.timestep += 1
+function update!(opt::ClippedAdaDelta, increment::Bool=false)
+    if increment
+        opt.timestep += 1
+    end
     lr = opt.learning_rate
     b1 = opt.moment1_decay
     b2 = opt.moment2_decay
@@ -539,8 +546,8 @@ function update!(opt::ClippedAdaDelta)
     t = opt.timestep
     umb1 = 1 - b1
     umb2 = 1 - b2
-    umb1sqr = 1 - (b1 * b1)
-    umb2sqr = 1 - (b2 * b2)
+    umb1sqr = 1 - (b1 * b1)^t
+    umb2sqr = 1 - (b2 * b2)^t
     ub = opt.clip
     lb = -opt.clip
 
@@ -609,15 +616,15 @@ function optimizer{O<:Optimizer}(::Type{O}, theta::Component;
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end
-    elseif O <: RMSProp
+    elseif O <: RmsProp
         paramvec = convert(Vector, theta)
         cachevec = Cache(paramvec)
         if clipping_type == :none
-            return PlainRMSProp(learning_rate, decay, paramvec, cachevec)
+            return PlainRmsProp(learning_rate, decay, paramvec, cachevec)
         elseif clipping_type == :scale
-            return ScaledRMSProp(learning_rate, decay, clip, paramvec, cachevec)
+            return ScaledRmsProp(learning_rate, decay, clip, paramvec, cachevec)
         elseif clipping_type == :clip
-            return ClippedRMSProp(learning_rate, decay, clip, paramvec, cachevec)
+            return ClippedRmsProp(learning_rate, decay, clip, paramvec, cachevec)
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end
@@ -639,11 +646,11 @@ function optimizer{O<:Optimizer}(::Type{O}, theta::Component;
         moment1_vec = Cache(paramvec)
         moment2_vec = Cache(paramvec)
         if clipping_type == :none
-            return PlainAdam(learning_rate, moment1_decay, moment2_decay, epsilon, 0, paramvec, moment1_vec, moment2_vec)
+            return PlainAdam(learning_rate, moment1_decay, moment2_decay, epsilon, 1, paramvec, moment1_vec, moment2_vec)
         elseif clipping_type == :scale
-            return ScaledAdam(learning_rate, moment1_decay, moment2_decay, epsilon, clip, 0, paramvec, moment1_vec, moment2_vec)
+            return ScaledAdam(learning_rate, moment1_decay, moment2_decay, epsilon, clip, 1, paramvec, moment1_vec, moment2_vec)
         elseif clipping_type == :clip
-            return ClippedAdam(learning_rate, moment1_decay, moment2_decay, epsilon, clip, 0, paramvec, moment1_vec, moment2_vec)
+            return ClippedAdam(learning_rate, moment1_decay, moment2_decay, epsilon, clip, 1, paramvec, moment1_vec, moment2_vec)
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end

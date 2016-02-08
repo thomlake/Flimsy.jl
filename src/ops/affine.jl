@@ -67,7 +67,7 @@ function affine!(y::AbstractMatrix, w::AbstractMatrix, x::AbstractMatrix, b::Abs
     return y
 end
 
-affine(w::AbstractArray, x::AbstractArray, b::AbstractArray) = affine!(zero(size(w, 1), size(x, 2)), w, x, b)
+affine(w::AbstractArray, x::AbstractArray, b::AbstractArray) = affine!(zeros(size(w, 1), size(x, 2)), w, x, b)
 
 @generated function affine{Tw<:Variable,Tx<:Variable,Tb<:Variable}(scope::Scope, w::Tw, x::Tx, b::Tb)
     if anygrads(Tw, Tx, Tb) && scope <: GradScope

@@ -13,6 +13,7 @@ immutable SimpleRecurrent{V<:Variable} <: RecurrentComponent{V}
         return new(f, w, u, b, h0)
     end
 end
+SimpleRecurrent{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrent{V}(f, w, u, b, h0)
 
 SimpleRecurrent(f::Function, m::Int, n::Int) = SimpleRecurrent(
     f=f,

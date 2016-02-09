@@ -27,6 +27,8 @@ immutable Lstm{V<:Variable} <: RecurrentComponent{V}
         return new(wi, wf, wc, wo, ui, uf, uc, uo, vo, bi, bf, bc, bo, h0, c0)
     end
 end
+Lstm{V<:Variable}(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, vo::V, bi::V, bf::V, bc::V, bo::V, h0::V, c0::V) = 
+    Lstm{V}(wi, wf, wc, wo, ui, uf, uc, uo, vo, bi, bf, bc, bo, h0, c0)
 
 Lstm(m::Int, n::Int) = Lstm(
     wi=orthonormal(m, n), wf=orthonormal(m, n), wc=orthonormal(m, n), wo=orthonormal(m, n),

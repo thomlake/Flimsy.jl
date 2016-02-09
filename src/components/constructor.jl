@@ -1,5 +1,5 @@
 
-function call{T<:Component}(::Type{T}; kwargs...)
+function call{T<:Component}(::Type{T}; kwargs...)#, kwargs::Dict{Symbol,V})
     @assert length(kwargs) == length(fieldnames(T))
     kwdict = Dict(kwargs)
     args = []
@@ -16,5 +16,5 @@ function call{T<:Component}(::Type{T}; kwargs...)
             push!(args, value)
         end
     end
-    return T{GradVariable{Float64}}(args...)
+    return T(args...)
 end

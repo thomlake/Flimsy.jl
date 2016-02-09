@@ -4,6 +4,9 @@ using Distributions
 using FastAnonymous
 using HDF5
 
+abstract Component{T}
+abstract ReverseOperation
+
 # Distributions exports
 export Normal,
        Uniform
@@ -11,7 +14,6 @@ export Normal,
 export @anon
 
 export Component,
-       GradComponent,
        ReverseOperation
 
 export @component
@@ -84,10 +86,6 @@ export readType,
        writeVariables
 
 const FLIMSY_DEFAULT_HEAP_SIZE = 1_073_741_824
-
-abstract Component{T}
-
-abstract ReverseOperation
 
 include("component_macro.jl")
 include("variable.jl")

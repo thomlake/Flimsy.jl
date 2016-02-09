@@ -4,9 +4,6 @@ module Components
 using .. Flimsy
 using HDF5: HDF5Group, attrs
 
-export read_component,
-       write_component
-
 export score,
        predict,
        probs,

@@ -18,6 +18,8 @@ immutable GatedRecurrent{V<:Variable} <: RecurrentComponent{V}
         return new(wr, wz, wc, ur, uz, uc, br, bz, bc, h0)
     end
 end
+GatedRecurrent{V<:Variable}(wr::V, wz::V, wc::V, ur::V, uz::V, uc::V, br::V, bz::V, bc::V, h0::V) = 
+    GatedRecurrent{V}(wr, wz, wc, ur, uz, uc, br, bz, bc, h0)
 
 GatedRecurrent(m::Int, n::Int) = GatedRecurrent(
     wr=orthonormal(m, n), wz=orthonormal(m, n), wc=orthonormal(m, n),

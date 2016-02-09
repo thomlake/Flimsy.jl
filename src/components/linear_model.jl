@@ -1,6 +1,6 @@
 
 """Abstract Linear Model."""
-abstract LinearModel{V<:Variable} <: Component{V}
+abstract LinearModel{V} <: Component{V}
 
 function call{C<:LinearModel}(::Type{C}, n_output::Int, n_input::Int)
     return C(w=rand(Normal(0, 0.01), n_output, n_input), b=zeros(n_output, 1))
@@ -22,6 +22,7 @@ immutable LinearRegression{V<:Variable} <: LinearModel{V}
         return new(w, b)
     end
 end
+LinearRegression{V<:Variable}(w::V, b::V) = LinearRegression{V}(w, b)
 
 @component predict(params::LinearRegression, x::Variable) = score(params, x)
 @component cost(params::LinearRegression, x::Variable, y) = Cost.mse(score(params, x), y)
@@ -41,6 +42,7 @@ immutable SoftmaxRegression{V<:Variable} <: LinearModel{V}
         return new(w, b)
     end
 end
+SoftmaxRegression{V<:Variable}(w::V, b::V) = SoftmaxRegression{V}(w, b)
 
 @component predict(params::SoftmaxRegression, x::Variable) = argmax(score(params, x))
 @component probs(params::SoftmaxRegression, x::Variable) = softmax(score(params, x))
@@ -62,6 +64,7 @@ immutable SigmoidRegression{V<:Variable} <: LinearModel{V}
         return new(w, b)
     end
 end
+SigmoidRegression{V<:Variable}(w::V, b::V) = SigmoidRegression{V}(w, b)
 
 @component function predict(params::SigmoidRegression, x::Variable, threshold::Real=0.5)
     @blacklist log

@@ -16,6 +16,8 @@ immutable FeedForward{V<:Variable} <: Component{V}
         return new(f, w, b)
     end
 end
+FeedForward{V<:Variable}(f::Function, w::Vector{V}, b::Vector{V}) = 
+    FeedForward{V}(f, w, b)
 
 function FeedForward(f::Function, sz::Int...)
     dims = reverse(sz)

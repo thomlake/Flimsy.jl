@@ -1,5 +1,5 @@
 
-immutable SimpleRecurrent{V<:Variable} <: RecurrentComponent{V}
+immutable SimpleRecurrent{V<:Variable} <: RecurrentComponent1{V}
     f::Function
     w::V
     u::V

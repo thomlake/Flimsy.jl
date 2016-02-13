@@ -1,5 +1,5 @@
 
-immutable Lstm{V<:Variable} <: RecurrentComponent{V}
+immutable Lstm{V<:Variable} <: RecurrentComponent2{V}
     wi::V; wf::V; wc::V; wo::V;
     ui::V; uf::V; uc::V; uo::V; vo::V;
     bi::V; bf::V; bc::V; bo::V;

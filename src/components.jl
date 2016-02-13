@@ -11,7 +11,9 @@ export score,
        cost,
        feedforward
 
-export RecurrentComponent
+export RecurrentComponent,
+       RecurrentComponent1,
+       RecurrentComponent2
 
 export ValueComponent,
        EmptyComponent
@@ -27,6 +29,8 @@ export LinearModel,
        Lstm
 
 abstract RecurrentComponent{T} <: Component{T}
+abstract RecurrentComponent1{T} <: RecurrentComponent{T}
+abstract RecurrentComponent2{T} <: RecurrentComponent{T}
 
 include("components/constructor.jl")
 include("components/value_component.jl")

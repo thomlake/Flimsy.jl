@@ -9,7 +9,7 @@ immutable CtcOutput{V<:Variable} <: LinearModel{V}
         return new(w, b, blank)
     end
 end
-CtcOutput{V<:Variable}(w::V, b::V, blank::Int) = CtcOutput{V}(w, v, blank)
+CtcOutput{V<:Variable}(w::V, b::V, blank::Int) = CtcOutput{V}(w, b, blank)
 
 function CtcOutput(n_output::Int, n_input::Int, blank::Int=1)
     return CtcOutput(w=rand(Normal(0, 0.01), n_output, n_input), b=zeros(n_output, 1), blank=blank)

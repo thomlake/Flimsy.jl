@@ -17,6 +17,8 @@ immutable Params{V<:Variable} <: Component{V}
     clf::SoftmaxRegression{V}
     rnn::RecurrentComponent{V}
 end
+Params{V}(clf::SoftmaxRegression{V}, rnn::RecurrentComponent{V}) = Params{V}(clf, rnn)
+
 
 @component predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
 

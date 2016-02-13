@@ -1,5 +1,5 @@
 
-immutable GatedRecurrent{V<:Variable} <: RecurrentComponent{V}
+immutable GatedRecurrent{V<:Variable} <: RecurrentComponent1{V}
     wr::V; wz::V; wc::V;
     ur::V; uz::V; uc::V;
     br::V; bz::V; bc::V;

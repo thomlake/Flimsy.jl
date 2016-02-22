@@ -1,4 +1,18 @@
 
+is_variable(T) = T <: Variable
+
+function is_variable_array(T)
+    if T <: AbstractArray && eltype(T) <: Variable
+        return true
+    end
+    try 
+        return T <: AbstractArray && length(T.parameters) > 0 && T.parameters[1].ub <: Variable 
+    catch
+        return false
+    end
+end
+
+
 function call{T<:Component}(::Type{T}; kwargs...)#, kwargs::Dict{Symbol,V})
     @assert length(kwargs) == length(fieldnames(T))
     kwdict = Dict(kwargs)
@@ -6,11 +20,9 @@ function call{T<:Component}(::Type{T}; kwargs...)#, kwargs::Dict{Symbol,V})
     for field in fieldnames(T)
         value = kwdict[field]
         ftype = fieldtype(T, field)
-        if ftype <: Variable
+        if is_variable(ftype)
             push!(args, typeof(value) <: Variable ? value : GradVariable(value, zero(value)))
-        elseif ftype <: AbstractArray && eltype(ftype) <: Variable
-            push!(args, eltype(value) <: Variable ? value : map(v -> GradVariable(v, zero(v)), value))
-        elseif ftype <: AbstractArray && length(ftype.parameters) > 0 && ftype.parameters[1].ub <: Variable
+        elseif is_variable_array(ftype)
             push!(args, eltype(value) <: Variable ? value : map(v -> GradVariable(v, zero(v)), value))
         else
             push!(args, value)

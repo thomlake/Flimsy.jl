@@ -52,7 +52,7 @@ function demo()
 
     # Main training loop.
     while !converged(progress)
-        nll = gradient!(cost, scope, params, Input(features), targets)
+        nll = gradient!(cost, scope, params, Input(copy(features)), targets)
         update!(opt)
         progress(nll)
     end

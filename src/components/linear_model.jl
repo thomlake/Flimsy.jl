@@ -25,8 +25,13 @@ end
 LinearRegression{V<:Variable}(w::V, b::V) = LinearRegression{V}(w, b)
 
 @component predict(params::LinearRegression, x::Variable) = score(params, x)
+@component predict(params::LinearRegression, x::Variable, p::AbstractFloat) = score(params, dropout!(x, p))
+
 @component cost(params::LinearRegression, x::Variable, y) = Cost.mse(score(params, x), y)
-@component cost(params::LinearRegression, x::Variable, y, weight::Real) = Cost.mse(score(params, x), y, weight)
+@component cost(params::LinearRegression, x::Variable, y, p::AbstractFloat) = Cost.mse(score(params, dropout!(x, p)), y)
+
+@component weighted_cost(params::LinearRegression, x::Variable, y, weight::AbstractFloat) = Cost.mse(score(params, x), y, weight)
+@component weighted_cost(params::LinearRegression, x::Variable, y, weight::AbstractFloat, p::AbstractFloat) = Cost.mse(score(params, dropout!(x, p)), y, weight)
 
 """
 Softmax Regression Component.

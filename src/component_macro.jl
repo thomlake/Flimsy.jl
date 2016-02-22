@@ -16,6 +16,7 @@ const DEFAULT_BLACKLIST = [
     :reverse,
     :enumerate,
     :zip,
+    :collect,
     :print,
     :println,
     :eltype,

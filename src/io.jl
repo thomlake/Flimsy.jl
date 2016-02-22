@@ -40,6 +40,11 @@ function Base.read{C<:Component}(::Type{C}, group::HDF5Group)
             gcomp = group[string(name)]
             c = read(readType(gcomp), gcomp)
             push!(args, c)
+        elseif T <: Vector && eltype(T) <: Component
+            gcompvec = group[string(name)]
+            len = read(attrs(gcompvec), "length")
+            cvec = [read(readType(gcompvec["$i"]), gcompvec["$i"]) for i = 1:len]
+            push!(args, cvec)
         elseif T <: Real
             val = read(attrs(group), string(name))
             push!(args, val)
@@ -91,18 +96,28 @@ function Base.write{C<:Component}(params::C, group::HDF5Group)
     writeType(C, group)
     for name in fieldnames(C)
         T = fieldtype(C, name)
+        
         if T <: Variable
             group[string(name)] = getfield(params, name).data
+        
         elseif T <: Vector && eltype(T) <: Variable
             gvec = g_create(group, string(name))
             values = getfield(params, name)
             attrs(gvec)["length"] = length(values)
             for i = 1:length(values)
                 gvec["$i"] = values[i].data
-            end
+            end  
         elseif T <: Component
             gcomp = g_create(group, string(name))
             c = write(getfield(params, name), gcomp)
+        elseif T <: Vector && eltype(T) <: Component
+            gcompvec = g_create(group, string(name))
+            values = getfield(params, name)
+            attrs(gcompvec)["length"] = length(values)
+            for i = 1:length(values)
+                gcomp = g_create(gcompvec, "$i")
+                write(values[i], gcomp)
+            end
         elseif T <: Real
             attrs(group)[string(name)] = getfield(params, name)
         elseif T <: Function

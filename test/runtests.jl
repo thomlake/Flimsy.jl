@@ -1,7 +1,7 @@
 using Flimsy
 using FactCheck
 
-FactCheck.setstyle(:compact)
+# FactCheck.setstyle(:compact)
 
 tests = [
     # "var.jl",
@@ -22,6 +22,7 @@ tests = [
     "ops/mult.jl",
     "ops/concat.jl",
     "ops/decat.jl",
+    "ops/embed.jl",
     # "ops/dropout.jl",
     "mse.jl",
     "categorical_cross_entropy.jl",

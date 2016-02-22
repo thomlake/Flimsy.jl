@@ -46,7 +46,8 @@ export sigmoid,
        linear,
        affine,
        decat,
-       concat
+       concat,
+       embed
 
 export OperationError
 
@@ -67,6 +68,9 @@ end
 
 anygrads(ts::Vector) = anygrads(ts...)
 
+export dropout!
+include("dropout.jl")
+
 include("ops/identity.jl")
 include("ops/tanh.jl")
 include("ops/sigmoid.jl")
@@ -83,3 +87,4 @@ include("ops/linear.jl")
 include("ops/affine.jl")
 include("ops/decat.jl")
 include("ops/concat.jl")
+include("ops/embed.jl")

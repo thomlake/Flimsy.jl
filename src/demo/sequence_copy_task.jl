@@ -33,9 +33,9 @@ function Base.rand(copytask::SequenceCopyTask)
     t2 = rand(copytask.suffix_range)
     
     prefix = rand(1:copytask.dim - 2, t1)   # numbers to remember
-    blanks = fill(copytask.dim - 1, t2 - 1) # blanks
+    blanks = fill(copytask.dim - 1, t2)     # blanks
     flag = copytask.dim                     # flag indicating recall should begin
-    suffix = fill(copytask.dim - 1, t1)     # blanks
+    suffix = fill(copytask.dim - 1, t1 - 1)     # blanks
     
     xs = vcat(prefix, blanks, flag, suffix)
     ys = vcat(fill(copytask.dim - 1, t1 + t2), prefix)

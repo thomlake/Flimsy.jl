@@ -29,7 +29,7 @@ facts("embed") do
                             x_arr[i] = 1
                         end
                     end
-                    y = embed(scope, w, x)
+                    y = linear(scope, w, x)
                     @fact isa(y, DataVariable) --> true
                     @fact size(y)              --> ysz
                     @fact y.data               --> roughly(w.data * x_arr)
@@ -53,7 +53,7 @@ facts("embed") do
                             x_arr[i] = 1
                         end
                     end
-                    y = embed(gscope, w, x)
+                    y = linear(gscope, w, x)
                     @fact isa(y, wtype) --> true
                     @fact size(y)       --> ysz
                     @fact y.data        --> roughly(w.data * x_arr)
@@ -66,7 +66,7 @@ facts("embed") do
                             else
                                 sample(1:xsz[1], rand(1:xsz[1]), replace=false)
                             end
-                            test_op_grad_mse(embed, w, x, wrt=w)
+                            test_op_grad_mse(linear, w, x, wrt=w)
                         end
                     end
                 end

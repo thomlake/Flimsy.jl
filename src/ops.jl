@@ -46,8 +46,7 @@ export sigmoid,
        linear,
        affine,
        decat,
-       concat,
-       embed
+       concat
 
 export OperationError
 

@@ -38,13 +38,13 @@ linear(w::AbstractArray, x::Vector{Vector{Int}}) = linear!(zeros(size(w, 1), len
 
 linear(w::AbstractArray, x::Vector{Int}) = linear(w, Vector{Int}[x])
 
+linear(w::AbstractArray, x::Int) = linear(w, Int[x])
+
 function linear(scope::Scope, w::Variable, x::Vector{Vector{Int}})
     sz = size(w, 1), length(x)
     y_data = allocate(scope, eltype(w.data), sz, 0)
     return DataVariable(linear!(y_data, w.data, x))
 end
-
-linear(scope::Scope, w::Variable, x::Vector{Int}) = linear(scope, w, Vector{Int}[x])
 
 function linear(scope::GradScope, w::GradVariable, x::Vector{Vector{Int}})
     sz = size(w, 1), length(x)
@@ -54,4 +54,6 @@ function linear(scope::GradScope, w::GradVariable, x::Vector{Vector{Int}})
     return y
 end
 
-linear(scope::GradScope, w::GradVariable, x::Vector{Int}) = linear(scope, w, Vector{Int}[x])
+linear(scope::Scope, w::Variable, x::Vector{Int}) = linear(scope, w, Vector{Int}[x])
+
+linear(scope::Scope, w::Variable, x::Int) = linear(scope, w, Int[x])

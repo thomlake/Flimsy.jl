@@ -46,7 +46,8 @@ export sigmoid,
        linear,
        affine,
        decat,
-       concat
+       concat,
+       gradnorm
 
 export OperationError
 
@@ -87,3 +88,4 @@ include("ops/affine.jl")
 include("ops/decat.jl")
 include("ops/concat.jl")
 include("ops/embed.jl")
+include("ops/gradnorm.jl")

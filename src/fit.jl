@@ -1,5 +1,5 @@
 
-function gradnorm{V<:GradVariable}(paramvec::Vector{V})
+function norm_param_grad{V<:GradVariable}(paramvec::Vector{V})
     ss = 0.0
     for param in paramvec
         for i in eachindex(param)
@@ -57,7 +57,7 @@ end
 
 function update!(opt::ScaledGradientDescent)
     lr = opt.learning_rate
-    gnorm = gradnorm(opt.paramvec)
+    gnorm = norm_param_grad(opt.paramvec)
     if gnorm > opt.max_norm
         lr *= opt.max_norm / gnorm
     end
@@ -154,7 +154,7 @@ end
 function update!(opt::ScaledMomentum)
     lr = opt.learning_rate
     mu = opt.momentum
-    gnorm = gradnorm(opt.paramvec)
+    gnorm = norm_param_grad(opt.paramvec)
     if gnorm > opt.max_norm
         lr *= opt.max_norm / gnorm
     end
@@ -266,7 +266,7 @@ function update!(opt::ScaledNesterov)
     lr = opt.learning_rate
     mu = opt.momentum
     upmu = 1 + mu
-    gnorm = gradnorm(opt.paramvec)
+    gnorm = norm_param_grad(opt.paramvec)
     if gnorm > opt.max_norm
         lr *= opt.max_norm / gnorm
     end
@@ -382,7 +382,7 @@ function update!(opt::ScaledRmsProp)
     lr = opt.learning_rate
     decay = opt.decay
     umdecay = 1 - decay
-    gnorm = gradnorm(opt.paramvec)
+    gnorm = norm_param_grad(opt.paramvec)
     scale = gnorm > opt.max_norm ? opt.max_norm / gnorm : 1.0
     
     for k = 1:length(opt.paramvec)
@@ -500,7 +500,7 @@ end
 function update!(opt::ScaledAdaDelta)
     decay = opt.decay
     umdecay = 1 - decay
-    gnorm = gradnorm(opt.paramvec)
+    gnorm = norm_param_grad(opt.paramvec)
     scale = gnorm > opt.max_norm ? opt.max_norm / gnorm : 1.0
 
     for i in eachindex(opt.paramvec)
@@ -662,7 +662,7 @@ function update!(opt::ScaledAdam, increment::Bool=false)
     umb2 = 1 - b2
     umb1sqr = 1 - (b1 * b1)^t
     umb2sqr = 1 - (b2 * b2)^t
-    gnorm = gradnorm(opt.paramvec)
+    gnorm = norm_param_grad(opt.paramvec)
     scale = gnorm > opt.max_norm ? opt.max_norm / gnorm : 1.0
 
     for i in eachindex(opt.paramvec)

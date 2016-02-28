@@ -28,18 +28,19 @@ GatedRecurrent(m::Int, n::Int) = GatedRecurrent(
 )
 
 
-@component function Base.step(params::GatedRecurrent, x::Variable, htm1::Variable)
+@component function Base.step(params::GatedRecurrent, x, htm1)
     r = sigmoid(plus(linear(params.wr, x), linear(params.ur, htm1), params.br))
     z = sigmoid(plus(linear(params.wz, x), linear(params.uz, htm1), params.bz))
     c = tanh(plus(linear(params.wc, x), mult(r, linear(params.uc, htm1)), params.bc))
     return plus(mult(z, htm1), mult(minus(1.0, z), c))
 end
 
-@component Base.step(params::GatedRecurrent, x::Variable) = step(params, x, params.h0)
+@component Base.step(params::GatedRecurrent, x) = step(params, x, params.h0)
 
-@component function unfold{T<:Variable}(params::GatedRecurrent, x::Vector{T})
-    h = Array(vartype(T), length(x))
-    h[1] = step(params, x[1])
+@component function unfold(params::GatedRecurrent, x::Vector)
+    h1 = step(params, x[1])
+    h = Array(typeof(h1), length(x))
+    h[1] = h1
     for t = 2:length(x)
         h[t] = step(params, x[t], h[t-1])
     end

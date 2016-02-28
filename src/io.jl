@@ -9,19 +9,11 @@ Base.showerror(io::IO, e::ComponentIoError) = print(io, "ComponentIoError(", e.i
 # ----------------- #
 # Component Reading #
 # ----------------- #
-function readType(df::HDF5.DataFile)
+function read_type(df::HDF5.DataFile)
     str = read(attrs(df), "type")
     return eval(Main, parse(str))
 end
 
-function readVariables(names::Vector{Symbol}, group::HDF5Group)
-    variables = Any[]
-    for name in names
-        data = read(group, string(name))
-        push!(variables, GradVariable(data, zero(data)))
-    end
-    return variables
-end
 
 function Base.read{C<:Component}(::Type{C}, group::HDF5Group)
     args = Any[]
@@ -38,12 +30,12 @@ function Base.read{C<:Component}(::Type{C}, group::HDF5Group)
             push!(args, vars)
         elseif T <: Component
             gcomp = group[string(name)]
-            c = read(readType(gcomp), gcomp)
+            c = read(read_type(gcomp), gcomp)
             push!(args, c)
         elseif T <: Vector && eltype(T) <: Component
             gcompvec = group[string(name)]
             len = read(attrs(gcompvec), "length")
-            cvec = [read(readType(gcompvec["$i"]), gcompvec["$i"]) for i = 1:len]
+            cvec = [read(read_type(gcompvec["$i"]), gcompvec["$i"]) for i = 1:len]
             push!(args, cvec)
         elseif T <: Real
             val = read(attrs(group), string(name))
@@ -59,8 +51,8 @@ function Base.read{C<:Component}(::Type{C}, group::HDF5Group)
     return C(args...)
 end
 
-function Base.read(f::HDF5File, verbose::Bool=true)
-    T = readType(f)
+function restore(f::HDF5File, verbose::Bool=true)
+    T = read_type(f)
     timestamp = read(attrs(f), "timestamp")
     dt = DateTime(timestamp)
     if verbose
@@ -73,27 +65,21 @@ function Base.read(f::HDF5File, verbose::Bool=true)
     return read(T, group)
 end
 
-function Base.read(fname::ASCIIString, verbose::Bool=true)
+function restore(fname::ASCIIString, verbose::Bool=true)
     return h5open(fname, "r") do f
-        return read(f, verbose)
+        return restore(f, verbose)
     end
 end
 
 # ----------------- #
 # Component Writing #
 # ----------------- #
-function writeType{C<:Component}(::Type{C}, df::HDF5.DataFile)
+function write_type{C<:Component}(::Type{C}, df::HDF5.DataFile)
     attrs(df)["type"] = string(C)
 end
 
-function writeVariables{V<:Variable}(variables::Dict{Symbol,V}, group::HDF5Group)
-    for (name, variable) in variables
-        group[string(name)] = variable.data
-    end
-end
-
 function Base.write{C<:Component}(params::C, group::HDF5Group)
-    writeType(C, group)
+    write_type(C, group)
     for name in fieldnames(C)
         T = fieldtype(C, name)
         
@@ -128,16 +114,16 @@ function Base.write{C<:Component}(params::C, group::HDF5Group)
     end
 end
 
-function Base.write{C<:Component}(params::C, f::HDF5File)
+function save{C<:Component}(f::HDF5File, params::C)
     timestamp = string(now())
     attrs(f)["timestamp"] = timestamp
-    writeType(C, f)
+    write_type(C, f)
     group = g_create(f, "params")
     write(params, group)
 end
 
-function Base.write{C<:Component}(params::C, fname::ASCIIString)
+function save{C<:Component}(fname::ASCIIString, params::C)
     h5open(fname, "w") do f
-        write(params, f)
+        save(f, params)
     end
 end

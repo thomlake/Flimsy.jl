@@ -53,9 +53,9 @@ end
 SimpleRecurrentGradNorm{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrentGradNorm{V}(f, w, u, b, h0)
 
 @component function Base.step(p::SimpleRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
-    h = p.f(plus(linear(p.w, x), linear(p.u, htm1), p.b))
-    h = gradnorm(h, gn)
-    return h
+    h_pre = plus(linear(p.w, x), linear(p.u, htm1), p.b)
+    gradnorm(h_pre, gn)
+    return p.f(h_pre)
 end
 
 @component Base.step(p::SimpleRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(p, x, p.h0, gn)

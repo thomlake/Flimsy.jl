@@ -68,7 +68,7 @@ function getdictparams{C<:Component}(params::C, prefix::ASCIIString=string(C.nam
             dict[key] = [getdictparams(field[i], key) for i = 1:endof(field)] 
         end
     end
-    return (C, dict)
+    return dict
 end
 
 Base.convert(::Type{Dict}, params::Component) = getdictparams(params)

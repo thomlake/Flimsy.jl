@@ -76,10 +76,13 @@ vartype{F<:AbstractFloat}(scope::GradScope, x::GradVariable{F}) = GradVariable{F
 
 function backprop!(scope::GradScope)
     stack = scope.stack
-    for i = endof(stack):-1:1
-        stack[i]()
+    while length(stack) > 0
+        pop!(stack)()
     end
-    empty!(stack)
+    # for i = endof(stack):-1:1
+    #     stack[i]()
+    # end
+    # empty!(stack)
 end
 
 function gradient!(f::Function, scope::GradScope, args...)

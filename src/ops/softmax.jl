@@ -7,34 +7,51 @@ end
 function call(rop::ReverseSoftmax)
     y = rop.y
     x = rop.x
-    for n = 1:size(y, 2)
-        for i = 1:size(y, 1)
-            for j = 1:size(y, 1)
+    x_grad = x.grad
+    y_data = y.data
+    y_grad = y.grad
+    n_rows, n_cols = size(y)
+
+    @inbounds for n = 1:n_cols
+        for i = 1:n_rows
+            for j = 1:n_rows
                 if i == j
-                    x.grad[i,n] += y.data[i,n] * (1 - y.data[j,n]) * y.grad[j,n]
+                    x_grad[i,n] += y_data[i,n] * (1 - y_data[j,n]) * y_grad[j,n]
                 else
-                    x.grad[i,n] -= y.data[i,n] * y.data[j,n] * y.grad[j,n]
+                    x_grad[i,n] -= y_data[i,n] * y_data[j,n] * y_grad[j,n]
                 end
             end
         end
     end
+    
     return nothing
 end
 
-function softmax!(y::AbstractArray, x::AbstractArray)
-    xmax = maximum(x, 1)
-    Z = zero(xmax)
-    for j = 1:size(x, 2)
-        for i = 1:size(x, 1)
-            y[i,j] = exp(x[i,j] - xmax[j])
-            Z[j] += y[i,j]
+function softmax!{T<:AbstractFloat}(y::Matrix{T}, x::Matrix{T})
+    m = size(x, 1)
+    Z = zero(T)
+    xmax = typemin(T)
+
+    @inbounds for j = 1:size(x, 2)
+        Z = zero(T)
+        xmax = typemin(T)
+
+        for i = 1:m
+            if x[i,j] > xmax
+                xmax = x[i,j]
+            end
+        end
+        
+        for i = 1:m
+            y[i,j] = exp(x[i,j] - xmax)
+            Z += y[i,j]
+        end
+        
+        for i = 1:m
+            y[i,j] = y[i,j] / Z
         end
     end
-    for j = 1:size(x, 2)
-        for i = 1:size(x, 1)
-            y[i,j] = y[i,j] / Z[j] 
-        end
-    end
+
     return y
 end
 

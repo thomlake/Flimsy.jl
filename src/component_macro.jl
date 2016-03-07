@@ -64,7 +64,54 @@ const SUPPORTED_SYNTAX = [
 ]
 
 """
-Insert a Scope type as the first argument in a function signature.
+Create a wrapper function from the signature of a component function
+to handle running the model, computing gradients, managing scope, and running gc.
+
+Input:
+
+    f(c::Foo, x, y) 
+
+Output:
+
+    function f{C<:Foo}(__model__::Model{C}, x, y; grad::Bool=false, force_gc::Bool=false)
+        reset!(__model__.scope)
+        if force_gc || __model__.step == __model__.gc_step
+            gc()
+            __model__.step = 0
+        else
+            __model__.step += 1
+        end
+        result = f(grad ? __model__.gradscope : __model__.scope, __model__.component, x, y)
+        grad && backprop!(__model__.gradscope)
+        return result
+    end
+"""
+function wrapped_component_function(signature::Expr)
+    name = signature.args[1]
+    arg1 = signature.args[2]
+    arg1.head == :(::) || error("expected name::Type but got $arg1")
+    component_type = arg1.args[2]
+    # TODO: Figure out how to check if component_type is actuall a subtype of Component
+    # eval(component_type) <: Component || error("first arg must be subtype of Component")
+    model_signature = :($name{C<:$component_type}(__model__::Model{C}, $(signature.args[3:end]...); grad::Bool=false, force_gc::Bool=false))
+    call_args = [isa(a, Symbol) ? a : a.args[1] for a in signature.args[3:end]]
+    model_body = quote
+        reset!(__model__.scope)
+        if force_gc || __model__.step == __model__.gc_step
+            gc()
+            __model__.step = 0
+        else
+            __model__.step += 1
+        end
+        result = $name(grad ? __model__.gradscope : __model__.scope, __model__.component, $(call_args...))
+        grad && backprop!(__model__.gradscope)
+        return result
+    end
+    return Expr(:(=), model_signature, model_body)
+end
+
+"""
+Add a Scope type as the first argument in a function signature.
 
     f(x, y) => f(__scope__::Scope, x, y)
 """
@@ -172,7 +219,9 @@ function create_component_functions(f::Expr)
 
     new_signature = signature_with_scope(signature)
     new_body, _ = insert_scope(body, DEFAULT_BLACKLIST)
-    return Expr(f.head, new_signature, new_body)
+    f1 = Expr(f.head, new_signature, new_body)
+    f2 = wrapped_component_function(signature)
+    return Expr(:block, f1, f2)
 end
 
 macro component(x::Expr)

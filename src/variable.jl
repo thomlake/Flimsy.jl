@@ -1,12 +1,12 @@
 
 abstract Variable{T}
 
-type GradVariable{T<:AbstractFloat} <: Variable{T}
+immutable GradVariable{T<:AbstractFloat} <: Variable{T}
     data::Matrix{T}
     grad::Matrix{T}
 end
 
-type DataVariable{T<:AbstractFloat} <: Variable{T}
+immutable DataVariable{T<:AbstractFloat} <: Variable{T}
     data::Matrix{T}
 end
 

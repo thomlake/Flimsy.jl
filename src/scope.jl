@@ -20,7 +20,7 @@ type Heap
     end
 end
 
-function call(heap::Heap, t::DataType, dims)
+function call(heap::Heap, t::DataType, dims::Tuple)
     s = sizeof(t) * prod(dims)
     remain = available(heap)
     if s > remain
@@ -79,10 +79,6 @@ function backprop!(scope::GradScope)
     while length(stack) > 0
         pop!(stack)()
     end
-    # for i = endof(stack):-1:1
-    #     stack[i]()
-    # end
-    # empty!(stack)
 end
 
 function gradient!(f::Function, scope::GradScope, args...)

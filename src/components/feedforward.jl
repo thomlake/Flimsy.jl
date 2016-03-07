@@ -29,24 +29,9 @@ end
 
 FeedForward(sz::Int...) = FeedForward(relu, sz...)
 
-@component function feedforward{C<:FeedForward}(params::C, h::Variable)
+@component function feedforward(params::FeedForward, h::Variable)
     for i = 1:length(params.w)
         h = params.f(affine(params.w[i], h, params.b[i]))
     end
     return h
 end
-
-# SimpleRecurrent(m::Int, n::Int) = SimpleRecurrent(tanh, m, n)
-
-# @component Base.step(p::SimpleRecurrent, x::Variable, htm1::Variable) = p.f(plus(linear(p.w, x), linear(p.u, htm1), p.b))
-
-# @component Base.step(p::SimpleRecurrent, x::Variable) = step(p, x, p.h0)
-
-# @component function unfold{T<:Variable}(p::SimpleRecurrent, x::Vector{T})
-#     h = Array(vartype(T), length(x))
-#     h[1] = step(p, x[1])
-#     for t = 2:length(x)
-#         h[t] = step(p, x[t], h[t-1])
-#     end
-#     return h
-# end

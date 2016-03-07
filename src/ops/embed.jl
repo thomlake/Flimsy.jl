@@ -10,8 +10,8 @@ function call{T}(rop::ReverseLinearEmbed{T})
     w = rop.w
     x = rop.x
 
-    for (k, x_k) in enumerate(x)
-        for j in x_k
+    for k = 1:length(x)
+        for j in x[k]
             for i = 1:size(y, 1)
                 w.grad[i,j] += y.grad[i,k]
             end
@@ -22,13 +22,15 @@ function call{T}(rop::ReverseLinearEmbed{T})
 end
 
 function linear!(y::AbstractArray, w::AbstractArray, x::Vector{Vector{Int}})
-    for (k, x_k) in enumerate(x)
-        for j in x_k
+    
+    for k = 1:length(x)
+        for j in x[k]
             for i = 1:size(w, 1)
                 y[i,k] += w[i,j]
             end
         end
     end
+
     return y
 end
 

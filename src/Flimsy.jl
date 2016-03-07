@@ -1,7 +1,6 @@
 module Flimsy
 
 using Distributions
-using FastAnonymous
 using HDF5
 
 abstract Component{T}
@@ -10,8 +9,6 @@ abstract ReverseOperation
 # Distributions exports
 export Normal,
        Uniform
-
-export @anon
 
 export Component,
        ReverseOperation
@@ -65,6 +62,8 @@ export check_gradients
 
 export Cost
 
+export Model
+
 export Components
 
 export ExternalEvaluation,
@@ -80,11 +79,6 @@ export ExternalEvaluation,
        epoch,
        best
 
-export readType,
-       writeType,
-       readVariables,
-       writeVariables
-
 const FLIMSY_DEFAULT_HEAP_SIZE = 1_073_741_824
 
 include("component_macro.jl")
@@ -94,15 +88,17 @@ include("getparams.jl")
 include("scope.jl")
 include("ops.jl")
 include("initialization.jl")
-include("fit.jl")
 include("gradient_noise.jl")
 include("check_gradients.jl")
 include("ctc.jl")
 include("cost.jl")
+include("model.jl")
+include("fit.jl")
 include("components.jl")
 include("extras.jl")
 include("progress.jl")
 include("demo.jl")
 include("io.jl")
+include("inplace.jl")
 
 end

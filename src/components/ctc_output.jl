@@ -21,6 +21,6 @@ end
 
 @component predict(params::CtcOutput, xs::Vector) = [argmax(y) for y in score(params, xs)]
 
-@component function cost{I<:Integer}(params::CtcOutput, xs::Vector, ys::Vector{I})
+@component function cost(params::CtcOutput, xs::Vector, ys::Vector)
     return Cost.ctc_with_scores(score(params, xs), ys, params.blank)
 end

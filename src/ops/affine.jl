@@ -15,23 +15,11 @@ end
     ]
 
     if Tw <: GradVariable
-        s = quote
-            dw = A_mul_Bt(y.grad, x.data)
-            for i in eachindex(w)
-                w.grad[i] += dw[i]
-            end
-        end
-        push!(stmts, s)
+        push!(stmts, :(add_to_A_mul_Bt!(w.grad, y.grad, x.data)))
     end
 
     if Tx <: GradVariable
-        s = quote
-            dx = At_mul_B(w.data, y.grad)
-            for i in eachindex(x)
-                x.grad[i] += dx[i]
-            end
-        end
-        push!(stmts, s)
+        push!(stmts, :(add_to_At_mul_B!(x.grad, w.data, y.grad)))
     end
 
     if Tb <: GradVariable

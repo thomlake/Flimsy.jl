@@ -11,11 +11,8 @@ facts("mse") do
             randn(m, n)
         end
 
-        params = ValueComponent(value=randn(m, n))
-        scope = DynamicScope()
-        @component cost() = Cost.mse(params.value, target)
-        g = () -> gradient!(cost, scope)
-        c = () -> cost(scope)
-        @fact check_gradients(g, c, params, verbose=false) --> true
+        params = Model(ValueComponent(value=randn(m, n)), DynamicScope())
+        @component cost(params::ValueComponent, target) = Cost.mse(params.value, target)
+        @fact check_gradients(cost, params, target; verbose=false) --> true
     end
 end

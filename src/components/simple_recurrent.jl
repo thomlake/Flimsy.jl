@@ -1,4 +1,20 @@
 
+"""
+SimpleRecurrent Component.
+
+Implements the hidden layer of a Simple Recurrent Neural Network (aka Elman Network).
+
+### Update Equations
+    h[1] = f(w * x[1] + u * h0 + b)
+    h[t] = f(w * x[t] + u * h[t-1] + b)
+
+### Fields
+* `f::Function` Activation function.
+* `w::Variable` Input to hidden weights.
+* `u::Variable` Hidden to hidden weights.
+* `b::Variable` Hidden bias.
+* `h0::Variable` Initial state.
+"""
 immutable SimpleRecurrent{V<:Variable} <: RecurrentComponent1{V}
     f::Function
     w::V
@@ -32,7 +48,7 @@ end
 
 
 """
-SimpleRecurrent Component with normalized hidden unit gradients.
+SimpleRecurrent component with normalized hidden unit gradients.
 By default gradients are normalized to 1/timesteps.
 """
 immutable SimpleRecurrentGradNorm{V<:Variable} <: RecurrentComponent1{V}
@@ -41,16 +57,16 @@ immutable SimpleRecurrentGradNorm{V<:Variable} <: RecurrentComponent1{V}
     u::V
     b::V
     h0::V
-    function SimpleRecurrentGradNorm(f::Function, w::V, u::V, b::V, h0::V)
-        m, n = size(w)
-        size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
-        size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
-        size(h0) == (m, 1) || throw(DimensionMismatch("Bad size(h0) == $(size(h0)) != ($m, 1)"))
-        return new(f, w, u, b, h0)
-    end
+    # function SimpleRecurrentGradNorm(f::Function, w::V, u::V, b::V, h0::V)
+    #     m, n = size(w)
+    #     size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
+    #     size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
+    #     size(h0) == (m, 1) || throw(DimensionMismatch("Bad size(h0) == $(size(h0)) != ($m, 1)"))
+    #     return new(f, w, u, b, h0)
+    # end
 end
 
-SimpleRecurrentGradNorm{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrentGradNorm{V}(f, w, u, b, h0)
+# SimpleRecurrentGradNorm{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrentGradNorm{V}(f, w, u, b, h0)
 
 @component function Base.step(p::SimpleRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
     h_pre = plus(linear(p.w, x), linear(p.u, htm1), p.b)

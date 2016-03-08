@@ -144,12 +144,6 @@ function insert_scope(expr::Expr, blacklist::Vector)
         else
             throw(ComponentParseError("Malformed @blacklist directive: $args"))
         end
-    elseif head == :macrocall && args[1] == symbol("@similar_variable_type")
-        if length(args) == 3 && isa(args[2], Symbol) && isa(args[3], Symbol)
-            return :($(args[2]) = GradVariable{eltype($(args[3]))}), blacklist
-        else
-            throw(ComponentParseError("Malformed @vartype directive: $args"))
-        end
     end
 
     if head == :call

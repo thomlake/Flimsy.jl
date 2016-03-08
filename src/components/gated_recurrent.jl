@@ -30,10 +30,9 @@ end
 
 @component Base.step(params::GatedRecurrent, x) = step(params, x, params.h0)
 
-@component function unfold(params::GatedRecurrent, x::Vector)
-    h1 = step(params, x[1])
-    h = Array(typeof(h1), length(x))
-    h[1] = h1
+@component function unfold(params::GatedRecurrent, x::Vector) 
+    h = Sequence(eltype(params), length(x))
+    h[1] = step(params, x[1])
     for t = 2:length(x)
         h[t] = step(params, x[t], h[t-1])
     end
@@ -79,9 +78,8 @@ end
 @component Base.step(params::GatedRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, params.h0, gn)
 
 @component function unfold(params::GatedRecurrentGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
-    h1 = step(params, x[1], gn)
-    h = Array(typeof(h1), length(x))
-    h[1] = h1
+    h = Sequence(eltype(params), length(x))
+    h[1] = step(params, x[1], gn)
     for t = 2:length(x)
         h[t] = step(params, x[t], h[t-1], gn)
     end

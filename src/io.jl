@@ -15,7 +15,7 @@ function read_type(df::HDF5.DataFile)
 end
 
 
-function Base.read{C<:Component}(::Type{C}, group::HDF5Group)
+function Base.read{C<:Component}(group::HDF5Group, ::Type{C})
     args = Any[]
     for name in fieldnames(C)
         T = fieldtype(C, name)
@@ -30,12 +30,12 @@ function Base.read{C<:Component}(::Type{C}, group::HDF5Group)
             push!(args, vars)
         elseif T <: Component
             gcomp = group[string(name)]
-            c = read(read_type(gcomp), gcomp)
+            c = read(gcomp, read_type(gcomp))
             push!(args, c)
         elseif T <: Vector && eltype(T) <: Component
             gcompvec = group[string(name)]
             len = read(attrs(gcompvec), "length")
-            cvec = [read(read_type(gcompvec["$i"]), gcompvec["$i"]) for i = 1:len]
+            cvec = [read(gcompvec["$i"], read_type(gcompvec["$i"])) for i = 1:len]
             push!(args, cvec)
         elseif T <: Real
             val = read(attrs(group), string(name))
@@ -62,7 +62,7 @@ function restore(f::HDF5File, verbose::Bool=true)
         println("  date => ", dt)
     end
     group = f["params"]
-    return read(T, group)
+    return read(group, T)
 end
 
 function restore(fname::ASCIIString, verbose::Bool=true)
@@ -78,7 +78,7 @@ function write_type{C<:Component}(::Type{C}, df::HDF5.DataFile)
     attrs(df)["type"] = string(C)
 end
 
-function Base.write{C<:Component}(params::C, group::HDF5Group)
+function Base.write{C<:Component}(group::HDF5Group, params::C)
     write_type(C, group)
     for name in fieldnames(C)
         T = fieldtype(C, name)
@@ -95,14 +95,14 @@ function Base.write{C<:Component}(params::C, group::HDF5Group)
             end  
         elseif T <: Component
             gcomp = g_create(group, string(name))
-            c = write(getfield(params, name), gcomp)
+            c = write(gcomp, getfield(params, name))
         elseif T <: Vector && eltype(T) <: Component
             gcompvec = g_create(group, string(name))
             values = getfield(params, name)
             attrs(gcompvec)["length"] = length(values)
             for i = 1:length(values)
                 gcomp = g_create(gcompvec, "$i")
-                write(values[i], gcomp)
+                write(gcomp, values[i])
             end
         elseif T <: Real
             attrs(group)[string(name)] = getfield(params, name)
@@ -119,7 +119,7 @@ function save{C<:Component}(f::HDF5File, params::C)
     attrs(f)["timestamp"] = timestamp
     write_type(C, f)
     group = g_create(f, "params")
-    write(params, group)
+    write(group, params)
 end
 
 function save{C<:Component}(fname::ASCIIString, params::C)

@@ -15,6 +15,16 @@ glorot(n_out::Int, n_in::Int) = glorot(sqrt(6), n_out, n_in)
 title: Exact solutions to the nonlinear dynamics of learning in deep linear neural networks
 paper: http://arxiv.org/pdf/1312.6120v3.pdf
 """
+function orthonormal end
+
+const DEFAULT_ORTHONORMAL_GAIN = 1.1
+
+const ORTHONORMAL_GAIN_LOOKUP = Dict(
+    relu => sqrt(2),
+    tanh => 1.1,
+    sigmoid => 1.1,
+)
+
 function orthonormal(gain::Real, n_out::Int, n_in::Int)
     n = max(n_out, n_in)
     w = gain * svd(randn(n, n))[1]
@@ -25,13 +35,6 @@ orthonormal(f::Function, n_out::Int, n_in::Int) = orthonormal(get(ORTHONORMAL_GA
 
 orthonormal(n_out::Int, n_in::Int) = orthonormal(DEFAULT_ORTHONORMAL_GAIN, n_out, n_in)
 
-const DEFAULT_ORTHONORMAL_GAIN = 1.1
-
-const ORTHONORMAL_GAIN_LOOKUP = Dict(
-    relu => sqrt(2),
-    tanh => 1.1,
-    sigmoid => 1.1,
-)
 
 """Sparse initialization
 title: On the importance of initialization and momentum in deep learning

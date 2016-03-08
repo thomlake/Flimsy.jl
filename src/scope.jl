@@ -20,6 +20,8 @@ type Heap
     end
 end
 
+Base.size(heap::Heap) = heap.tail - heap.head
+
 function call(heap::Heap, t::DataType, dims::Tuple)
     s = sizeof(t) * prod(dims)
     remain = available(heap)
@@ -65,7 +67,6 @@ vartype{F<:AbstractFloat}(scope::Scope, x::GradVariable{F}) = DataVariable{F}
 # -------------- #
 abstract GradScope <: Scope
 
-# similartype{F<:AbstractFloat}(scope::GradScope, ::Type{F}) = GradVariable{F}
 vartype{F<:AbstractFloat}(scope::GradScope, ::Type{DataVariable{F}}) = GradVariable{F}
 
 vartype{F<:AbstractFloat}(scope::GradScope, x::DataVariable{F}) = GradVariable{F}

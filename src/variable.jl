@@ -46,3 +46,11 @@ function is_scalar(x::Variable)
     return m == 1 && n == 1
 end
 
+function Base.show{V<:Variable}(io::IO, x::V)
+    m, n = size(x)
+    print(io, "$(m)x$(n) $V")
+end
+
+function Base.show{V<:Variable}(io::IO, xs::Vector{V})
+    print(io, eltype(xs), "[", join(map(x-> "$(size(x,1))x$(size(x,2))", xs), ", "), "]")
+end

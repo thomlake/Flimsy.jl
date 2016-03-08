@@ -44,6 +44,8 @@ export Scope,
        available,
        vartype
 
+export Sequence
+
 export glorot,
        orthonormal
 
@@ -86,18 +88,18 @@ include("variable.jl")
 include("argmax.jl")
 include("getparams.jl")
 include("scope.jl")
+include("sequence.jl")
 include("ops.jl")
 include("initialization.jl")
 include("gradient_noise.jl")
+include("model.jl")
 include("check_gradients.jl")
 include("ctc.jl")
 include("cost.jl")
-include("model.jl")
 include("fit.jl")
 include("components.jl")
 include("extras.jl")
 include("progress.jl")
-include("demo.jl")
 include("io.jl")
 include("inplace.jl")
 

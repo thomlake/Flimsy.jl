@@ -16,6 +16,7 @@ export RecurrentComponent,
        RecurrentComponent2
 
 export ValueComponent,
+       VectorComponent,
        EmptyComponent
 
 export LinearModel,
@@ -33,6 +34,7 @@ abstract RecurrentComponent1{T} <: RecurrentComponent{T}
 abstract RecurrentComponent2{T} <: RecurrentComponent{T}
 
 include("components/constructor.jl")
+include("components/common.jl")
 include("components/value_component.jl")
 include("components/linear_model.jl")
 include("components/ctc_output.jl")

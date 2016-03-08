@@ -27,9 +27,6 @@ export Variable,
 export argmax,
        argmaxneq
 
-export getparams,
-       getnamedparams
-
 export Scope,
        GradScope,
        DynamicScope,
@@ -86,13 +83,13 @@ const FLIMSY_DEFAULT_HEAP_SIZE = 1_073_741_824
 include("component_macro.jl")
 include("variable.jl")
 include("argmax.jl")
-include("getparams.jl")
 include("scope.jl")
 include("sequence.jl")
 include("ops.jl")
 include("initialization.jl")
 include("gradient_noise.jl")
 include("model.jl")
+include("conversion.jl")
 include("check_gradients.jl")
 include("ctc.jl")
 include("cost.jl")

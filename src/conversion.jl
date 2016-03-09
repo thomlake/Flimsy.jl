@@ -1,22 +1,22 @@
 
 function Base.convert{V<:Variable}(::Type{Vector}, params::Component{V})
-    params = V[]
-    for f in fieldnames(theta)
-        T = fieldtype(typeof(theta), f)
+    param_vector = V[]
+    for f in fieldnames(params)
+        T = fieldtype(typeof(params), f)
         if T <: Variable
-            push!(params, getfield(theta, f))
+            push!(param_vector, getfield(params, f))
         elseif T <: AbstractArray && eltype(T) <: Variable
-            append!(params, getfield(theta, f)[:])
+            append!(param_vector, getfield(params, f)[:])
         elseif T <: Component
-            append!(params, convert(Vector, getfield(theta, f)))
+            append!(param_vector, convert(Vector, getfield(params, f)))
         elseif T <: AbstractArray && eltype(T) <: Component
-            field = getfield(theta, f)
+            field = getfield(params, f)
             for component in field
-                append!(params, convert(Vector, component))
+                append!(param_vector, convert(Vector, component))
             end
         end
     end
-    return params
+    return param_vector
 end
 
 Base.convert(::Type{Vector}, model::Model) = convert(Vector, model.component)

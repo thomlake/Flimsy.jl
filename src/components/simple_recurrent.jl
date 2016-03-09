@@ -29,7 +29,6 @@ immutable SimpleRecurrent{V<:Variable} <: RecurrentComponent1{V}
         return new(f, w, u, b, h0)
     end
 end
-
 SimpleRecurrent{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrent{V}(f, w, u, b, h0)
 
 @component Base.step(p::SimpleRecurrent, x, htm1) = p.f(plus(linear(p.w, x), linear(p.u, htm1), p.b))
@@ -37,9 +36,8 @@ SimpleRecurrent{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecur
 @component Base.step(p::SimpleRecurrent, x) = step(p, x, p.h0)
 
 @component function unfold(p::SimpleRecurrent, x::Vector)
-    h1 = step(p, x[1])
-    h = Array(typeof(h1), length(x))
-    h[1] = h1
+    h = Sequence(eltype(p), length(x))
+    h[1] = step(p, x[1])
     for t = 2:length(x)
         h[t] = step(p, x[t], h[t-1])
     end 
@@ -57,16 +55,15 @@ immutable SimpleRecurrentGradNorm{V<:Variable} <: RecurrentComponent1{V}
     u::V
     b::V
     h0::V
-    # function SimpleRecurrentGradNorm(f::Function, w::V, u::V, b::V, h0::V)
-    #     m, n = size(w)
-    #     size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
-    #     size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
-    #     size(h0) == (m, 1) || throw(DimensionMismatch("Bad size(h0) == $(size(h0)) != ($m, 1)"))
-    #     return new(f, w, u, b, h0)
-    # end
+    function SimpleRecurrentGradNorm(f::Function, w::V, u::V, b::V, h0::V)
+        m, n = size(w)
+        size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
+        size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
+        size(h0) == (m, 1) || throw(DimensionMismatch("Bad size(h0) == $(size(h0)) != ($m, 1)"))
+        return new(f, w, u, b, h0)
+    end
 end
-
-# SimpleRecurrentGradNorm{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrentGradNorm{V}(f, w, u, b, h0)
+SimpleRecurrentGradNorm{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrentGradNorm{V}(f, w, u, b, h0)
 
 @component function Base.step(p::SimpleRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
     h_pre = plus(linear(p.w, x), linear(p.u, htm1), p.b)
@@ -77,9 +74,8 @@ end
 @component Base.step(p::SimpleRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(p, x, p.h0, gn)
 
 @component function unfold(p::SimpleRecurrentGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
-    h1 = step(p, x[1], gn)
-    h = Array(typeof(h1), length(x))
-    h[1] = h1
+    h = Sequence(eltype(params), length(x))
+    h[1] = step(p, x[1], gn)
     for t = 2:length(x)
         h[t] = step(p, x[t], h[t-1], gn)
     end

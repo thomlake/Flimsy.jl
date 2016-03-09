@@ -127,3 +127,5 @@ function save{C<:Component}(fname::ASCIIString, params::C)
         save(f, params)
     end
 end
+
+save(file, model::Model) = save(file, model.component)

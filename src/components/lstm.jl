@@ -43,9 +43,9 @@ end
 @component Base.step(params::Lstm, x) = step(params, x, (params.h0, params.c0))
 
 @component function unfold(params::Lstm, x::Vector)
-    h1, c1 = step(params, x)
-    h, c = Array(typeof(h1), length(x)), Array(typeof(c1), length(x))
-    h[1], c[1] = h1, c1
+    h = Sequence(eltype(params), length(x))
+    c = Sequence(eltype(params), length(x))
+    h[1], c[1] = step(params, x)
     for t = 2:length(x)
         h[t], c[t] = step(params, x[t], (h[t-1], c[t-1]))
     end
@@ -102,9 +102,9 @@ end
 @component Base.step(params::LstmGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, (params.h0, params.c0), gn)
 
 @component function unfold(params::LstmGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
-    h1, c1 = step(params, x, gn)
-    h, c = Array(typeof(h1), length(x)), Array(typeof(c1), length(x))
-    h[1], c[1] = h1, c1
+    h = Sequence(eltype(params), length(x))
+    c = Sequence(eltype(params), length(x))
+    h[1], c[1] = step(params, x, gn)
     for t = 2:length(x)
         h[t], c[t] = step(params, x[t], (h[t-1], c[t-1]), gn)
     end

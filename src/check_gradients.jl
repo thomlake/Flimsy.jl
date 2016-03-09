@@ -28,36 +28,78 @@ check_gradients(cost, params, target)
 """
 function check_gradients end
 
+function check_gradients(f::Function, param::Variable, name; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
+    for j = 1:size(param, 2)
+        for i = 1:size(param, 1)
+            xij = param.data[i,j]
+            param.data[i,j] = xij + eps
+            lp = f()
+            param.data[i,j] = xij - eps
+            lm = f()
+            param.data[i,j] = xij
+            dxij = (lp - lm) / (2 * eps)
+            if abs(dxij - param.grad[i,j]) > tol
+                errmsg = "Finite difference gradient check failed!"
+                errelm = "  name => $name, index => ($i, $j), ratio => $(dxij / param.grad[i,j])"
+                errdsc = "  |$(dxij) - $(param.grad[i,j])| > $tol"
+                if throwerr
+                    error("$errmsg\n$errelm\n$errdsc")
+                else
+                    if verbose
+                        println("$errmsg\n$errelm\n$errdsc")
+                    end
+                    return false
+                end
+            end
+        end
+    end
+    return true
+end
+
+function check_gradients(f::Function, params::Dict, name; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
+    for (name, value) in params
+        if !check_gradients(f, value, name; eps=eps, tol=tol, verbose=verbose, throwerr=throwerr)
+            return false
+        end
+    end
+    return true
+end
+
+
+
 function check_gradients(f::Function, params::Model, args...; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
     passed = true
     f(params, args...; grad=true)
     g = () -> f(params, args...; grad=false)
 
-    for (name, param) in convert(Dict, params.component)
-        for j = 1:size(param, 2)
-            for i = 1:size(param, 1)
-                xij = param.data[i,j]
-                param.data[i,j] = xij + eps
-                lp = f(params, args...)
-                param.data[i,j] = xij - eps
-                lm = f(params, args...)
-                param.data[i,j] = xij
-                dxij = (lp - lm) / (2 * eps)
-                if abs(dxij - param.grad[i,j]) > tol
-                    errmsg = "Finite difference gradient check failed!"
-                    errelm = "  name => $name, index => ($i, $j), ratio => $(dxij / param.grad[i,j])"
-                    errdsc = "  |$(dxij) - $(param.grad[i,j])| > $tol"
-                    if throwerr
-                        error("$errmsg\n$errelm\n$errdsc")
-                    else
-                        passed = false
-                        if verbose
-                            println("$errmsg\n$errelm\n$errdsc")
-                        end
-                    end
-                end
-            end
+    for (name, value) in convert(Dict, params.component)
+        if !check_gradients(g, value, name; eps=eps, tol=tol, verbose=verbose, throwerr=throwerr)
+            return false
         end
+        # for j = 1:size(param, 2)
+        #     for i = 1:size(param, 1)
+        #         xij = param.data[i,j]
+        #         param.data[i,j] = xij + eps
+        #         lp = f(params, args...)
+        #         param.data[i,j] = xij - eps
+        #         lm = f(params, args...)
+        #         param.data[i,j] = xij
+        #         dxij = (lp - lm) / (2 * eps)
+        #         if abs(dxij - param.grad[i,j]) > tol
+        #             errmsg = "Finite difference gradient check failed!"
+        #             errelm = "  name => $name, index => ($i, $j), ratio => $(dxij / param.grad[i,j])"
+        #             errdsc = "  |$(dxij) - $(param.grad[i,j])| > $tol"
+        #             if throwerr
+        #                 error("$errmsg\n$errelm\n$errdsc")
+        #             else
+        #                 passed = false
+        #                 if verbose
+        #                     println("$errmsg\n$errelm\n$errdsc")
+        #                 end
+        #             end
+        #         end
+        #     end
+        # end
     end
     if verbose
         status = passed ? "passed" : "failed"

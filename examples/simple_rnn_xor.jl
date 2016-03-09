@@ -1,10 +1,10 @@
 # Flimsy.jl
 # Simple Recurrent Neural Network
-
+using Synthetic
 using Flimsy
 using Flimsy.Components
 import Flimsy.Components: cost, predict
-import Flimsy.Demo: XORTask
+
 
 immutable Params{V<:Variable} <: Component{V}
     clf::SoftmaxRegression{V}
@@ -13,7 +13,7 @@ end
 
 @component predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
 
-@component function cost{I<:Integer}(params::Params, xs::Vector, ys::Vector{I})
+@component function cost(params::Params, xs::Vector, ys::Vector)
     nll = 0.0
     hs = unfold(params.rnn, xs)
     for (h, y) in zip(hs, ys)
@@ -29,9 +29,7 @@ Params(n_out::Int, n_hid::Int, n_in::Int) = Params(
     ),
     rnn=SimpleRecurrent(
         f=tanh,
-        # w=rand(Normal(0, 0.1), n_hid, n_in),
-        # u=rand(Normal(0, 0.1), n_hid, n_hid),
-        w=orthonormal(1, n_hid, n_in),
+        w=rand(Normal(0, 0.01), n_hid, n_in),
         u=orthonormal(1, n_hid, n_hid),
         b=zeros(n_hid, 1),
         h0=zeros(n_hid, 1),
@@ -40,16 +38,10 @@ Params(n_out::Int, n_hid::Int, n_in::Int) = Params(
 
 function check()
     n_out, n_hid, n_in = 2, 10, 2
-    xs, ys = rand(XORTask(20))
-    params = Params(n_out, n_hid, n_in)
-    println("Params:")
-    for (name, param) in getnamedparams(params)
-        println("  $name => ", size(param))
-    end
-    scope = Scope()
-    g = () -> gradient!(cost, scope, params, map(Input, xs), ys)
-    c = () -> cost(reset!(scope), params, map(Input, xs), ys)
-    check_gradients(g, c, params)
+    x, y = rand(Synthetic.XORTask(20))
+    params = Model(Params(n_out, n_hid, n_in))
+    println(params)
+    check_gradients(cost, params, x, y)
 end
 
 function sequence_error_count(y_pred, y_true)
@@ -63,38 +55,42 @@ function sequence_error_count(y_pred, y_true)
     return count
 end
 
-function fit()
+function main()
     srand(1235)
+    max_epochs = 500
+    n_epochs = 0
+    print_freq = 10
     n_out, n_hid, n_in = 2, 7, 2
     n_train = 20
-    xortask = XORTask(20)
-    D = collect(zip(rand(xortask, n_train)...))
+    xortask = Synthetic.XORTask(20)
+    dset = rand(xortask, n_train)
     indices = collect(1:n_train)
 
-    params = Params(n_out, n_hid, n_in)
+    params = Model(Params(n_out, n_hid, n_in))
     opt = optimizer(GradientDescent, params, learning_rate=0.05, clip=5.0, clipping_type=:scale)
-    scope = Scope()
 
-    fe = FunctionEvaluation(; minimize=true) do
-        errors = 0
-        for (x, y) in D
-            errors += sequence_error_count(predict(reset!(scope), params, map(Input, x)), y)
-        end
-        return errors
-    end
-    progress = Progress(params, fe, IsEqual(0), max_epochs=500, frequency=10)
-    
-    while !converged(progress)
+    start_time = time()
+    while n_epochs < max_epochs
+        n_epochs += 1
         shuffle!(indices)
         nll = 0.0
         for i in indices
-            x, y = D[i]
-            nll += gradient!(cost, scope, params, map(Input, x), y)
+            x, y = dset[i]
+            nll += cost(params, x, y; grad=true)
             update!(opt)
         end
-        progress() && println(progress)
+        if n_epochs % print_freq == 0
+            errors = 0
+            for (x, y) in dset
+                errors += sequence_error_count(predict(params, x), y)
+            end
+            println(n_epochs, ": nll => ", round(nll, 2), ", errors => ", errors)
+            errors < 1 && break
+        end
     end
+    stop_time = time()
+    println("converged after ", n_epochs, " epochs in ", round(stop_time - start_time, 2), " seconds")
 end
 
 ("-c" in ARGS || "--check" in ARGS) && check()
-fit()
+main()

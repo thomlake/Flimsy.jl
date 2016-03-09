@@ -27,6 +27,6 @@ function show_component(io::IO, d::Dict, indent::Int=2)
 end
 
 function Base.show{C<:Component}(io::IO, params::C, indent::Int=0)
-    println(io, repeat(" ", indent), C.name)
+    println(io, repeat(" ", indent), C.name, " =>")
     show_component(io, convert(Dict, params), indent + 2)
 end

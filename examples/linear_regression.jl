@@ -29,10 +29,10 @@ function main()
     expl = [:Rm, :Crim, :LStat, :PTRatio, :Dis]
 
     # Convert data frame to Arrays and preprocess to have
-    # zero mean and unit stard deviation. 
+    # zero mean and unit standard deviation. 
     # N.B. Julia matrices are column-major, 
     # so we transpose the features and targets matrices.
-    # features[i,j] is the ith feature of the jth instance.
+    # After this features[i,j] is the ith feature of the jth instance.
     features = zscore(convert(Array{Float64}, df[:, expl]).')
     targets = zscore(convert(Array{Float64}, df[:, resp]).')
 

@@ -1,16 +1,16 @@
 using Flimsy
 using Synthetic
 
-# model definition
+# Parameter definition
 immutable Params{V<:Variable} <: Component{V}
     w::V
     b::V
 end
 
-# default constructor
+# Default constructor
 Params(m, n) = Params(w=randn(m, n), b=zeros(m, 1))
 
-# computation the model performs
+# Computation the model performs
 @component score(θ::Params, x::Variable) = affine(θ.w, x, θ.b)
 @component predict(θ::Params, x::Variable) = argmax(score(θ, x))
 @component probs(θ::Params, x::Variable) = softmax(score(θ, x))
@@ -27,7 +27,7 @@ function check()
     check_gradients(cost, θ, Input(X), y)
 end
 
-# train and test
+# Train/Test
 function main()
     srand(sum(map(Int, collect("Flimsy"))))
     n_features, n_classes = 20, 3

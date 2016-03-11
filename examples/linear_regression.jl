@@ -58,15 +58,17 @@ function main()
     end
     stop_time = time()
 
-    # Print out info about our model.
+    # Print info about our model.
     println("[Info]")
     println("  number of samples  => ", n_samples)
     println("  number of features => ", n_features)
     println("  number of epochs   => ", n_epochs)
     println("  cpu time           => ", round(stop_time - start_time, 2), " seconds")
     println("  final train nll    => ", nll)
+    
+    coeffs = get(params, :w, :data)
     println("[Coefficients]")
-    for (k, v) in zip(expl, convert(Dict, params)["w"].data)
+    for (k, v) in zip(expl, coeffs)
         println("  ", rpad(k, 7), " => ", sign(v) > 0 ? "+" : "-", round(abs(v), 3))
     end
 end

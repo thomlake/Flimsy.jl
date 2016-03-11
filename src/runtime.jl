@@ -39,3 +39,5 @@ function setup(component::Component; dynamic::Bool=false, heap_size::Int=FLIMSY_
     scope = dynamic ? DynamicScope() : StaticScope(heap_size)
     return Runtime(component, scope; gc_step=gc_step)
 end
+
+Base.get(runtime::Runtime, args::Symbol...) = foldl((x, f) -> getfield(x, f), runtime.component, args)

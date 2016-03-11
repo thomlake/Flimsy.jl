@@ -128,4 +128,4 @@ function save{C<:Component}(fname::ASCIIString, params::C)
     end
 end
 
-save(file, model::Model) = save(file, model.component)
+save(file, runtime::Runtime) = save(file, runtime.component)

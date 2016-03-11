@@ -65,7 +65,7 @@ const SUPPORTED_SYNTAX = [
 
 """
 Create a wrapper function from the signature of a component function
-to handle running the model, computing gradients, managing scope, and running gc.
+to handle running, computing gradients, managing scope, and running gc.
 
 Input:
 
@@ -73,16 +73,16 @@ Input:
 
 Output:
 
-    function f{C<:Foo}(__model__::Model{C}, x, y; grad::Bool=false, force_gc::Bool=false)
-        reset!(__model__.scope)
-        if force_gc || __model__.step == __model__.gc_step
+    function f{C<:Foo}(__rt__::Runtime{C}, x, y; grad::Bool=false, force_gc::Bool=false)
+        reset!(__rt__.scope)
+        if force_gc || __rt__.step == __rt__.gc_step
             gc()
-            __model__.step = 0
+            __rt__.step = 0
         else
-            __model__.step += 1
+            __rt__.step += 1
         end
-        result = f(grad ? __model__.gradscope : __model__.scope, __model__.component, x, y)
-        grad && backprop!(__model__.gradscope)
+        result = f(grad ? __rt__.gradscope : __rt__.scope, __rt__.component, x, y)
+        grad && backprop!(__rt__.gradscope)
         return result
     end
 """
@@ -93,21 +93,21 @@ function wrapped_component_function(signature::Expr)
     component_type = arg1.args[2]
     # TODO: Figure out how to check if component_type is actuall a subtype of Component
     # eval(component_type) <: Component || error("first arg must be subtype of Component")
-    model_signature = :($name{C<:$component_type}(__model__::Model{C}, $(signature.args[3:end]...); grad::Bool=false, force_gc::Bool=false))
+    rt_signature = :($name{C<:$component_type}(__rt__::Runtime{C}, $(signature.args[3:end]...); grad::Bool=false, force_gc::Bool=false))
     call_args = [isa(a, Symbol) ? a : a.args[1] for a in signature.args[3:end]]
-    model_body = quote
-        reset!(__model__.scope)
-        if force_gc || __model__.step == __model__.gc_step
+    rt_body = quote
+        reset!(__rt__.scope)
+        if force_gc || __rt__.step == __rt__.gc_step
             gc()
-            __model__.step = 0
+            __rt__.step = 0
         else
-            __model__.step += 1
+            __rt__.step += 1
         end
-        result = $name(grad ? __model__.gradscope : __model__.scope, __model__.component, $(call_args...))
-        grad && backprop!(__model__.gradscope)
+        result = $name(grad ? __rt__.gradscope : __rt__.scope, __rt__.component, $(call_args...))
+        grad && backprop!(__rt__.gradscope)
         return result
     end
-    return Expr(:(=), model_signature, model_body)
+    return Expr(:(=), rt_signature, rt_body)
 end
 
 """

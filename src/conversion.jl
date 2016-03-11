@@ -19,28 +19,31 @@ function Base.convert{V<:Variable}(::Type{Vector}, params::Component{V})
     return param_vector
 end
 
-Base.convert(::Type{Vector}, model::Model) = convert(Vector, model.component)
+Base.convert(::Type{Vector}, runtime::Runtime) = convert(Vector, runtime.component)
 
-function Base.convert{C<:Component}(::Type{Dict}, params::C, prefix::ASCIIString=string(C.name))
-    dict = Dict{ASCIIString,Any}()
+function Base.convert{C<:Component}(::Type{Dict}, params::C, prefix::ASCIIString="")
+    if length(prefix) > 0
+        prefix = string(prefix, ".")
+    end
+    param_dict = Dict{ASCIIString,Any}()
     for name in fieldnames(params)
         T = fieldtype(typeof(params), name)
         if T <: Variable
-            key = join([prefix, name], ".")
-            dict[key] = getfield(params, name)
+            key = string(prefix, name)
+            param_dict[key] = getfield(params, name)
         elseif T <: AbstractArray && eltype(T) <: Variable
-            key = join([prefix, name], ".")
-            dict[key] = getfield(params, name)
+            key = string(prefix, name)
+            param_dict[key] = getfield(params, name)
         elseif T <: Component
-            key = join([prefix, name], ".")
-            dict[key] = convert(Dict, getfield(params, name), key)
+            key = string(prefix, name)
+            param_dict[key] = convert(Dict, getfield(params, name), key)
         elseif T <: AbstractArray && eltype(T) <: Component
-            key = join([prefix, name], ".")
+            key = string(prefix, name)
             field = getfield(params, name)
-            dict[key] = [convert(Dict, field[i], key) for i = 1:endof(field)] 
+            param_dict[key] = [convert(Dict, field[i], key) for i = 1:endof(field)] 
         end
     end
-    return dict
+    return param_dict
 end
 
-Base.convert(::Type{Dict}, model::Model) = convert(Dict, model.component)
+Base.convert(::Type{Dict}, runtime::Runtime) = convert(Dict, runtime.component)

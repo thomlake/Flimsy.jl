@@ -60,9 +60,10 @@ facts("ctc_with_scores") do
         S = 5
         T = 20
         targets = rand(SYMBOLS, S)
-        params = Model(VectorComponent(values=[randn(LL, 1) for t = 1:T]), DynamicScope())
+        params = setup(VectorComponent(values=[randn(LL, 1) for t = 1:T]); dynamic=true)
         @component cost(params::VectorComponent, target) = Cost.ctc_with_scores(params.values, targets, BLANK)
         @fact check_gradients(cost, params, targets; verbose=false) --> true
+        
         # const eps = 1e-6
         # const tol = 1e-6
         # gradient!(Cost.ctc_with_scores, scope, output, xs, BLANK)

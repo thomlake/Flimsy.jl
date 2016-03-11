@@ -11,12 +11,9 @@ function check()
     n_sample = 2
     n_labels, n_features = 3, 10
     X = randn(n_features, n_sample)
-    Y = rand(1:n_labels, n_sample)
-    params = SoftmaxRegression(n_labels, n_features)
-    scope = Scope()
-    g = () -> gradient!(cost, scope, params, Input(X), Y)
-    c = () -> cost(reset!(scope), params, Input(X), Y)
-    check_gradients(g, c, params)
+    y = rand(1:n_labels, n_sample)
+    params = setup(SoftmaxRegression(n_labels, n_features))
+    check_gradients(cost, params, Input(X), y)
 end
 
 function demo()
@@ -36,12 +33,12 @@ function demo()
     n_labels = length(lmap)
 
     trainmask = rand(n_sample) .< 0.75
-    X_tr = features[:,trainmask]
-    Y_tr = labels[trainmask]
-    X_te = features[:,!trainmask]
-    Y_te = labels[!trainmask]
-    n_train = length(Y_tr)
-    n_test = length(Y_te)
+    X_train = features[:,trainmask]
+    y_train = labels[trainmask]
+    X_test = features[:,!trainmask]
+    y_test = labels[!trainmask]
+    n_train = length(y_train)
+    n_test = length(y_test)
 
     println("[Info]")
     println("  number of features      => ", n_features)
@@ -50,32 +47,32 @@ function demo()
     println("  number of train samples => ", n_train)
     println("  number of test samples  => ", n_test)
 
-    # Setup parameters, optimizer, and progress
-    params = SoftmaxRegression(n_labels, n_features)
-    scope = Scope()
+    # Setup parameters and create optimizer
+    params = setup(SoftmaxRegression(n_labels, n_features))
     opt = optimizer(GradientDescent, params, learning_rate=0.01)
-    progress = Progress(params, ExternalEvaluation(tol=0.01), NoImprovement(), max_epochs=500)
     
-    # Fit parameters
-    while !converged(progress)
-        nll = gradient!(cost, scope, params, Input(X_tr), Y_tr)
+    # Main training loop
+    nll_prev, nll = Inf, -Inf
+    max_epochs, n_epochs = 100, 0
+    start_time = time()
+    while n_epochs < max_epochs
+        n_epochs += 1
+        nll = cost(params, Input(X_train), y_train; grad=true)
         update!(opt)
-        progress(nll)
+        nll_prev - nll > 1e-6 || break
+        nll_prev = nll
     end
-    timer_stop(progress)
+    stop_time = time()
 
-    # Get the best parameter values
-    best_params = best(progress)
-    Yhat_tr = predict(reset!(scope), best_params, Input(X_tr))
-    Yhat_te = predict(reset!(scope), best_params, Input(X_te))
-    reset!(scope)
+    p_train = predict(params, Input(X_train))
+    p_test = predict(params, Input(X_test))
 
     println("[Results]")
-    println("  number of epochs => ", epoch(progress))
-    println("  cpu time         => ", round(time(progress), 2), " seconds")
-    println("  final train nll  => ", evaluate(progress, best=true))
-    println("  train error      => ", sum(Y_tr .!= Yhat_tr) / n_train)
-    println("  test error       => ", sum(Y_te .!= Yhat_te) / n_test)
+    println("  number of epochs => ", n_epochs)
+    println("  cpu time         => ", round(stop_time - start_time, 2), " seconds")
+    println("  final train nll  => ", nll)
+    println("  train error      => ", sum(y_train .!= p_train) / n_train)
+    println("  test error       => ", sum(y_test .!= p_test) / n_test)
 end
 
 ("-c" in ARGS || "--check" in ARGS) && check()

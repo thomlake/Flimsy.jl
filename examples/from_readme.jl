@@ -23,7 +23,7 @@ function check()
     data = rand(Synthetic.MixtureTask(n_features, n_classes), n_samples)
     X = hcat(map(first, data)...)
     y = vcat(map(last, data)...)
-    θ = Model(Params(n_classes, n_features))
+    θ = setup(Params(n_classes, n_features))
     check_gradients(cost, θ, Input(X), y)
 end
 
@@ -38,7 +38,7 @@ function main()
     X_train, y_train = hcat(map(first, data_train)...), vcat(map(last, data_train)...)
     X_test, y_test = hcat(map(first, data_test)...), vcat(map(last, data_test)...)
 
-    θ = Model(Params(n_classes, n_features))
+    θ = setup(Params(n_classes, n_features))
     opt = optimizer(RmsProp, θ, learning_rate=0.01, decay=0.9)
     start_time = time()
     for i = 1:100

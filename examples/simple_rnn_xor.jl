@@ -39,7 +39,7 @@ Params(n_out::Int, n_hid::Int, n_in::Int) = Params(
 function check()
     n_out, n_hid, n_in = 2, 10, 2
     x, y = rand(Synthetic.XORTask(20))
-    params = Model(Params(n_out, n_hid, n_in))
+    params = setup(Params(n_out, n_hid, n_in))
     println(params)
     check_gradients(cost, params, x, y)
 end
@@ -66,7 +66,7 @@ function main()
     dset = rand(xortask, n_train)
     indices = collect(1:n_train)
 
-    params = Model(Params(n_out, n_hid, n_in))
+    params = setup(Params(n_out, n_hid, n_in))
     opt = optimizer(GradientDescent, params, learning_rate=0.05, clip=5.0, clipping_type=:scale)
 
     start_time = time()

@@ -16,7 +16,7 @@ function check()
     n_targets, n_features = 3, 10
     X = randn(n_features, n_samples)
     Y = randn(n_targets, n_samples)
-    params = Model(LinearRegression(n_targets, n_features))
+    params = setup(LinearRegression(n_targets, n_features))
     check_gradients(cost, params, Input(X), Y)
 end
 
@@ -40,7 +40,7 @@ function main()
     n_samples = size(features, 2)
     n_features = length(expl)
     n_targets = length(resp)
-    params = Model(LinearRegression(n_targets, n_features))
+    params = setup(LinearRegression(n_targets, n_features))
 
     # Learning Algorithm
     opt = optimizer(GradientDescent, params, learning_rate=0.01 / n_samples)
@@ -66,7 +66,7 @@ function main()
     println("  cpu time           => ", round(stop_time - start_time, 2), " seconds")
     println("  final train nll    => ", nll)
     println("[Coefficients]")
-    for (k, v) in zip(expl, params.component.w.data)
+    for (k, v) in zip(expl, convert(Dict, params)["w"].data)
         println("  ", rpad(k, 7), " => ", sign(v) > 0 ? "+" : "-", round(abs(v), 3))
     end
 end

@@ -61,7 +61,8 @@ export check_gradients
 
 export Cost
 
-export Model
+export Runtime, 
+       setup
 
 export Components
 
@@ -88,7 +89,7 @@ include("sequence.jl")
 include("ops.jl")
 include("initialization.jl")
 include("gradient_noise.jl")
-include("model.jl")
+include("runtime.jl")
 include("conversion.jl")
 include("check_gradients.jl")
 include("ctc.jl")

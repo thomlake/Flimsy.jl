@@ -65,19 +65,19 @@ immutable SimpleRecurrentGradNorm{V<:Variable} <: RecurrentComponent1{V}
 end
 SimpleRecurrentGradNorm{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrentGradNorm{V}(f, w, u, b, h0)
 
-@component function Base.step(p::SimpleRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
-    h_pre = plus(linear(p.w, x), linear(p.u, htm1), p.b)
+@component function Base.step(params::SimpleRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
+    h_pre = plus(linear(params.w, x), linear(params.u, htm1), params.b)
     gradnorm(h_pre, gn)
-    return p.f(h_pre)
+    return params.f(h_pre)
 end
 
-@component Base.step(p::SimpleRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(p, x, p.h0, gn)
+@component Base.step(params::SimpleRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, params.h0, gn)
 
-@component function unfold(p::SimpleRecurrentGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
+@component function unfold(params::SimpleRecurrentGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
     h = Sequence(eltype(params), length(x))
-    h[1] = step(p, x[1], gn)
+    h[1] = step(params, x[1], gn)
     for t = 2:length(x)
-        h[t] = step(p, x[t], h[t-1], gn)
+        h[t] = step(params, x[t], h[t-1], gn)
     end
     return h
 end

@@ -389,7 +389,7 @@ function update!(opt::ScaledRmsProp)
         param = opt.paramvec[k]
         cache = opt.cachevec[k]
         @assert size(param) == size(cache)
-        for i in eachindex(cache)
+        @flimsy_inbounds for i in eachindex(cache)
             grad = scale * param.grad[i]
             cache[i] = decay * cache[i] + umdecay * grad * grad
             delta = grad / sqrt(cache[i] + 1e-8)

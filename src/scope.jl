@@ -82,14 +82,14 @@ function backprop!(scope::GradScope)
     end
 end
 
-function gradient!(f::Function, scope::GradScope, args...)
-    y = f(scope, args...)
-    backprop!(scope)
-    reset!(scope)
-    return y
-end
+# function gradient!(f::Function, scope::GradScope, args...)
+#     y = f(scope, args...)
+#     backprop!(scope)
+#     reset!(scope)
+#     return y
+# end
 
-gradient!(f::Function, scope::Scope, args...) = gradient!(f, GradScope(scope), args...)
+# gradient!(f::Function, scope::Scope, args...) = gradient!(f, GradScope(scope), args...)
 
 function push_callback!(scope::GradScope, cb::ReverseOperation)
     push!(scope.stack, cb)

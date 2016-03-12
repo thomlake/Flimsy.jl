@@ -44,7 +44,7 @@ end
 
 @component function unfold(params::Lstm, x::Vector)
     h = Sequence(eltype(params), length(x))
-    h[1], c = step(params, x)
+    h[1], c = step(params, x[1])
     for t = 2:length(x)
         h[t], c = step(params, x[t], (h[t-1], c))
     end
@@ -93,8 +93,8 @@ LstmGradNorm{V<:Variable}(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V
     o = sigmoid(plus(linear(params.wo, x), linear(params.uo, htm1), params.bo))
     c = tanh(plus(linear(params.wc, x), linear(params.uc, htm1), params.bc))
     ct = plus(mult(i, c), mult(f, ctm1))
+    gradnorm(ct, gn)
     h = tanh(ct)
-    gradnorm(h, gn)
     return (mult(o, h), ct)
 end
 
@@ -102,7 +102,7 @@ end
 
 @component function unfold(params::LstmGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
     h = Sequence(eltype(params), length(x))
-    h[1], c = step(params, x, gn)
+    h[1], c = step(params, x[1], gn)
     for t = 2:length(x)
         h[t], c = step(params, x[t], (h[t-1], c), gn)
     end

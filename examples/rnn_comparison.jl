@@ -4,11 +4,10 @@
 # Comparison of SRNN, LSTM, and GRU hidden layers
 # on sequential xor task. Demonstrates how to build
 # components with a generic sub-component.
-
+using Synthetic
 using Flimsy
 using Flimsy.Components
 import Flimsy.Components: cost, predict
-import Flimsy.Demo: XORTask
 
 # Sequence Tagger:
 # h[t] = g(x[t], h[t-1]) : Recurrent Hidden Layer
@@ -19,10 +18,9 @@ immutable Params{V<:Variable} <: Component{V}
 end
 Params{V}(clf::SoftmaxRegression{V}, rnn::RecurrentComponent{V}) = Params{V}(clf, rnn)
 
-
 @component predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
 
-@component function cost{I<:Integer}(params::Params, xs::Vector, ys::Vector{I})
+@component function cost(params::Params, xs::Vector, ys::Vector)
     nll = 0.0
     for (h, y) in zip(unfold(params.rnn, xs), ys)
         nll += cost(params.clf, h, y)
@@ -39,102 +37,102 @@ const recurrent_layer_types = [SimpleRecurrent, GatedRecurrent, Lstm]
 
 function check()
     n_out, n_hid, n_in = 2, 5, 2
-    xs, ys = rand(XORTask(20))
-    scope = Scope()
+    x, y = rand(Synthetic.XORTask(20))
     for R in recurrent_layer_types
+        params = setup(Params(R, n_out, n_hid, n_in))
         println(R.name)
-        println("  params [")
-        params = Params(R, n_out, n_hid, n_in)
-        param_count = 0
-        for (name, param) in getnamedparams(params)
-            param_count += prod(size(param))
-            println("    $name => $(size(param)),")
-        end
-        println("  ]")
-        println("  count: $param_count")
-        print("  ")
-        g = () -> gradient!(cost, reset!(scope), params, map(Input, xs), ys)
-        c = () -> cost(reset!(scope), params, map(Input, xs), ys)
-        check_gradients(g, c, params)
+        println(params.component)
+        check_gradients(cost, params, x, y)
     end
 end
 
-function error_count(scope, params, X, Y)
-    errors = 0
-    for (xs, y_true) in zip(X, Y)
-        y_pred = predict(reset!(scope), params, map(Input, xs))
-        for t = 1:length(y_true)
-            errors += y_true[t] == y_pred[t][1] ? 0 : 1
+function count_errors(y_pred, y_true)
+    count = 0
+    length(y_true) == length(y_pred) || error("sequence length mismatch")
+    for t = 1:length(y_true)
+        if y_true[t] != y_pred[t][1]
+            count += 1
         end
     end
-    return errors
+    return count
 end
 
 function fit()
     srand(1235)
-
     n_out, n_hid, n_in = 2, 5, 2
+
+    # Build train and valid datasets
     n_train, n_valid = 50, 20
-    xor = XORTask(5:20)
-    X_train, Y_train = rand(xor, n_train)
-    X_valid, Y_valid = rand(xor, n_valid)
-    n_train_timesteps = mapreduce(length, +, Y_train)
-    minlen = minimum(map(length, X_train))
-    maxlen = maximum(map(length, X_train))
+    xor_train = Synthetic.XORTask(5:20)
+    data_train = rand(xor_train, n_train)
+    data_valid = rand(xor_train, n_valid)
 
-    println("[train]")
-    println("  number samples   => ", n_train)
-    println("  number timesteps => ", n_train_timesteps)
-    println("  min seq length   => ", minlen)
-    println("  max seq length   => ", maxlen)
-
-    models = [R => Params(R, n_out, n_hid, n_in) for R in recurrent_layer_types]
-    info = Dict()
-    scope = Scope()
-    for (R, params) in models
-        println(R.name)
-        indices = collect(1:n_train)
-        opt = optimizer(GradientDescent, params, learning_rate=0.1, clip=1.0, clipping_type=:scale)
-        evaluate = FunctionEvaluation(() -> error_count(scope, params, X_valid, Y_valid))
-        progress = Progress(params, evaluate, Patience(Inf), min_epochs=30, max_epochs=30, frequency=5)
-        
-        while !converged(progress)
-            shuffle!(indices)
-            for i in indices
-                xs, ys = X_train[i], Y_train[i]
-                gradient!(cost, reset!(scope), params, map(Input, xs), ys)
-                update!(opt)
-            end
-            progress(save=true) && println(progress)
-        end
-        timer_stop(progress)
-        
-        info[R] = progress
-        println()
+    n_timesteps_train, min_len_train, max_len_train = 0, typemax(Int), typemin(Int)
+    for (x, y) in data_train
+        n_timesteps_train += length(y)
+        min_len_train = min(min_len_train, length(y))
+        max_len_train = max(max_len_train, length(y))
     end
 
+    println("[train data]")
+    println("  number samples   => ", n_train)
+    println("  number timesteps => ", n_timesteps_train)
+    println("  min seq length   => ", min_len_train)
+    println("  max seq length   => ", max_len_train)
+
+    # Build test dataset
     n_test = 20
-    X_test, Y_test = rand(XORTask(100:200), n_test)
-    n_test_timesteps = mapreduce(length, +, Y_test)
-    minlen = minimum(map(length, X_test))
-    maxlen = maximum(map(length, X_test))
+    xor_test = Synthetic.XORTask(100)
+    data_test = rand(xor_test, n_test)
+    n_timesteps_test, min_len_test, max_len_test = 0, typemax(Int), typemin(Int)
+    for (x, y) in data_test
+        n_timesteps_test += length(y)
+        min_len_test = min(min_len_test, length(y))
+        max_len_test = max(max_len_test, length(y))
+    end
 
-
-    println("[test]")
+    println("[test data]")
     println("  number samples   => ", n_test)
-    println("  number timesteps => ", n_test_timesteps)
-    println("  min seq length   => ", minlen)
-    println("  max seq length   => ", maxlen)
-    for (R, progress) in info
-        params = progress.best_model
-        errors = error_count(scope, params, X_test, Y_test)
-        param_count = sum([prod(size(p)) for p in getparams(params)])
-        println(R.name)
-        println("  params    => ", param_count)
-        println("  cpu time  => ", time(progress))
-        println("  sum error => ", errors)
-        println("  seq error => ", errors / n_test)
-        println("  avg error => ", errors / n_test_timesteps)
+    println("  number timesteps => ", n_timesteps_test)
+    println("  min seq length   => ", min_len_test)
+    println("  max seq length   => ", max_len_test)
+
+    for R in recurrent_layer_types
+        params = setup(Params(R, n_out, n_hid, n_in))
+        opt = optimizer(GradientDescent, params, learning_rate=0.1, clip=1.0, clipping_type=:scale)
+        n_params = sum(map(x -> prod(size(x)), convert(Vector, params)))
+        println("[", typeof(params.component.rnn).name, "]")
+        indices = collect(1:n_train)
+        max_epochs, n_epochs = 200, 0
+        start_time = time()
+        while n_epochs < max_epochs
+            n_epochs += 1
+            shuffle!(indices)
+            nll = 0.0
+            for i in indices
+                x, y = data_train[i]
+                nll += cost(params, x, y; grad=true)
+                update!(opt)
+            end
+            errors = 0
+            for (x, y) in data_valid
+                errors += count_errors(predict(params, x), y)
+            end
+            errors == 0 && break
+        end
+
+        stop_time = time()
+        errors = 0
+        for (x, y) in data_test
+            errors += count_errors(predict(params, x), y)
+        end
+
+        println("  wall time              => ", stop_time - start_time)
+        println("  number of epochs       => ", n_epochs)
+        println("  number of parameters   => ", n_params)
+        println("  total errors           => ", errors)
+        println("  avg error per sequence => ", errors / n_test)
+        println("  avg error per timestep => ", errors / n_timesteps_test)
     end
 end
 

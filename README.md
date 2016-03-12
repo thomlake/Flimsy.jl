@@ -7,26 +7,22 @@ increasing memory usage in long running training loops. Periodically calling `gc
 to fix this issue, I'm currently working on a fix.
 
 # Flimsy.jl
-Flimsy.jl is a Julia package for expressing and training a rich class of machine learning 
-models whose parameters are differentiable with respect to a scalar loss function, i.e., neural networks.
+Flimsy.jl is a Julia package for expressing and training a rich class of machine learning models whose parameters are differentiable with respect to a scalar loss function, i.e., neural networks.
 
 Computations are described natively within Julia, making it _relatively_ easy to express complicated models. 
-For example, models with [attentional components](http://arxiv.org/abs/1409.0473) 
-or arbitrary size persistent [memory structures](http://arxiv.org/abs/1503.08895) 
+For example, models with [attentional components](http://arxiv.org/abs/1409.0473) or arbitrary size persistent [memory structures](http://arxiv.org/abs/1503.08895) 
 can be easily expressed using Flimsy.jl 
-(see [attention.jl](https://github.com/thomlake/Flimsy.jl/blob/master/examples/attention.jl) for an example).
 
 ## Features
-- Automatic gradient computation
-- Express computation with native control flow structures (`for`, `while`, recursion, etc)
-- Extensible
-- Group parameters and functionality via components
-- No compilation process (outside of Julia's own JIT compiler)
+- Automatic gradient computation.
+- Express computation with native control flow structures (`for`, `while`, recursion, etc).
+- Extensible.
+- Group parameters and functionality via components.
+- No compilation process (outside of Julia's own JIT compiler).
 
 ## Un-Features
-- No GPU support
-- No automatic computation graph optimization
-- No memory pre-allocation or reuse
+- No GPU support.
+- No automatic computation graph optimization.
 
 ## Why?
 Flimsy.jl is primarily an experiment in interface design for neural network centric machine learning libraries. 
@@ -34,21 +30,14 @@ It aims to overcome what I see as the biggest interface drawbacks of popular lib
 [Theano](http://deeplearning.net/software/theano/), 
 [Torch](http://torch.ch/), and 
 [TensorFlow](https://www.tensorflow.org/).<br>
-**N.B.** I'm much less familiar with the other libararies listed above than Theano, 
-which I have worked with extensively for several years. 
-As such the below criticism may or may not be applicable to all the libraries listed above.
+**N.B.** I'm much less familiar with the other libararies listed above than Theano, which I have worked with extensively for several years. As such the below criticism may or may not be applicable to all the libraries listed above.
 
 - **Awkward, limited, and non-native control flow structures**<br>
-Flimsy.jl sidesteps the need for an explict computational graph structure and the *special* control 
-flow functions they bring with them, e.g., `scan`, by implicitly constructing a backward graph at runtime. 
-This is done by pushing a closure (implemented as a type with a `call` method) onto a shared stack after each 
-function application. Popping and calling the closures until the stack is empty implicitly carries out backpropagation.
+Flimsy.jl sidesteps the need for an explict computational graph structure and the *special* control flow functions they bring with them, e.g., `scan`, by implicitly constructing a backward graph at runtime. 
+This is done by pushing a closure (implemented as a type with a `call` method) onto a shared stack after each function application. Popping and calling the closures until the stack is empty implicitly carries out backpropagation.
 
 - **Lack of reuseable and composable sub-components**<br>
-Flimsy.jl defines an abstract `Component` type for coupling parameters and functionality. 
-Using Julia's multiple dispatch and a common set of component functions names allows the creation of a 
-library of `Components` which can easily be composed to form larger `Components`. 
-See [`examples/rnn_comparison.jl`](https://github.com/thomlake/Flimsy.jl/blob/master/examples/rnn_comparison.jl) for a practical example.
+Flimsy.jl defines an abstract `Component` type for coupling parameters and functionality. Using Julia's multiple dispatch and a common set of component functions names allows the creation of a library of `Components` which can easily be composed to form larger `Components`. See [`examples/rnn_comparison.jl`](https://github.com/thomlake/Flimsy.jl/blob/master/examples/rnn_comparison.jl) for a practical example.
 
 - **Two Language Syndrome**<br>
 Flimsy.jl is written entirely in Julia, and Julia is fast. 

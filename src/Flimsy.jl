@@ -71,18 +71,7 @@ export Runtime,
 
 export Components
 
-export ExternalEvaluation,
-       FunctionEvaluation,
-       NoImprovement,
-       IsEqual,
-       Patience,
-       Progress,
-       converged,
-       timer_start,
-       timer_stop,
-       evaluate,
-       epoch,
-       best
+export Patience
 
 const FLIMSY_DEFAULT_HEAP_SIZE = 1_073_741_824
 

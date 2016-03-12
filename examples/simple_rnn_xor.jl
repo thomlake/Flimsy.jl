@@ -58,6 +58,7 @@ end
 function main()
     srand(1235)
     max_epochs = 500
+    converged = false
     n_epochs = 0
     print_freq = 10
     n_out, n_hid, n_in = 2, 7, 2
@@ -67,7 +68,7 @@ function main()
     indices = collect(1:n_train)
 
     params = setup(Params(n_out, n_hid, n_in))
-    opt = optimizer(GradientDescent, params, learning_rate=0.05, clip=5.0, clipping_type=:scale)
+    opt = optimizer(GradientDescent, params, learning_rate=0.1, clip=1.0, clipping_type=:scale)
 
     start_time = time()
     while n_epochs < max_epochs
@@ -85,11 +86,15 @@ function main()
                 errors += sequence_error_count(predict(params, x), y)
             end
             println(n_epochs, ": nll => ", round(nll, 2), ", errors => ", errors)
-            errors < 1 && break
+            if errors < 1 
+                converged = true
+                break
+            end
         end
     end
     stop_time = time()
-    println("converged after ", n_epochs, " epochs in ", round(stop_time - start_time, 2), " seconds")
+    println("converged => ", converged)
+    println("ran ", n_epochs, " epochs in ", round(stop_time - start_time, 2), " seconds")
 end
 
 ("-c" in ARGS || "--check" in ARGS) && check()

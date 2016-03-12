@@ -9,9 +9,12 @@ using Flimsy
 using Flimsy.Components
 import Flimsy.Components: cost, predict
 
-# Sequence Tagger:
-# h[t] = g(x[t], h[t-1]) : Recurrent Hidden Layer
-# y[t] = f(h[t])         : Classifier
+"""
+Sequence Tagger Params
+
+    h[t] = g(x[t], h[t-1]) : Recurrent Hidden Layer
+    y[t] = f(h[t])         : Classifier
+"""
 immutable Params{V<:Variable} <: Component{V}
     clf::SoftmaxRegression{V}
     rnn::RecurrentComponent{V}
@@ -57,7 +60,7 @@ function count_errors(y_pred, y_true)
     return count
 end
 
-function fit()
+function main()
     srand(1235)
     n_out, n_hid, n_in = 2, 5, 2
 
@@ -136,5 +139,5 @@ function fit()
     end
 end
 
-("-c" in ARGS || "--check" in ARGS) && check()
-fit()
+# ("-c" in ARGS || "--check" in ARGS) && check()
+# main()

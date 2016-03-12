@@ -8,7 +8,7 @@ function call(rop::ReverseDecat)
     ys = rop.ys
     x = rop.x
     m, n = size(x)
-    for j = 1:n
+    @flimsy_inbounds for j = 1:n
         for i = 1:m
             x.grad[i,j] += ys[i].grad[j]
         end
@@ -17,7 +17,7 @@ function call(rop::ReverseDecat)
 end
 
 function decat!{T}(ys::Vector{Matrix{T}}, x::Matrix{T})
-    for j = 1:size(x, 2)
+    @flimsy_inbounds for j = 1:size(x, 2)
         for i = 1:size(x, 1)
             ys[i][j] = x[i,j]
         end

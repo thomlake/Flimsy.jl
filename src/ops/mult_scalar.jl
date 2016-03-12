@@ -9,14 +9,14 @@ function call(rop::ReverseScalarMult)
     c = rop.c
     a = rop.a
     b = rop.b
-    for i in eachindex(c)
+    @flimsy_inbounds for i in eachindex(c)
         b.grad[i] += a * c.grad[i]
     end
     return nothing
 end
 
 function mult!(c::AbstractArray, a::Real, b::AbstractArray)
-    for i in eachindex(b)
+    @flimsy_inbounds for i in eachindex(b)
         c[i] = a * b[i]
     end
     return c

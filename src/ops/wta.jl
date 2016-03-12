@@ -10,7 +10,7 @@ function call(rop::ReverseWTA)
     y = rop.y
     x = rop.x
     _, imax = findmax(x.data, 1)
-    for i = 1:endof(imax)
+    @flimsy_inbounds for i = 1:endof(imax)
         x.grad[imax[i]] += y.grad[imax[i]]
     end
     return nothing
@@ -18,7 +18,7 @@ end
 
 function wta!(y::AbstractMatrix, x::AbstractMatrix)
     xmax, imax = findmax(x, 1)
-    for i = 1:endof(imax)
+    @flimsy_inbounds for i = 1:endof(imax)
         y[imax[i]] = xmax[i]
     end
     return y

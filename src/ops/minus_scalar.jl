@@ -8,14 +8,14 @@ end
 function call(rop::ReverseScalarMinusMatrix)
     y = rop.y
     x = rop.x
-    for i in eachindex(y)
+    @flimsy_inbounds for i in eachindex(y)
         x.grad[i] -= y.grad[i]
     end
     return nothing
 end
 
 function minus!(y::AbstractArray, a::Real, x::AbstractArray)
-    for i in eachindex(x)
+    @flimsy_inbounds for i in eachindex(x)
         y[i] = a - x[i]
     end
     return y
@@ -38,14 +38,14 @@ end
 function call(rop::ReverseMatrixMinusScalar)
     y = rop.y
     x = rop.x
-    for i in eachindex(y)
+    @flimsy_inbounds for i in eachindex(y)
         x.grad[i] += y.grad[i]
     end
     return nothing
 end
 
 function minus!(y::AbstractArray, x::AbstractArray, a::Real)
-    for i in eachindex(x)
+    @flimsy_inbounds for i in eachindex(x)
         y[i] = x[i] - a
     end
     return y

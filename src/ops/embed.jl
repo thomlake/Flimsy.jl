@@ -22,7 +22,6 @@ function call{T}(rop::ReverseLinearEmbed{T})
 end
 
 function linear!(y::AbstractArray, w::AbstractArray, x::Vector{Vector{Int}})
-    
     for k = 1:length(x)
         for j in x[k]
             for i = 1:size(w, 1)

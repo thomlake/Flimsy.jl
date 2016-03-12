@@ -7,7 +7,7 @@ end
 function call(rop::ReverseGradNorm)
     s = rop.s
     dx = rop.x.grad
-    for j = 1:size(dx, 2)
+    @flimsy_inbounds for j = 1:size(dx, 2)
         ss = 0.0
         for i = 1:size(dx, 1)
             ss += abs2(dx[i,j])

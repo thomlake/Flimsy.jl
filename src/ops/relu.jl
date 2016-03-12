@@ -7,7 +7,7 @@ end
 function call(rop::ReverseRelu)
     y = rop.y
     x = rop.x
-    for i in eachindex(x)
+    @flimsy_inbounds for i in eachindex(x)
         if x.data[i] > 0
             x.grad[i] += y.grad[i]
         end
@@ -16,7 +16,7 @@ function call(rop::ReverseRelu)
 end
 
 function relu!(y::AbstractArray, x::AbstractArray)
-    for i in eachindex(x)
+    @flimsy_inbounds for i in eachindex(x)
         y[i] = max(0, x[i])
     end
     return y

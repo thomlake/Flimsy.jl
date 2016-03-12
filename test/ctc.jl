@@ -60,51 +60,8 @@ facts("ctc_with_scores") do
         S = 5
         T = 20
         targets = rand(SYMBOLS, S)
-        params = setup(VectorComponent(values=[randn(LL, 1) for t = 1:T]); dynamic=true)
+        params = setup(VectorComponent(values=[randn(LL, 1) for t = 1:T]))
         @component cost(params::VectorComponent, target) = Cost.ctc_with_scores(params.values, targets, BLANK)
         @fact check_gradients(cost, params, targets; verbose=false) --> true
-        
-        # const eps = 1e-6
-        # const tol = 1e-6
-        # gradient!(Cost.ctc_with_scores, scope, output, xs, BLANK)
-        # for t = 1:T
-        #     param = output[t]
-        #     for i = 1:size(param, 1)
-        #         xi = param.data[i]
-        #         param.data[i] = xi + eps
-        #         lp = Cost.ctc_with_scores(scope, output, xs, BLANK)
-        #         param.data[i] = xi - eps
-        #         lm = Cost.ctc_with_scores(scope, output, xs, BLANK)
-        #         param.data[i] = xi
-        #         dxi = (lp - lm) / (2 * eps)
-        #         @fact dxi - param.grad[i] --> roughly(0, tol)
-        #     end
-        # end
-
-        # SYMBOLS = collect(2:20)
-        # LANGUAGE = vcat(BLANK, SYMBOLS)
-        # LL = length(LANGUAGE)
-        # S = 5
-        # T = 20
-        # xs = rand(SYMBOLS, S)
-        # output = [GradVariable(randn(LL, 1), zeros(LL, 1)) for t = 1:T]
-        # scope = DynamicScope()
-
-        # const eps = 1e-6
-        # const tol = 1e-6
-        # gradient!(Cost.ctc_with_scores, scope, output, xs, BLANK)
-        # for t = 1:T
-        #     param = output[t]
-        #     for i = 1:size(param, 1)
-        #         xi = param.data[i]
-        #         param.data[i] = xi + eps
-        #         lp = Cost.ctc_with_scores(scope, output, xs, BLANK)
-        #         param.data[i] = xi - eps
-        #         lm = Cost.ctc_with_scores(scope, output, xs, BLANK)
-        #         param.data[i] = xi
-        #         dxi = (lp - lm) / (2 * eps)
-        #         @fact dxi - param.grad[i] --> roughly(0, tol)
-        #     end
-        # end
     end
 end

@@ -8,7 +8,7 @@ function call(rop::ReverseConcat)
     y = rop.y
     xs = rop.xs
     offset = 0
-    for k = 1:length(xs)
+    @flimsy_inbounds for k = 1:length(xs)
         if isa(xs[k], GradVariable)
             for j = 1:size(xs[k], 2)
                 for i = 1:size(xs[k], 1)
@@ -23,7 +23,7 @@ end
 
 function concat!{T<:AbstractArray}(y::T, xs::Vector{T})
     offset = 0
-    for k = 1:length(xs)
+    @flimsy_inbounds for k = 1:length(xs)
         for j = 1:size(xs[k], 2)
             for i = 1:size(xs[k], 1)
                 y[offset + i,j] = xs[k][i,j]

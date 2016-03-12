@@ -10,7 +10,7 @@ function call(rop::ReverseVectorSoftmax)
     xs = rop.xs
     m = length(ys)
     n = length(ys[1].data)
-    for k = 1:n
+    @flimsy_inbounds for k = 1:n
         for i = 1:m
             for j = 1:m
                 if i == j
@@ -24,9 +24,9 @@ function call(rop::ReverseVectorSoftmax)
     return nothing
 end
 
-
 function softmax_vector!{T}(ys::Vector{Matrix{T}}, xs::Vector{Matrix{T}})
     m = length(xs)
+    m > 0 || throw(OperationError("softmax can not be applied to empty vector"))
     k, n = size(xs[1])
     k == 1 || throw(OperationError("softmax can only be applied over a vector of 1xN matrices"))
     xmax = deepcopy(xs[1])

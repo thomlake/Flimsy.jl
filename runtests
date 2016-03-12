@@ -1,2 +1,2 @@
 cd test
-julia --color=yes runtests.jl
+julia --color=yes runtests.jl flimsy_config=test_config.jl

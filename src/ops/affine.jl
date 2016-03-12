@@ -24,7 +24,7 @@ end
 
     if Tb <: GradVariable
         s = quote
-            for j = 1:size(y, 2)
+            @flimsy_inbounds for j = 1:size(y, 2)
                 for i = 1:size(y, 1)
                     b.grad[i] += y.grad[i,j]
                 end
@@ -47,7 +47,7 @@ function affine!(y::AbstractMatrix, w::AbstractMatrix, x::AbstractMatrix, b::Abs
     ysz == (wsz[1], xsz[2]) || throw(OperationError("y must be a $(wsz[1])x$(xsz[2]) matrix"))
 
     A_mul_B!(y, w, x)
-    for j = 1:xsz[2]
+    @flimsy_inbounds for j = 1:xsz[2]
         for i = 1:wsz[1]
             y[i,j] += b[i]
         end

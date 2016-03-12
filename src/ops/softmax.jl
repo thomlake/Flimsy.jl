@@ -12,7 +12,7 @@ function call(rop::ReverseSoftmax)
     y_grad = y.grad
     n_rows, n_cols = size(y)
 
-    @inbounds for n = 1:n_cols
+    @flimsy_inbounds for n = 1:n_cols
         for i = 1:n_rows
             for j = 1:n_rows
                 if i == j
@@ -32,7 +32,7 @@ function softmax!{T<:AbstractFloat}(y::Matrix{T}, x::Matrix{T})
     Z = zero(T)
     xmax = typemin(T)
 
-    @inbounds for j = 1:size(x, 2)
+    @flimsy_inbounds for j = 1:size(x, 2)
         Z = zero(T)
         xmax = typemin(T)
 

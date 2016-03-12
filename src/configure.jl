@@ -8,7 +8,8 @@ function get_user_config()
             break
         end
     end
-    if isfile(config_file_name) 
+    if isfile(config_file_name)
+        println("Flimsy Info: found config file => ", config_file_name)
         return JSON.parsefile(config_file_name)
     else
         return Dict{ASCIIString,Any}()

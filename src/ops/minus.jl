@@ -27,7 +27,7 @@ end
         c = rop.c
         a = rop.a
         b = rop.b
-        @inbounds for i in eachindex(c)
+        @flimsy_inbounds for i in eachindex(c)
             $inner
         end
         return nothing
@@ -63,7 +63,7 @@ end
         c = rop.c
         a = rop.a
         b = rop.b
-        @inbounds for j = 1:size(c, 2)
+        @flimsy_inbounds for j = 1:size(c, 2)
             for i = 1:size(c, 1)
                 $inner
             end
@@ -101,7 +101,7 @@ end
         c = rop.c
         a = rop.a
         b = rop.b
-        @inbounds for j = 1:size(c, 2)
+        @flimsy_inbounds for j = 1:size(c, 2)
             for i = 1:size(c, 1)
                 $inner
             end
@@ -111,14 +111,14 @@ end
 end
 
 function minus_elementwise!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
-    @inbounds for i in eachindex(c)
+    @flimsy_inbounds for i in eachindex(c)
         c[i] = a[i] - b[i]
     end
     return c
 end
 
 function minus_row_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
-    @inbounds for j = 1:size(b, 2)
+    @flimsy_inbounds for j = 1:size(b, 2)
         for i = 1:size(b, 1)
             c[i,j] = a[1,j] - b[i,j]
         end
@@ -127,7 +127,7 @@ function minus_row_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArr
 end
 
 function minus_column_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
-    @inbounds for j = 1:size(b, 2)
+    @flimsy_inbounds for j = 1:size(b, 2)
         for i = 1:size(b, 1)
             c[i,j] = a[i] - b[i,j]
         end
@@ -188,24 +188,3 @@ minus(a::AbstractArray, b::AbstractArray) = a .- b
         end
     end
 end
-
-# @generated function minus{Ta<:Variable,Tb<:Variable}(scope::Scope, a::Ta, b::Tb)
-#     if anygrads(Ta, Tb) && scope <: GradScope
-#         return quote
-#             c = GradVariable(minus(a.data, b.data))
-#             asz, bsz = size(a), size(b)
-#             if asz == bsz
-#                 push!(stack, ReverseMinus(c, a, b))
-#             elseif asz == (1, bsz[2])
-#                 push!(stack, ReverseRowBroadcastMinus(c, a, b))
-#             elseif asz == (bsz[1], 1)
-#                 push!(stack, ReverseColBroadcastMinus(c, a, b))
-#             else
-#                 throw(OperationError("no minus for sizes a: $(size(a)), b: $(size(b))"))
-#             end
-#             return c
-#         end
-#     else
-#         return :(minus(a, b))
-#     end
-# end

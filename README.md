@@ -2,16 +2,13 @@
 This package recently underwent a significant refactor. 
 Some links in this README are currently broken, but most of the library is stable.
 
-Unfortunately it appears Julia's GC isn't working correctly, resulting in monotonically
-increasing memory usage in long running training loops. Periodically calling `gc()` appears
-to fix this issue, I'm currently working on a fix.
+Unfortunately it appears Julia's GC isn't working correctly, resulting in monotonically increasing memory usage in long running training loops. Periodically calling `gc()` appears to fix this issue, I'm currently working on a fix.
 
 # Flimsy.jl
 Flimsy.jl is a Julia package for expressing and training a rich class of machine learning models whose parameters are differentiable with respect to a scalar loss function, i.e., neural networks.
 
 Computations are described natively within Julia, making it _relatively_ easy to express complicated models. 
-For example, models with [attentional components](http://arxiv.org/abs/1409.0473) or arbitrary size persistent [memory structures](http://arxiv.org/abs/1503.08895) 
-can be easily expressed using Flimsy.jl 
+For example, models with [attentional components](http://arxiv.org/abs/1409.0473) or arbitrary size persistent [memory structures](http://arxiv.org/abs/1503.08895) can be easily expressed using Flimsy.jl 
 
 ## Features
 - Automatic gradient computation.
@@ -33,8 +30,7 @@ It aims to overcome what I see as the biggest interface drawbacks of popular lib
 **N.B.** I'm much less familiar with the other libararies listed above than Theano, which I have worked with extensively for several years. As such the below criticism may or may not be applicable to all the libraries listed above.
 
 - **Awkward, limited, and non-native control flow structures**<br>
-Flimsy.jl sidesteps the need for an explict computational graph structure and the *special* control flow functions they bring with them, e.g., `scan`, by implicitly constructing a backward graph at runtime. 
-This is done by pushing a closure (implemented as a type with a `call` method) onto a shared stack after each function application. Popping and calling the closures until the stack is empty implicitly carries out backpropagation.
+Flimsy.jl sidesteps the need for an explict computational graph structure and the *special* control flow functions they bring with them, e.g., `scan`, by implicitly constructing a backward graph at runtime. This is done by pushing a closure (implemented as a type with a `call` method) onto a shared stack after each function application. Popping and calling the closures until the stack is empty implicitly carries out backpropagation.
 
 - **Lack of reuseable and composable sub-components**<br>
 Flimsy.jl defines an abstract `Component` type for coupling parameters and functionality. Using Julia's multiple dispatch and a common set of component functions names allows the creation of a library of `Components` which can easily be composed to form larger `Components`. See [`examples/rnn_comparison.jl`](https://github.com/thomlake/Flimsy.jl/blob/master/examples/rnn_comparison.jl) for a practical example.
@@ -48,9 +44,7 @@ a substitute for the libraries mentioned above in many cases.
 
 ## Disclaimer
 Flimsy.jl is experimental software. 
-There are probably bugs to be fixed and certainly optimizations to be made. 
-Any potential user would be well advised to make liberal use of the `check_gradients` 
-function to test that gradients are being calculated correctly for their particular model.
+There are probably bugs to be fixed and certainly optimizations to be made. Any potential user would be well advised to make liberal use of the `check_gradients` function to test that gradients are being calculated correctly for their particular model.
 
 ## Installation
 Flimsy.jl is currently unregistered, to install use
@@ -64,7 +58,7 @@ This and several other builtin components are available in the `Flimsy.Component
 
 ```julia
 using Flimsy
-using Synthetic # Utils for synthetic data generation
+using Synthetic # Data generation: https://github.com/thomlake/Synthetic.jl
 
 # Parameter definition
 immutable Params{V<:Variable} <: Component{V}

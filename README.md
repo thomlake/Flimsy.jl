@@ -108,9 +108,12 @@ end
 main()
 ```
 
-## Package Layout
+## Directory Layout
 ### `src/`
 Core module functionality.
+
+### `test/`
+Unit tests (uses [FactCheck.jl](https://github.com/JuliaLang/FactCheck.jl)).
 
 ### `src/ops/`
 Differentiable operations.

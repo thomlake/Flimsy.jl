@@ -11,22 +11,24 @@ vartype{V<:Variable}(scope::GradScope, c::Component{V}) = GradVariable{eltype(V)
 
 vartype{V<:Variable}(scope::GradScope, ::Type{Component{V}}) = GradVariable{eltype(V)}
 
-function show_component(io::IO, d::Dict, indent::Int=2)
+function get_component_strings!(strings::Vector{AbstractString}, d::Dict, indent::Int=2)
     indent_string = repeat(" ", indent)
     for (k, v) in d
         if isa(v, Dict)
-            println(io, indent_string, k, " => ")
-            show_component(io, v, indent + 2)
+            push!(strings, string(indent_string, k, " => "))
+            get_component_strings!(strings, v, indent + 2)
         elseif isa(v, Vector)
-            println(io, indent_string, k, " => ", v)
+            push!(strings, string(indent_string, k, " => ", v))
         else
             m, n = size(v)
-            println(io, indent_string, k, " => ", m, "x", n, " ", typeof(v))
+            push!(strings, string(indent_string, k, " => ", m, "x", n, " ", typeof(v)))
         end
     end
 end
 
 function Base.show{C<:Component}(io::IO, params::C, indent::Int=0)
     println(io, repeat(" ", indent), C.name, " =>")
-    show_component(io, convert(Dict, params), indent + 2)
+    strings = AbstractString[]
+    get_component_strings!(strings, convert(Dict, params), indent + 2)
+    print(io, join(strings, "\n"))
 end

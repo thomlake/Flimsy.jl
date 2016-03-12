@@ -65,10 +65,8 @@ function main()
     println("  number of epochs   => ", n_epochs)
     println("  cpu time           => ", round(stop_time - start_time, 2), " seconds")
     println("  final train nll    => ", nll)
-    
-    coeffs = get(params, :w, :data)
     println("[Coefficients]")
-    for (k, v) in zip(expl, coeffs)
+    for (k, v) in zip(expl, get(params, :w, :data))
         println("  ", rpad(k, 7), " => ", sign(v) > 0 ? "+" : "-", round(abs(v), 3))
     end
 end

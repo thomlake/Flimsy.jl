@@ -27,7 +27,7 @@ end
         c = rop.c
         a = rop.a
         b = rop.b
-        for i in eachindex(c)
+        @inbounds for i in eachindex(c)
             $inner
         end
         return nothing
@@ -63,7 +63,7 @@ end
         c = rop.c
         a = rop.a
         b = rop.b
-        for j = 1:size(c, 2)
+        @inbounds for j = 1:size(c, 2)
             for i = 1:size(c, 1)
                 $inner
             end
@@ -101,7 +101,7 @@ end
         c = rop.c
         a = rop.a
         b = rop.b
-        for j = 1:size(c, 2)
+        @inbounds for j = 1:size(c, 2)
             for i = 1:size(c, 1)
                 $inner
             end
@@ -111,14 +111,14 @@ end
 end
 
 function plus_elementwise!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
-    for i in eachindex(a)
+    @inbounds for i in eachindex(a)
         c[i] = a[i] + b[i]
     end
     return c
 end
 
 function plus_row_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
-    for j = 1:size(b, 2)
+    @inbounds for j = 1:size(b, 2)
         for i = 1:size(b, 1)
             c[i,j] = a[1,j] + b[i,j]
         end
@@ -127,7 +127,7 @@ function plus_row_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArra
 end
 
 function plus_column_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
-    for j = 1:size(b, 2)
+    @inbounds for j = 1:size(b, 2)
         for i = 1:size(b, 1)
             c[i,j] = a[i] + b[i,j]
         end
@@ -213,7 +213,7 @@ end
 # -- Plus > 2 -- #
 function plus{T<:AbstractArray}(xs::Vector{T})
     y = plus(xs[1], xs[2])
-    for i = 3:length(xs)
+    @inbounds for i = 3:length(xs)
         y = plus(y, xs[i])
     end
     return y
@@ -221,7 +221,7 @@ end
 
 function plus{V<:Variable}(scope::Scope, xs::Vector{V})
     y = plus(scope, xs[1], xs[2])
-    for i = 3:length(xs)
+    @inbounds for i = 3:length(xs)
         y = plus(scope, y, xs[i])
     end
     return y

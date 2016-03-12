@@ -35,8 +35,8 @@ end
 
 Runtime{C<:Component}(component::C, scope::StaticScope; gc_step::Int=10) = StaticRuntime(component, scope, GradScope(scope), 0, gc_step)
 
-function setup(component::Component; dynamic::Bool=false, heap_size::Int=FLIMSY_DEFAULT_HEAP_SIZE, gc_step::Int=10)
-    scope = dynamic ? DynamicScope() : StaticScope(heap_size)
+function setup(component::Component; static::Bool=false, heap_size::Int=FLIMSY_DEFAULT_HEAP_SIZE, gc_step::Int=10)
+    scope = static ? StaticScope(heap_size): DynamicScope()
     return Runtime(component, scope; gc_step=gc_step)
 end
 

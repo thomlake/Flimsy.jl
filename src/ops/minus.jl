@@ -27,7 +27,7 @@ end
         c = rop.c
         a = rop.a
         b = rop.b
-        for i in eachindex(c)
+        @inbounds for i in eachindex(c)
             $inner
         end
         return nothing
@@ -63,7 +63,7 @@ end
         c = rop.c
         a = rop.a
         b = rop.b
-        for j = 1:size(c, 2)
+        @inbounds for j = 1:size(c, 2)
             for i = 1:size(c, 1)
                 $inner
             end
@@ -101,7 +101,7 @@ end
         c = rop.c
         a = rop.a
         b = rop.b
-        for j = 1:size(c, 2)
+        @inbounds for j = 1:size(c, 2)
             for i = 1:size(c, 1)
                 $inner
             end
@@ -111,14 +111,14 @@ end
 end
 
 function minus_elementwise!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
-    for i in eachindex(c)
+    @inbounds for i in eachindex(c)
         c[i] = a[i] - b[i]
     end
     return c
 end
 
 function minus_row_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
-    for j = 1:size(b, 2)
+    @inbounds for j = 1:size(b, 2)
         for i = 1:size(b, 1)
             c[i,j] = a[1,j] - b[i,j]
         end
@@ -127,7 +127,7 @@ function minus_row_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArr
 end
 
 function minus_column_broadcast!(c::AbstractArray, a::AbstractArray, b::AbstractArray)
-    for j = 1:size(b, 2)
+    @inbounds for j = 1:size(b, 2)
         for i = 1:size(b, 1)
             c[i,j] = a[i] - b[i,j]
         end

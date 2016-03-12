@@ -44,10 +44,9 @@ end
 
 @component function unfold(params::Lstm, x::Vector)
     h = Sequence(eltype(params), length(x))
-    c = Sequence(eltype(params), length(x))
-    h[1], c[1] = step(params, x)
+    h[1], c = step(params, x)
     for t = 2:length(x)
-        h[t], c[t] = step(params, x[t], (h[t-1], c[t-1]))
+        h[t], c = step(params, x[t], (h[t-1], c))
     end
     return h
 end
@@ -103,10 +102,9 @@ end
 
 @component function unfold(params::LstmGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
     h = Sequence(eltype(params), length(x))
-    c = Sequence(eltype(params), length(x))
-    h[1], c[1] = step(params, x, gn)
+    h[1], c = step(params, x, gn)
     for t = 2:length(x)
-        h[t], c[t] = step(params, x[t], (h[t-1], c[t-1]), gn)
+        h[t], c = step(params, x[t], (h[t-1], c), gn)
     end
     return h
 end

@@ -2,6 +2,9 @@ module Flimsy
 
 using Distributions
 using HDF5
+using JSON
+
+include("configure.jl")
 
 abstract Component{T}
 abstract ReverseOperation
@@ -12,6 +15,8 @@ export Normal,
 
 export Component,
        ReverseOperation
+
+export @flimsy_inbounds
 
 export @component
 
@@ -81,6 +86,7 @@ export ExternalEvaluation,
 
 const FLIMSY_DEFAULT_HEAP_SIZE = 1_073_741_824
 
+include("flimsy_macros.jl")
 include("component_macro.jl")
 include("variable.jl")
 include("argmax.jl")

@@ -108,3 +108,22 @@ end
 main()
 ```
 
+## Package Layout
+### `src/`
+Core module functionality.
+
+### `src/ops/`
+Differentiable operations.
+
+### `src/cost/`
+Module containing common cost functions.
+
+### `src/components/`
+Module containing common ML models.
+
+### `src/ctc.jl`
+Module containing utility functions for Connectionist Temporal Classification cost function.
+
+### `src/extras/`
+Module containing several utility functions.
+

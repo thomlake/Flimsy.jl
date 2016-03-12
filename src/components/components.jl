@@ -33,14 +33,14 @@ abstract RecurrentComponent{T} <: Component{T}
 abstract RecurrentComponent1{T} <: RecurrentComponent{T}
 abstract RecurrentComponent2{T} <: RecurrentComponent{T}
 
-include("components/constructor.jl")
-include("components/common.jl")
-include("components/value_component.jl")
-include("components/linear_model.jl")
-include("components/ctc_output.jl")
-include("components/feedforward.jl")
-include("components/simple_recurrent.jl")
-include("components/gated_recurrent.jl")
-include("components/lstm.jl")
+include("constructor.jl")
+include("common.jl")
+include("value_component.jl")
+include("linear_model.jl")
+include("ctc_output.jl")
+include("feedforward.jl")
+include("simple_recurrent.jl")
+include("gated_recurrent.jl")
+include("lstm.jl")
 
 end

@@ -139,5 +139,5 @@ function main()
     end
 end
 
-# ("-c" in ARGS || "--check" in ARGS) && check()
-# main()
+("-c" in ARGS || "--check" in ARGS) && check()
+main()

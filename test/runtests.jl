@@ -4,8 +4,6 @@ using FactCheck
 FactCheck.setstyle(:compact)
 
 tests = [
-    # "var.jl",
-    # "getparams.jl",
     "inplace.jl",
     "ops/identity.jl",
     "ops/tanh.jl",
@@ -24,15 +22,12 @@ tests = [
     "ops/concat.jl",
     "ops/decat.jl",
     "ops/embed.jl",
-    # # "ops/dropout.jl",
+    "ops/dot.jl",
+    # "ops/dropout.jl",
     "mse.jl",
     "categorical_cross_entropy.jl",
     "categorical_cross_entropy_with_scores.jl",
     "ctc.jl",
-    # "ndembed.jl",
-    # "logistic_regression.jl",
-    # "multilabel_classifier.jl",
-    
 ]
 
 srand(sum(map(Int, collect("Flimsy"))))

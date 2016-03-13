@@ -39,6 +39,15 @@ end
     return h
 end
 
+@component function unfold(params::GatedRecurrent, x::Vector, h0::Variable) 
+    h = Sequence(eltype(params), length(x))
+    h[1] = step(params, x[1], h0)
+    for t = 2:length(x)
+        h[t] = step(params, x[t], h[t-1])
+    end
+    return h
+end
+
 
 """
 GatedRecurrent Component with normalized hidden unit gradients.

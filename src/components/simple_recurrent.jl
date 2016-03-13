@@ -44,6 +44,15 @@ SimpleRecurrent{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecur
     return h
 end
 
+@component function unfold(p::SimpleRecurrent, x::Vector, h0::Variable)
+    h = Sequence(eltype(p), length(x))
+    h[1] = step(p, x[1], h0)
+    for t = 2:length(x)
+        h[t] = step(p, x[t], h[t-1])
+    end 
+    return h
+end
+
 
 """
 SimpleRecurrent component with normalized hidden unit gradients.
@@ -81,6 +90,16 @@ end
     end
     return h
 end
+
+@component function unfold(p::SimpleRecurrent, x::Vector, h0::Variable)
+    h = Sequence(eltype(p), length(x))
+    h[1] = step(p, x[1], h0, gn)
+    for t = 2:length(x)
+        h[t] = step(p, x[t], h[t-1])
+    end 
+    return h
+end
+
 
 """
 Convenience Constructor

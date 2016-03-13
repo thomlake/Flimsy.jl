@@ -21,6 +21,7 @@ const DEFAULT_BLACKLIST = [
     :println,
     :eltype,
     :typeof,
+    :isa,
     :push!,
     :append!,
     :rand,

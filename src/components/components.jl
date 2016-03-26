@@ -2,6 +2,7 @@
 module Components
 
 using .. Flimsy
+import StatsBase: predict
 using HDF5: HDF5Group, attrs
 
 export score,

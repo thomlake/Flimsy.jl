@@ -29,6 +29,8 @@ end
 
 FeedForward(sz::Int...) = FeedForward(relu, sz...)
 
+@component depth(params::FeedForward) = length(params.w)
+
 @component function feedforward(params::FeedForward, h::Variable)
     for i = 1:length(params.w)
         h = params.f(affine(params.w[i], h, params.b[i]))

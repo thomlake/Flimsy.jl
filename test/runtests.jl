@@ -1,7 +1,7 @@
 using Flimsy
 using FactCheck
 
-FactCheck.setstyle(:compact)
+# FactCheck.setstyle(:compact)
 
 tests = [
     "inplace.jl",

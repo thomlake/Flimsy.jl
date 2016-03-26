@@ -51,7 +51,7 @@ function Base.read{C<:Component}(group::HDF5Group, ::Type{C})
     return C(args...)
 end
 
-function restore(f::HDF5File, verbose::Bool=true)
+function restore(f::HDF5File; verbose::Bool=true)
     T = read_type(f)
     timestamp = read(attrs(f), "timestamp")
     dt = DateTime(timestamp)
@@ -65,9 +65,9 @@ function restore(f::HDF5File, verbose::Bool=true)
     return read(group, T)
 end
 
-function restore(fname::ASCIIString, verbose::Bool=true)
+function restore(fname::ASCIIString; verbose::Bool=true)
     return h5open(fname, "r") do f
-        return restore(f, verbose)
+        return restore(f; verbose=verbose)
     end
 end
 

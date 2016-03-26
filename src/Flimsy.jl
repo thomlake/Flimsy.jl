@@ -3,6 +3,7 @@ module Flimsy
 using Distributions
 using HDF5
 using JSON
+import StatsBase: softmax, softmax!
 
 include("configure.jl")
 

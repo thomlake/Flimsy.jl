@@ -1,6 +1,21 @@
 using Flimsy
 
 facts("inplace") do
+    context("add_to_A_mul_B!") do
+        for (m, n) in [(7, 1), (1, 5), (5, 4)]
+            for k in [1, 10]
+                for ivalue in [0.0, 3.3, -5.7]
+                    w = randn(m, n)
+                    x = randn(n, k)
+                    y1 = w * x
+                    
+                    y2 = zeros(size(y1)) + ivalue
+                    Flimsy.add_to_A_mul_B!(y2, w, x)
+                    @fact y2 --> roughly(y1 + ivalue)
+                end
+            end
+        end
+    end
     context("add_to_A_mul_Bt!") do
         for (m, n) in [(7, 1), (1, 5), (5, 4)]
             for k in [1, 10]

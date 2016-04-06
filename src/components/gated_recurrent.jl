@@ -18,8 +18,11 @@ immutable GatedRecurrent{V<:Variable} <: RecurrentComponent1{V}
         return new(wr, wz, wc, ur, uz, uc, br, bz, bc, h0)
     end
 end
+
 GatedRecurrent{V<:Variable}(wr::V, wz::V, wc::V, ur::V, uz::V, uc::V, br::V, bz::V, bc::V, h0::V) = 
     GatedRecurrent{V}(wr, wz, wc, ur, uz, uc, br, bz, bc, h0)
+
+@component initial_state(params::GatedRecurrent) = params.h0
 
 @component function Base.step(params::GatedRecurrent, x, htm1)
     r = sigmoid(plus(linear(params.wr, x), linear(params.ur, htm1), params.br))
@@ -28,7 +31,7 @@ GatedRecurrent{V<:Variable}(wr::V, wz::V, wc::V, ur::V, uz::V, uc::V, br::V, bz:
     return plus(mult(z, htm1), mult(minus(1.0, z), c))
 end
 
-@component Base.step(params::GatedRecurrent, x) = step(params, x, params.h0)
+@component Base.step(params::GatedRecurrent, x) = step(params, x, initial_state(params))
 
 @component function unfold(params::GatedRecurrent, x::Vector) 
     h = Sequence(eltype(params), length(x))
@@ -47,7 +50,6 @@ end
     end
     return h
 end
-
 
 """
 GatedRecurrent Component with normalized hidden unit gradients.
@@ -72,8 +74,11 @@ immutable GatedRecurrentGradNorm{V<:Variable} <: RecurrentComponent1{V}
         return new(wr, wz, wc, ur, uz, uc, br, bz, bc, h0)
     end
 end
+
 GatedRecurrentGradNorm{V<:Variable}(wr::V, wz::V, wc::V, ur::V, uz::V, uc::V, br::V, bz::V, bc::V, h0::V) = 
     GatedRecurrentGradNorm{V}(wr, wz, wc, ur, uz, uc, br, bz, bc, h0)
+
+@component initial_state(params::GatedRecurrentGradNorm) = params.h0
 
 @component function Base.step(params::GatedRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
     r = sigmoid(plus(linear(params.wr, x), linear(params.ur, htm1), params.br))
@@ -84,7 +89,7 @@ GatedRecurrentGradNorm{V<:Variable}(wr::V, wz::V, wc::V, ur::V, uz::V, uc::V, br
     return plus(mult(z, htm1), mult(minus(1.0, z), c))
 end
 
-@component Base.step(params::GatedRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, params.h0, gn)
+@component Base.step(params::GatedRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, initial_state(params), gn)
 
 @component function unfold(params::GatedRecurrentGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
     h = Sequence(eltype(params), length(x))

@@ -746,7 +746,7 @@ end
 ########################################################
 function optimizer{O<:Optimizer}(::Type{O}, runtime::Runtime;
     learning_rate::Real=0.1,
-    clipping_type::Symbol=:none,
+    clipping_type::Union{Symbol,AbstractString}=:none,
     clip::Real=5.0,
     decay::Real=0.9,
     moment1_decay::Real=0.9,
@@ -754,6 +754,10 @@ function optimizer{O<:Optimizer}(::Type{O}, runtime::Runtime;
     epsilon::Real=1e-9,
     momentum::Real=0.87,
     )
+
+    if !isa(clipping_type, Symbol)
+        clipping_type = Symbol(clipping_type)
+    end
 
     theta = runtime.component
     if O <: GradientDescent

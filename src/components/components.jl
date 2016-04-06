@@ -10,7 +10,8 @@ export score,
        probs,
        unfold,
        cost,
-       feedforward
+       feedforward,
+       initial_state
 
 export RecurrentComponent,
        RecurrentComponent1,

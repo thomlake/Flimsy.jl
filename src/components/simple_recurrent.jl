@@ -29,11 +29,14 @@ immutable SimpleRecurrent{V<:Variable} <: RecurrentComponent1{V}
         return new(f, w, u, b, h0)
     end
 end
+
 SimpleRecurrent{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrent{V}(f, w, u, b, h0)
+
+@component initial_state(params::SimpleRecurrent) = params.h0
 
 @component Base.step(p::SimpleRecurrent, x, htm1) = p.f(plus(linear(p.w, x), linear(p.u, htm1), p.b))
 
-@component Base.step(p::SimpleRecurrent, x) = step(p, x, p.h0)
+@component Base.step(p::SimpleRecurrent, x) = step(p, x, initial_state(p))
 
 @component function unfold(p::SimpleRecurrent, x::Vector)
     h = Sequence(eltype(p), length(x))
@@ -72,7 +75,10 @@ immutable SimpleRecurrentGradNorm{V<:Variable} <: RecurrentComponent1{V}
         return new(f, w, u, b, h0)
     end
 end
+
 SimpleRecurrentGradNorm{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrentGradNorm{V}(f, w, u, b, h0)
+
+@component initial_state(params::SimpleRecurrentGradNorm) = params.h0
 
 @component function Base.step(params::SimpleRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
     h_pre = plus(linear(params.w, x), linear(params.u, htm1), params.b)
@@ -80,7 +86,7 @@ SimpleRecurrentGradNorm{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = Sim
     return params.f(h_pre)
 end
 
-@component Base.step(params::SimpleRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, params.h0, gn)
+@component Base.step(params::SimpleRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, initial_state(params), gn)
 
 @component function unfold(params::SimpleRecurrentGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
     h = Sequence(eltype(params), length(x))

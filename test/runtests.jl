@@ -12,6 +12,8 @@ tests = [
     "ops/softmax.jl",
     "ops/softmax_vector.jl",
     "ops/wta.jl",
+    "ops/recip.jl",
+    "ops/norm2.jl",
     "ops/linear.jl",
     "ops/affine.jl",
     "ops/plus.jl",
@@ -57,7 +59,7 @@ function test_op_grad_mse(f::Function, args...; wrt=nothing, eps=1e-6, tol=1e-6)
             lm = Cost.mse(scope, f(scope, args...), target)
             x.data[i] = xi
             dx = (lp - lm) / (2 * eps)
-            @fact abs(dx - x.grad[i]) --> less_than(tol)
+            @fact abs(dx - x.grad[i]) --> less_than(tol) "$dx != $(x.grad[i]) at index $i"
         end
     end
 end

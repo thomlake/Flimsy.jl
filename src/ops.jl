@@ -40,6 +40,8 @@ export sigmoid,
        relu,
        wta,
        softmax,
+       recip,
+       norm2,
        plus,
        minus,
        mult,
@@ -78,6 +80,8 @@ include("ops/relu.jl")
 include("ops/wta.jl")
 include("ops/softmax.jl")
 include("ops/softmax_vector.jl")
+include("ops/recip.jl")
+include("ops/norm2.jl")
 include("ops/plus.jl")
 include("ops/minus_scalar.jl")
 include("ops/minus.jl")

@@ -5,6 +5,8 @@ using HDF5
 using JSON
 import StatsBase: softmax, softmax!
 
+typealias FloatX Float32
+
 include("configure.jl")
 
 abstract Component{T}

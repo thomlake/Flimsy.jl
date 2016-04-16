@@ -1,13 +1,13 @@
 
-abstract Variable{T}
+abstract Variable
 
-immutable GradVariable{T<:AbstractFloat} <: Variable{T}
-    data::Matrix{T}
-    grad::Matrix{T}
+immutable GradVariable <: Variable
+    data::Matrix{FloatX}
+    grad::Matrix{FloatX}
 end
 
-immutable DataVariable{T<:AbstractFloat} <: Variable{T}
-    data::Matrix{T}
+immutable DataVariable <: Variable
+    data::Matrix{FloatX}
 end
 
 Input(x::Matrix) = DataVariable(x)

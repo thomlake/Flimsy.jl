@@ -16,25 +16,24 @@ Implements the hidden layer of a Simple Recurrent Neural Network (aka Elman Netw
 * `h0::Variable` Initial state.
 """
 immutable SimpleRecurrent{V<:Variable} <: RecurrentComponent1{V}
-    f::Function
     w::V
     u::V
     b::V
     h0::V
-    function SimpleRecurrent(f::Function, w::V, u::V, b::V, h0::V)
+    function SimpleRecurrent(w::V, u::V, b::V, h0::V)
         m, n = size(w)
         size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
         size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
         size(h0) == (m, 1) || throw(DimensionMismatch("Bad size(h0) == $(size(h0)) != ($m, 1)"))
-        return new(f, w, u, b, h0)
+        return new(w, u, b, h0)
     end
 end
 
-SimpleRecurrent{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrent{V}(f, w, u, b, h0)
+SimpleRecurrent{V<:Variable}(w::V, u::V, b::V, h0::V) = SimpleRecurrent{V}(w, u, b, h0)
 
 @component initial_state(params::SimpleRecurrent) = params.h0
 
-@component Base.step(p::SimpleRecurrent, x, htm1) = p.f(plus(linear(p.w, x), linear(p.u, htm1), p.b))
+@component Base.step(p::SimpleRecurrent, x, htm1) = tanh(plus(linear(p.w, x), linear(p.u, htm1), p.b))
 
 @component Base.step(p::SimpleRecurrent, x) = step(p, x, initial_state(p))
 
@@ -119,7 +118,7 @@ function SimpleRecurrent(m::Int, n::Int; f::Function=tanh, normed::Bool=false)
     if normed
         return SimpleRecurrentGradNorm(f=f, w=w, u=u, b=b, h0=h0)
     else
-        return SimpleRecurrent(f=f, w=w, u=u, b=b, h0=h0)
+        return SimpleRecurrent(w=w, u=u, b=b, h0=h0)
     end
 end
 

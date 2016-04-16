@@ -14,6 +14,8 @@ tests = [
     "ops/wta.jl",
     "ops/recip.jl",
     "ops/norm2.jl",
+    "ops/exp.jl",
+    "ops/log.jl",
     "ops/linear.jl",
     "ops/affine.jl",
     "ops/plus.jl",

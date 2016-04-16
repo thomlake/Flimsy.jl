@@ -438,6 +438,60 @@ function update!(opt::ClippedRmsProp)
     end
 end
 
+######################
+# --- Graves --- #
+######################
+"""
+Generating Sequences With Recurrent Neural Networks
+Alex Graves, http://arxiv.org/abs/1308.0850
+"""
+abstract Graves <: Optimizer
+
+type PlainGraves{T<:AbstractFloat,F<:AbstractFloat} <: Graves
+    learning_rate::T
+    momentum::T
+    decay::T
+    epsilon::T
+    paramvec::Vector{GradVariable{F}}
+    cachevec::Vector{Matrix{F}}
+    m1vec::Vector{Matrix{F}}
+    m2vec::Vector{Matrix{F}}
+end
+
+function Base.show(io::IO, opt::PlainGraves)
+    p = [
+        string("learning_rate=", opt.learning_rate),
+        string("momentum=", opt.momentum),
+        string("decay=", opt.decay),
+    ]
+    print(io, "PlainGraves(", join(p, ", "), ")")
+end
+
+function update!(opt::PlainGraves)
+    lr = opt.learning_rate
+    momentum = opt.momentum
+    decay = opt.decay
+    umdecay = 1 - decay
+    epsilon = opt.epsilon
+    for k in eachindex(opt.paramvec)
+        param = opt.paramvec[k]
+        cache = opt.cachevec[k]
+        m1 = opt.m1vec[k]
+        m2 = opt.m2vec[k]
+        @assert size(param) == size(m1) == size(m2)
+        for i in eachindex(param)
+            g = param.grad[i]
+            g2 = g * g
+            m1[i] = decay * m1[i] + umdecay * g
+            m2[i] = decay * m2[i] + umdecay * g2
+            cache[i] = momentum * cache[i] - lr * g / sqrt(m2[i] - m1[i] * m1[i] + epsilon)
+            param.data[i] += cache[i]
+        end
+        fill!(param.grad, 0)
+    end
+end
+
+
 ####################
 # --- AdaDelta --- #
 ####################
@@ -807,6 +861,12 @@ function optimizer{O<:Optimizer}(::Type{O}, runtime::Runtime;
         else
             error("unkown clipping_type: $clipping_type for optimizer: $O")
         end
+    elseif O <: Graves
+        paramvec = convert(Vector, theta)
+        cachevec = Cache(paramvec)
+        m1vec = Cache(paramvec)
+        m2vec = Cache(paramvec)
+        return PlainGraves(learning_rate, momentum, decay, 0.0001, paramvec, cachevec, m1vec, m2vec)
     elseif O <: AdaDelta
         paramvec = convert(Vector, theta)
         cachevec = Cache(paramvec)

@@ -38,7 +38,7 @@ SimpleRecurrent{V<:Variable}(w::V, u::V, b::V, h0::V) = SimpleRecurrent{V}(w, u,
 @comp Base.step(p::SimpleRecurrent, x) = step(p, x, initial_state(p))
 
 @comp function unfold(p::SimpleRecurrent, x::Vector)
-    h = Sequence(eltype(p), length(x))
+    h = Sequence(length(x))
     h[1] = step(p, x[1])
     for t = 2:length(x)
         h[t] = step(p, x[t], h[t-1])

@@ -1,13 +1,13 @@
 
-abstract Variable{T}
+abstract Variable
 
-immutable GradVariable{T<:AbstractFloat} <: Variable{T}
-    data::Matrix{T}
-    grad::Matrix{T}
+immutable GradVariable <: Variable
+    data::Matrix{FloatX}
+    grad::Matrix{FloatX}
 end
 
-immutable DataVariable{T<:AbstractFloat} <: Variable{T}
-    data::Matrix{T}
+immutable DataVariable <: Variable
+    data::Matrix{FloatX}
 end
 
 Input(x::Matrix) = DataVariable(x)
@@ -17,12 +17,6 @@ Input(x::Vector) = DataVariable(reshape(x, length(x), 1))
 Base.size(x::Variable) = size(x.data)
 
 Base.size(x::Variable, d::Integer) = size(x.data, d)
-
-Base.eltype{T}(::Type{GradVariable{T}}) = T
-
-Base.eltype{T}(::Type{DataVariable{T}}) = T
-
-Base.eltype{V<:Variable}(x::V) = eltype(V)
 
 Base.eachindex(x::Variable) = eachindex(x.data)
 

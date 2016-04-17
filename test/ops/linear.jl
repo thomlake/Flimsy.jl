@@ -11,8 +11,8 @@ facts("linear") do
                         xtype <: DataVariable ? "DataVariable" : "GradVariable",
                     )
                     context(ctxstr) do
-                        scope = DynamicScope()
-                        gscope = GradScope(scope)
+                        scope = DataScope()
+                        gscope = GradScope()
 
                         ysz = (wsz[1], xsz[2])
                         w = wtype <: DataVariable ? wtype(randn(wsz)) : wtype(randn(wsz), zeros(wsz))

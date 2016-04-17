@@ -5,8 +5,8 @@ facts("mult_scalar") do
         context("$(m)x$(n)") do
             for a in [1.5, 0.5, -0.5, 1.5]
                 for typ in [DataVariable, GradVariable]
-                    scope = DynamicScope()
-                    gscope = GradScope(scope)
+                    scope = DataScope()
+                    gscope = GradScope()
 
                     x = typ <: DataVariable ? typ(randn(m, n)) : typ(randn(m, n), zeros(m, n))
                     y = mult(scope, a, x)

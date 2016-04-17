@@ -12,8 +12,8 @@ facts("minus (binary)") do
                     )
                     context(ctxstr) do
                         context("MxN + MxN") do
-                            scope = DynamicScope()
-                            gscope = GradScope(scope)
+                            scope = DataScope()
+                            gscope = GradScope()
 
                             a = atype <: DataVariable ? atype(randn(m, n)) : atype(randn(m, n), zeros(m, n))
                             b = btype <: DataVariable ? btype(randn(m, n)) : btype(randn(m, n), zeros(m, n))
@@ -46,8 +46,8 @@ facts("minus (binary)") do
                         end
 
                         context("1xN + MxN") do
-                            scope = DynamicScope()
-                            gscope = GradScope(scope)
+                            scope = DataScope()
+                            gscope = GradScope()
 
                             a = atype <: DataVariable ? atype(randn(1, n)) : atype(randn(1, n), zeros(1, n))
                             b = btype <: DataVariable ? btype(randn(m, n)) : btype(randn(m, n), zeros(m, n))
@@ -80,8 +80,8 @@ facts("minus (binary)") do
                         end
 
                         context("Mx1 + MxN") do
-                            scope = DynamicScope()
-                            gscope = GradScope(scope)
+                            scope = DataScope()
+                            gscope = GradScope()
 
                             a = atype <: DataVariable ? atype(randn(m, 1)) : atype(randn(m, 1), zeros(m, 1))
                             b = btype <: DataVariable ? btype(randn(m, n)) : btype(randn(m, n), zeros(m, n))

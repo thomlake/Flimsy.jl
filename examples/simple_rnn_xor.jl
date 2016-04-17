@@ -11,9 +11,9 @@ immutable Params{V<:Variable} <: Component{V}
     rnn::SimpleRecurrent{V}
 end
 
-@component predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
+@comp predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
 
-@component function cost(params::Params, xs::Vector, ys::Vector)
+@comp function cost(params::Params, xs::Vector, ys::Vector)
     nll = 0.0
     hs = unfold(params.rnn, xs)
     for (h, y) in zip(hs, ys)
@@ -38,7 +38,7 @@ Params(n_out::Int, n_hid::Int, n_in::Int) = Params(
 function check()
     n_out, n_hid, n_in = 2, 10, 2
     x, y = rand(Synthetic.XORTask(20))
-    params = setup(Params(n_out, n_hid, n_in))
+    params = Runtime(Params(n_out, n_hid, n_in))
     println(params)
     check_gradients(cost, params, x, y)
 end
@@ -66,7 +66,7 @@ function main()
     dset = rand(xortask, n_train)
     indices = collect(1:n_train)
 
-    params = setup(Params(n_out, n_hid, n_in))
+    params = Runtime(Params(n_out, n_hid, n_in))
     opt = optimizer(GradientDescent, params, learning_rate=0.1, clip=1.0, clipping_type=:scale)
 
     start_time = time()

@@ -59,16 +59,23 @@ end
 
 Base.showerror(io::IO, e::OperationError) = print(io, "Flimsy.OperationError: ", e.msg)
 
-function anygrads(ts::DataType...)
-    for t in ts
-        if t <: GradVariable
+function anygrads(types::Vector{DataType})
+    for typ in types
+        if typ <: GradVariable
             return true
         end
     end
     return false
 end
 
-anygrads(ts::Vector) = anygrads(ts...)
+function anygrads(types::DataType...)
+    for typ in types
+        if typ <: GradVariable
+            return true
+        end
+    end
+    return false
+end
 
 export dropout!
 include("dropout.jl")

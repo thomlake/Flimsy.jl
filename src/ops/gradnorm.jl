@@ -1,7 +1,7 @@
 
-type ReverseGradNorm{F<:AbstractFloat,T<:GradVariable} <: ReverseOperation
+type ReverseGradNorm{F<:AbstractFloat} <: ReverseOperation
     s::F
-    x::T
+    x::GradVariable
 end
 
 function call(rop::ReverseGradNorm)

@@ -1,12 +1,12 @@
 
-type ReverseAffine{Ty<:GradVariable,Tw<:Variable,Tx<:Variable,Tb<:Variable} <: ReverseOperation
-    y::Ty
+type ReverseAffine{Tw<:Variable,Tx<:Variable,Tb<:Variable} <: ReverseOperation
+    y::GradVariable
     w::Tw
     x::Tx
     b::Tb
 end
 
-@generated function call{Ty,Tw,Tx,Tb}(rop::ReverseAffine{Ty,Tw,Tx,Tb})
+@generated function call{Tw,Tx,Tb}(rop::ReverseAffine{Tw,Tx,Tb})
     stmts = Any[
         :(y = rop.y),
         :(w = rop.w),
@@ -60,15 +60,15 @@ affine(w::AbstractArray, x::AbstractArray, b::AbstractArray) = affine!(zeros(siz
 @generated function affine{Tw<:Variable,Tx<:Variable,Tb<:Variable}(scope::Scope, w::Tw, x::Tx, b::Tb)
     if anygrads(Tw, Tx, Tb) && scope <: GradScope
         return quote
-            y_data = allocate(scope, eltype(x), (size(w, 1), size(x, 2)))
+            y_data = Matrix{FloatX}(size(w, 1), size(x, 2))
             affine!(y_data, w.data, x.data, b.data)
-            y = GradVariable(y_data, similar(scope, y_data, 0))
+            y = GradVariable(y_data, zero(y_data))
             push_callback!(scope, ReverseAffine(y, w, x, b))
             return y
         end
     else
         return quote
-            y_data = allocate(scope, eltype(x), (size(w, 1), size(x, 2)))
+            y_data = Matrix{FloatX}(size(w, 1), size(x, 2))
             affine!(y_data, w.data, x.data, b.data)
             y = DataVariable(y_data)
             return y

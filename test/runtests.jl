@@ -1,7 +1,8 @@
+include("../src/Flimsy.jl")
 using Flimsy
 using FactCheck
 
-# FactCheck.setstyle(:compact)
+FactCheck.setstyle(:compact)
 
 tests = [
     "inplace.jl",
@@ -36,7 +37,7 @@ tests = [
 
 srand(sum(map(Int, collect("Flimsy"))))
 
-function test_op_grad_mse(f::Function, args...; wrt=nothing, eps=1e-6, tol=1e-6)
+function test_op_grad_mse(f::Function, args...; wrt=nothing, eps=1e-3, atol=0.1, rtol=0.1)
     if wrt == nothing
         error("wrt must be given")
     end
@@ -45,12 +46,16 @@ function test_op_grad_mse(f::Function, args...; wrt=nothing, eps=1e-6, tol=1e-6)
         wrt = typeof(wrt)[wrt]
     end
 
-    scope = DynamicScope()
-    gradscope = GradScope(scope)
+    scope = DataScope()
+    gradscope = GradScope()
     output = f(gradscope, args...)
-    target = randn(size(output))
+    target = map(FloatX, randn(size(output)))
     Cost.mse(gradscope, output, target)
     backprop!(gradscope)
+
+    eps = FloatX(eps)
+    atol = FloatX(atol)
+    rtol = FloatX(rtol)
 
     for x in wrt
         for i in eachindex(x)
@@ -60,8 +65,13 @@ function test_op_grad_mse(f::Function, args...; wrt=nothing, eps=1e-6, tol=1e-6)
             x.data[i] = xi - eps
             lm = Cost.mse(scope, f(scope, args...), target)
             x.data[i] = xi
-            dx = (lp - lm) / (2 * eps)
-            @fact abs(dx - x.grad[i]) --> less_than(tol) "$dx != $(x.grad[i]) at index $i"
+            dx = FloatX(lp - lm) / FloatX(2 * eps)
+            if abs(dx) > 1
+                ratio = dx / x.grad[i]
+                @fact ratio --> roughly(1, rtol) "$dx != $(x.grad[i]) at index $i"
+            else
+                @fact dx --> roughly(x.grad[i], atol) "$dx != $(x.grad[i]) at index $i"
+            end
         end
     end
 end

@@ -1,16 +1,4 @@
 
-Base.eltype{V<:Variable}(c::Component{V}) = eltype(V)
-
-Base.eltype{V<:Variable}(::Type{Component{V}}) = eltype(V)
-
-Flimsy.vartype{V<:Variable}(scope::Scope, c::Component{V}) = DataVariable{eltype(V)}
-
-Flimsy.vartype{V<:Variable}(scope::Scope, ::Type{Component{V}}) = DataVariable{eltype(V)}
-
-Flimsy.vartype{V<:Variable}(scope::GradScope, c::Component{V}) = GradVariable{eltype(V)}
-
-Flimsy.vartype{V<:Variable}(scope::GradScope, ::Type{Component{V}}) = GradVariable{eltype(V)}
-
 function get_component_strings!(strings::Vector{AbstractString}, d::Dict, indent::Int=2)
     indent_string = repeat(" ", indent)
     for (k, v) in d

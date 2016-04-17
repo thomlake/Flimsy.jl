@@ -1,11 +1,11 @@
 
-type ReverseDot{Tc<:GradVariable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
-    c::Tc
+type ReverseDot{Ta<:Variable,Tb<:Variable} <: ReverseOperation
+    c::GradVariable
     a::Ta
     b::Tb
 end
 
-@generated function call{Tc,Ta,Tb}(rop::ReverseDot{Tc,Ta,Tb})
+@generated function call{Ta,Tb}(rop::ReverseDot{Ta,Tb})
     updates = Any[]
     if Ta <: GradVariable
         push!(updates, :(a.grad[i,j] += c.grad[1,j] * b.data[i,j]))
@@ -27,17 +27,6 @@ end
         end
         return nothing
     end
-    # c = rop.c
-    # a = rop.a
-    # b = rop.b
-    # m, n = size(a)
-    # for j = 1:n
-    #     for i = 1:m
-    #         a.grad[i,j] += c.grad[1,j] * b.data[i,j]
-    #         b.grad[i,j] += c.grad[1,j] * a.data[i,j]
-    #     end
-    # end
-    # return nothing
 end
 
 function dot!(c::Matrix, a::Matrix, b::Matrix)
@@ -54,7 +43,7 @@ function Base.dot(scope::Scope, a::Variable, b::Variable)
     asz = size(a)
     bsz = size(b)
     asz == bsz || throw(OperationError("no dot for sizes a: $asz, b: $bsz"))
-    c_data = allocate(scope, eltype(a.data), (1, asz[2]), 0)
+    c_data = zeros(FloatX, 1, asz[2])
     return DataVariable(dot!(c_data, a.data, b.data))
 end
 
@@ -64,8 +53,8 @@ end
             asz = size(a)
             bsz = size(b)
             asz == bsz || throw(OperationError("no dot for sizes a: $asz, b: $bsz"))
-            c_data = allocate(scope, eltype(a.data), (1, asz[2]), 0)
-            c = GradVariable(dot!(c_data, a.data, b.data), similar(scope, c_data, 0))
+            c_data = zeros(FloatX, 1, asz[2])
+            c = GradVariable(dot!(c_data, a.data, b.data), zero(c_data))
             push_callback!(scope, ReverseDot(c, a, b))
             return c
         end
@@ -74,7 +63,7 @@ end
             asz = size(a)
             bsz = size(b)
             asz == bsz || throw(OperationError("no dot for sizes a: $asz, b: $bsz"))
-            c_data = allocate(scope, eltype(a.data), (1, asz[2]), 0)
+            c_data = zeros(FloatX, 1, asz[2])
             return DataVariable(dot!(c_data, a.data, b.data))
         end
     end

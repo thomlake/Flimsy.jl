@@ -30,7 +30,8 @@ facts("ctc_with_scores") do
     end
 
 
-    context("forward") do
+    context("forward_backward") do
+        tol = 1e-4
         S = 3
         T = 2 * S + 4
         xs = rand(SYMBOLS, S)
@@ -42,14 +43,14 @@ facts("ctc_with_scores") do
         lpmat = Ctc.make_lpmat(output)
 
         ll_bf = Ctc.bruteforce(xs, lpmat, LANGUAGE, BLANK)
-        nll_ctc = Cost.ctc_with_scores(DynamicScope(), output, xs, BLANK)
-        @fact -nll_ctc --> roughly(ll_bf)
+        nll_ctc = Cost.ctc_with_scores(DataScope(), output, xs, BLANK)
+        @fact -nll_ctc --> roughly(ll_bf, tol)
 
         fmat = Ctc.forward(ys, lpmat, BLANK)
         bmat = Ctc.backward(ys, lpmat, BLANK)
         fbmat = fmat + bmat
         for t = 1:T
-            @fact Flimsy.Extras.logsumexp(fbmat[:,t]) --> roughly(ll_bf)
+            @fact Flimsy.Extras.logsumexp(fbmat[:,t]) --> roughly(ll_bf, tol)
         end
     end
 
@@ -60,8 +61,8 @@ facts("ctc_with_scores") do
         S = 5
         T = 20
         targets = rand(SYMBOLS, S)
-        params = setup(VectorComponent(values=[randn(LL, 1) for t = 1:T]))
-        @component cost(params::VectorComponent, target) = Cost.ctc_with_scores(params.values, targets, BLANK)
+        params = Runtime(VectorComponent(values=[randn(LL, 1) for t = 1:T]))
+        @comp cost(params::VectorComponent, target) = Cost.ctc_with_scores(params.values, targets, BLANK)
         @fact check_gradients(cost, params, targets; verbose=false) --> true
     end
 end

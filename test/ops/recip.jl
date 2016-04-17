@@ -4,8 +4,8 @@ facts("recip") do
     for (m, n) in [(3, 1), (5, 8)]
         context("$(m)x$(n)") do
             context("DataVariable") do
-                scope = DynamicScope()
-                gscope = GradScope(scope)
+                scope = DataScope()
+                gscope = GradScope()
 
                 x = DataVariable(randn(m, n))
                 y = recip(scope, x)
@@ -21,8 +21,8 @@ facts("recip") do
             end
 
             context("GradVariable") do
-                scope = DynamicScope()
-                gscope = GradScope(scope)
+                scope = DataScope()
+                gscope = GradScope()
 
                 x = GradVariable(randn(m, n), zeros(m, n))
                 y = recip(scope, x)

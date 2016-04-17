@@ -8,13 +8,13 @@ Gradient propagation
     da[i] += dc[i]
     db[i] += dc[i]
 """
-type ReversePlus{Tc<:GradVariable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
-    c::Tc
+type ReversePlus{Ta<:Variable,Tb<:Variable} <: ReverseOperation
+    c::GradVariable
     a::Ta
     b::Tb
 end
 
-@generated function call{Tc,Ta,Tb}(rop::ReversePlus{Tc,Ta,Tb})
+@generated function call{Ta,Tb}(rop::ReversePlus{Ta,Tb})
     updates = Any[]
     if Ta <: GradVariable
         push!(updates, :(a.grad[i] += c.grad[i]))
@@ -44,13 +44,13 @@ Gradient propagation
     da[j] += dc[i,j]
     db[i,j] += db[i,j]
 """
-type ReverseRowBroadcastPlus{Tc<:GradVariable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
-    c::Tc
+type ReverseRowBroadcastPlus{Ta<:Variable,Tb<:Variable} <: ReverseOperation
+    c::GradVariable
     a::Ta
     b::Tb
 end
 
-@generated function call{Tc,Ta,Tb}(rop::ReverseRowBroadcastPlus{Tc,Ta,Tb})
+@generated function call{Ta,Tb}(rop::ReverseRowBroadcastPlus{Ta,Tb})
     updates = Any[]
     if Ta <: GradVariable
         push!(updates, :(a.grad[j] += c.grad[i,j]))
@@ -82,13 +82,13 @@ Gradient propagation
     da[i] += dc[i,j]
     db[i,j] += db[i,j]
 """
-type ReverseColBroadcastPlus{Tc<:GradVariable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
-    c::Tc
+type ReverseColBroadcastPlus{Ta<:Variable,Tb<:Variable} <: ReverseOperation
+    c::GradVariable
     a::Ta
     b::Tb
 end
 
-@generated function call{Tc,Ta,Tb}(rop::ReverseColBroadcastPlus{Tc,Ta,Tb})
+@generated function call{Ta,Tb}(rop::ReverseColBroadcastPlus{Ta,Tb})
     updates = Any[]
     if Ta <: GradVariable
         push!(updates, :(a.grad[i] += c.grad[i,j]))
@@ -142,33 +142,38 @@ plus(a::AbstractArray, b::AbstractArray) = a .+ b
         return quote
             asz, bsz = size(a), size(b)
             if asz == bsz
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
+                c_grad = zero(c_data)
                 plus_elementwise!(c_data, a.data, b.data)
-                c = GradVariable(c_data, similar(scope, c_data, 0))
+                c = GradVariable(c_data, c_grad)
                 push_callback!(scope, ReversePlus(c, a, b))
                 return c
             elseif asz == (1, bsz[2])
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
+                c_grad = zero(c_data)
                 plus_row_broadcast!(c_data, a.data, b.data)
-                c = GradVariable(c_data, similar(scope, c_data, 0))
+                c = GradVariable(c_data, c_grad)
                 push_callback!(scope, ReverseRowBroadcastPlus(c, a, b))
                 return c
             elseif asz == (bsz[1], 1)
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
+                c_grad = zero(c_data)
                 plus_column_broadcast!(c_data, a.data, b.data)
-                c = GradVariable(c_data, similar(scope, c_data, 0))
+                c = GradVariable(c_data, c_grad)
                 push_callback!(scope, ReverseColBroadcastPlus(c, a, b))
                 return c
             elseif bsz == (1, asz[2])
-                c_data = similar(scope, a.data)
+                c_data = similar(a.data)
+                c_grad = zero(c_data)
                 plus_row_broadcast!(c_data, b.data, a.data)
-                c = GradVariable(c_data, similar(scope, c_data, 0))
+                c = GradVariable(c_data, c_grad)
                 push_callback!(scope, ReverseRowBroadcastPlus(c, b, a))
                 return c
             elseif bsz == (asz[1], 1)
-                c_data = similar(scope, a.data)
+                c_data = similar(a.data)
+                c_grad = zero(c_data)
                 plus_column_broadcast!(c_data, b.data, a.data)
-                c = GradVariable(c_data, similar(scope, c_data, 0))
+                c = GradVariable(c_data, c_grad)
                 push_callback!(scope, ReverseColBroadcastPlus(c, b, a))
                 return c
             else
@@ -179,27 +184,27 @@ plus(a::AbstractArray, b::AbstractArray) = a .+ b
         return quote
             asz, bsz = size(a), size(b)
             if asz == bsz
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
                 plus_elementwise!(c_data, a.data, b.data)
                 c = DataVariable(c_data)
                 return c
             elseif asz == (1, bsz[2])
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
                 plus_row_broadcast!(c_data, a.data, b.data)
                 c = DataVariable(c_data)
                 return c
             elseif asz == (bsz[1], 1)
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
                 plus_column_broadcast!(c_data, a.data, b.data)
                 c = DataVariable(c_data)
                 return c
             elseif bsz == (1, asz[2])
-                c_data = similar(scope, a.data)
+                c_data = similar(a.data)
                 plus_row_broadcast!(c_data, b.data, a.data)
                 c = DataVariable(c_data)
                 return c
             elseif bsz == (asz[1], 1)
-                c_data = similar(scope, a.data)
+                c_data = similar(a.data)
                 plus_column_broadcast!(c_data, b.data, a.data)
                 c = DataVariable(c_data)
                 return c

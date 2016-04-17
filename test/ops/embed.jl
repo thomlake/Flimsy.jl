@@ -6,8 +6,8 @@ facts("embed") do
         context(string(join(wsz, "x"), " * ", join(xsz, "x"))) do
             for wtype in [DataVariable, GradVariable]
                 context(wtype <: DataVariable ? "DataVariable" : "GradVariable",) do
-                    scope = DynamicScope()
-                    gscope = GradScope(scope)
+                    scope = DataScope()
+                    gscope = GradScope()
 
                     ysz = (wsz[1], xsz[2])
                     
@@ -17,7 +17,7 @@ facts("embed") do
                     else
                         sample(1:xsz[1], rand(1:xsz[1]), replace=false)
                     end
-                    x_arr = zeros(xsz)
+                    x_arr = zeros(FloatX, xsz)
                     if xsz[2] > 1
                         for k = 1:xsz[2]
                             for i in x[k]
@@ -41,7 +41,7 @@ facts("embed") do
                     else
                         sample(1:xsz[1], rand(1:xsz[1]), replace=false)
                     end
-                    x_arr = zeros(xsz)
+                    x_arr = zeros(FloatX, xsz)
                     if xsz[2] > 1
                         for k = 1:xsz[2]
                             for i in x[k]

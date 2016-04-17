@@ -1,7 +1,7 @@
 
-type ReverseRelu{T<:GradVariable} <: ReverseOperation
-    y::T
-    x::T
+type ReverseRelu <: ReverseOperation
+    y::GradVariable
+    x::GradVariable
 end
 
 function call(rop::ReverseRelu)
@@ -25,10 +25,10 @@ end
 relu(x::AbstractArray) = max(0, x)
 
 
-relu(scope::Scope, x::Variable) = DataVariable(relu!(similar(scope, x.data), x.data))
+relu(scope::Scope, x::Variable) = DataVariable(relu!(similar(x.data), x.data))
 
 function relu(scope::GradScope, x::GradVariable)
-    y = GradVariable(relu!(similar(scope, x.data), x.data), similar(scope, x.data, 0))
+    y = GradVariable(relu!(similar(x.data), x.data), zero(x.data))
     push_callback!(scope, ReverseRelu(y, x))
     return y
 end

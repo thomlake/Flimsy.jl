@@ -1,7 +1,7 @@
 
-type ReverseSigmoid{T<:GradVariable} <: ReverseOperation
-    y::T
-    x::T
+type ReverseSigmoid <: ReverseOperation
+    y::GradVariable
+    x::GradVariable
 end
 
 function call(rop::ReverseSigmoid)
@@ -28,10 +28,10 @@ function sigmoid(x::AbstractArray)
     return y
 end
 
-sigmoid(scope::Scope, x::Variable) = DataVariable(sigmoid!(similar(scope, x.data), x.data))
+sigmoid(scope::Scope, x::Variable) = DataVariable(sigmoid!(similar(x.data), x.data))
 
 function sigmoid(scope::GradScope, x::GradVariable)
-    y = GradVariable(sigmoid!(similar(scope, x.data), x.data), similar(scope, x.data, 0))
+    y = GradVariable(sigmoid!(similar(x.data), x.data), zero(x.data))
     push_callback!(scope, ReverseSigmoid(y, x))
     return y
 end

@@ -1,7 +1,7 @@
 
-type ReverseNorm2{T<:GradVariable} <: ReverseOperation
-    y::T
-    x::T
+type ReverseNorm2 <: ReverseOperation
+    y::GradVariable
+    x::GradVariable
 end
 
 function call(rop::ReverseNorm2)
@@ -15,7 +15,7 @@ function call(rop::ReverseNorm2)
     return nothing
 end
 
-function norm2!{T}(y::Matrix{T}, x::Matrix{T})
+function norm2!(y::Matrix, x::Matrix)
     sumabs2!(y, x)
     @flimsy_inbounds for i in eachindex(y)
         y[i] = sqrt(y[i])
@@ -23,11 +23,12 @@ function norm2!{T}(y::Matrix{T}, x::Matrix{T})
     return y
 end
 
-norm2(scope::Scope, x::Variable) = DataVariable(norm2!(allocate(scope, eltype(x.data), (1, size(x, 2))), x.data))
+norm2(scope::Scope, x::Variable) = DataVariable(norm2!(Matrix{FloatX}(1, size(x, 2)), x.data))
 
 function norm2(scope::GradScope, x::GradVariable)
-    y_data = allocate(scope, eltype(x.data), (1, size(x, 2)))
-    y = GradVariable(norm2!(y_data, x.data), similar(scope, y_data, 0))
+    y_data = Matrix{FloatX}(1, size(x, 2))
+    y_grad = zero(y_data)
+    y = GradVariable(norm2!(y_data, x.data), y_grad)
     push_callback!(scope, ReverseNorm2(y, x))
     return y
 end

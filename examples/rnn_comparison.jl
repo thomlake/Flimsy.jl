@@ -21,9 +21,9 @@ immutable Params{V<:Variable} <: Component{V}
 end
 Params{V}(clf::SoftmaxRegression{V}, rnn::RecurrentComponent{V}) = Params{V}(clf, rnn)
 
-@component predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
+@comp predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
 
-@component function cost(params::Params, xs::Vector, ys::Vector)
+@comp function cost(params::Params, xs::Vector, ys::Vector)
     nll = 0.0
     for (h, y) in zip(unfold(params.rnn, xs), ys)
         nll += cost(params.clf, h, y)
@@ -42,7 +42,7 @@ function check()
     n_out, n_hid, n_in = 2, 5, 2
     x, y = rand(Synthetic.XORTask(20))
     for R in recurrent_layer_types
-        params = setup(Params(R, n_out, n_hid, n_in))
+        params = Runtime(Params(R, n_out, n_hid, n_in))
         println(R.name)
         println(params.component)
         check_gradients(cost, params, x, y)
@@ -101,7 +101,7 @@ function main()
     println("  max seq length   => ", max_len_test)
 
     for R in recurrent_layer_types
-        params = setup(Params(R, n_out, n_hid, n_in))
+        params = Runtime(Params(R, n_out, n_hid, n_in))
         opt = optimizer(GradientDescent, params, learning_rate=0.1, clip=1.0, clipping_type=:scale)
         n_params = sum(map(x -> prod(size(x)), convert(Vector, params)))
         println("[", typeof(params.component.rnn).name, "]")

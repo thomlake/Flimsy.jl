@@ -22,34 +22,27 @@ end
 GatedRecurrent{V<:Variable}(wr::V, wz::V, wc::V, ur::V, uz::V, uc::V, br::V, bz::V, bc::V, h0::V) = 
     GatedRecurrent{V}(wr, wz, wc, ur, uz, uc, br, bz, bc, h0)
 
-@component initial_state(params::GatedRecurrent) = params.h0
+@comp initial_state(params::GatedRecurrent) = params.h0
 
-@component function Base.step(params::GatedRecurrent, x, htm1)
+@comp function Base.step(params::GatedRecurrent, x, htm1)
     r = sigmoid(plus(linear(params.wr, x), linear(params.ur, htm1), params.br))
     z = sigmoid(plus(linear(params.wz, x), linear(params.uz, htm1), params.bz))
     c = tanh(plus(linear(params.wc, x), mult(r, linear(params.uc, htm1)), params.bc))
     return plus(mult(z, htm1), mult(minus(1.0, z), c))
 end
 
-@component Base.step(params::GatedRecurrent, x) = step(params, x, initial_state(params))
+@comp Base.step(params::GatedRecurrent, x) = step(params, x, initial_state(params))
 
-@component function unfold(params::GatedRecurrent, x::Vector) 
-    h = Sequence(eltype(params), length(x))
-    h[1] = step(params, x[1])
-    for t = 2:length(x)
-        h[t] = step(params, x[t], h[t-1])
-    end
-    return h
-end
-
-@component function unfold(params::GatedRecurrent, x::Vector, h0::Variable) 
-    h = Sequence(eltype(params), length(x))
+@comp function unfold(params::GatedRecurrent, x::Vector, h0::Variable) 
+    h = Sequence(length(x))
     h[1] = step(params, x[1], h0)
     for t = 2:length(x)
         h[t] = step(params, x[t], h[t-1])
     end
     return h
 end
+
+@comp unfold(params::GatedRecurrent, x::Vector) = unfold(params, x, initial_state(params))
 
 """
 GatedRecurrent Component with normalized hidden unit gradients.
@@ -78,9 +71,9 @@ end
 GatedRecurrentGradNorm{V<:Variable}(wr::V, wz::V, wc::V, ur::V, uz::V, uc::V, br::V, bz::V, bc::V, h0::V) = 
     GatedRecurrentGradNorm{V}(wr, wz, wc, ur, uz, uc, br, bz, bc, h0)
 
-@component initial_state(params::GatedRecurrentGradNorm) = params.h0
+@comp initial_state(params::GatedRecurrentGradNorm) = params.h0
 
-@component function Base.step(params::GatedRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
+@comp function Base.step(params::GatedRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
     r = sigmoid(plus(linear(params.wr, x), linear(params.ur, htm1), params.br))
     z = sigmoid(plus(linear(params.wz, x), linear(params.uz, htm1), params.bz))
     c_pre = plus(linear(params.wc, x), mult(r, linear(params.uc, htm1)), params.bc)
@@ -89,16 +82,18 @@ GatedRecurrentGradNorm{V<:Variable}(wr::V, wz::V, wc::V, ur::V, uz::V, uc::V, br
     return plus(mult(z, htm1), mult(minus(1.0, z), c))
 end
 
-@component Base.step(params::GatedRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, initial_state(params), gn)
+@comp Base.step(params::GatedRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, initial_state(params), gn)
 
-@component function unfold(params::GatedRecurrentGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
-    h = Sequence(eltype(params), length(x))
-    h[1] = step(params, x[1], gn)
+@comp function unfold(params::GatedRecurrentGradNorm, x::Vector, h0::Variable, gn::AbstractFloat=inv(length(x)))
+    h = Sequence(length(x))
+    h[1] = step(params, x[1], h0, gn)
     for t = 2:length(x)
         h[t] = step(params, x[t], h[t-1], gn)
     end
     return h
 end
+
+@comp unfold(params::GatedRecurrentGradNorm, x::Vector, gn::AbstractFloat=inv(length(x))) = unfold(params, x, initial_state(params), gn)
 
 
 """

@@ -14,8 +14,8 @@ facts("affine") do
                             btype <: DataVariable ? "DataVariable" : "GradVariable",
                         )
                         context(ctxstr) do
-                            scope = DynamicScope()
-                            gscope = GradScope(scope)
+                            scope = DataScope()
+                            gscope = GradScope()
 
                             ysz = m, k
                             w = wtype <: DataVariable ? wtype(randn(m, n)) : wtype(randn(m, n), zeros(m, n))

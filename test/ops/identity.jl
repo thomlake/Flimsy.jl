@@ -3,7 +3,7 @@ using Flimsy
 facts("identity") do
     for (m, n) in [(1, 3), (3, 1), (5, 6)]
         context("$(m)x$(n)") do
-            scope = DynamicScope()
+            scope = DataScope()
             x = DataVariable(randn(m, n))
             y = identity(scope, x)
             @fact isa(y, DataVariable) --> true

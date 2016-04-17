@@ -42,6 +42,8 @@ Lstm{V<:Variable}(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, bi::V,
     return (mult(o, tanh(ct)), ct)
 end
 
+@comp Base.step(params::Lstm, x) = step(params, x, initial_state(params))
+
 @comp function unfold(params::Lstm, x::Vector)
     h = Sequence(length(x))
     h[1], c = step(params, x[1])

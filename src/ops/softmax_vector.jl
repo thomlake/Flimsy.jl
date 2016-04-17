@@ -1,8 +1,8 @@
 
 # -- Softmax over vector of 1xN -- #
-type ReverseVectorSoftmax{T<:GradVariable} <: ReverseOperation
-    ys::Vector{T}
-    xs::Vector{T}
+type ReverseVectorSoftmax <: ReverseOperation
+    ys::Vector{GradVariable}
+    xs::Vector{GradVariable}
 end
 
 function call(rop::ReverseVectorSoftmax)
@@ -24,7 +24,7 @@ function call(rop::ReverseVectorSoftmax)
     return nothing
 end
 
-function softmax_vector!{T}(ys::Vector{Matrix{T}}, xs::Vector{Matrix{T}})
+function softmax_vector!{T<:Matrix}(ys::Vector{T}, xs::Vector{T})
     m = length(xs)
     m > 0 || throw(OperationError("softmax can not be applied to empty vector"))
     k, n = size(xs[1])
@@ -54,22 +54,20 @@ function softmax_vector!{T}(ys::Vector{Matrix{T}}, xs::Vector{Matrix{T}})
     return ys
 end
 
-softmax{T<:AbstractMatrix}(xs::Vector{T}) = softmax!([zero(x) for x in xs], xs)
+softmax{T<:Matrix}(xs::Vector{T}) = softmax!([zero(x) for x in xs], xs)
 
 function softmax{T<:Variable}(scope::Scope, xs::Vector{T})
-    E = eltype(T)
-    xs_data = Matrix{E}[x.data for x in xs]
-    ys_data = Matrix{E}[similar(scope, x_data) for x_data in xs_data]
+    xs_data = Matrix{FloatX}[x.data for x in xs]
+    ys_data = Matrix{FloatX}[similar(x_data) for x_data in xs_data]
     softmax_vector!(ys_data, xs_data)
-    return DataVariable{E}[DataVariable(y_data) for y_data in ys_data]
+    return DataVariable[DataVariable(y_data) for y_data in ys_data]
 end
 
-function softmax{T<:GradVariable}(scope::GradScope, xs::Vector{T})
-    E = eltype(T)
-    xs_data = Matrix{E}[x.data for x in xs]
-    ys_data = Matrix{E}[similar(scope, x_data) for x_data in xs_data]
+function softmax(scope::GradScope, xs::Vector{GradVariable})
+    xs_data = Matrix{FloatX}[x.data for x in xs]
+    ys_data = Matrix{FloatX}[similar(x_data) for x_data in xs_data]
     softmax_vector!(ys_data, xs_data)
-    ys = GradVariable{E}[GradVariable(y_data, similar(scope, y_data, 0)) for y_data in ys_data]
+    ys = GradVariable[GradVariable(y_data, zero(y_data)) for y_data in ys_data]
     push_callback!(scope, ReverseVectorSoftmax(ys, xs))
     return ys
 end

@@ -13,8 +13,8 @@ facts("plus (binary)") do
                     )
                     context(ctxstr) do
                         context("MxN + MxN") do
-                            scope = DynamicScope()
-                            gscope = GradScope(scope)
+                            scope = DataScope()
+                            gscope = GradScope()
 
                             a = atype <: DataVariable ? atype(randn(m, n)) : atype(randn(m, n), zeros(m, n))
                             b = btype <: DataVariable ? btype(randn(m, n)) : btype(randn(m, n), zeros(m, n))
@@ -47,8 +47,8 @@ facts("plus (binary)") do
                         end
 
                         context("1xN + MxN") do
-                            scope = DynamicScope()
-                            gscope = GradScope(scope)
+                            scope = DataScope()
+                            gscope = GradScope()
 
                             a = atype <: DataVariable ? atype(randn(1, n)) : atype(randn(1, n), zeros(1, n))
                             b = btype <: DataVariable ? btype(randn(m, n)) : btype(randn(m, n), zeros(m, n))
@@ -81,8 +81,8 @@ facts("plus (binary)") do
                         end
 
                         context("MxN + 1xN") do
-                            scope = DynamicScope()
-                            gscope = GradScope(scope)
+                            scope = DataScope()
+                            gscope = GradScope()
 
                             a = atype <: DataVariable ? atype(randn(m, n)) : atype(randn(m, n), zeros(m, n))
                             b = btype <: DataVariable ? btype(randn(1, n)) : btype(randn(1, n), zeros(1, n))
@@ -115,8 +115,8 @@ facts("plus (binary)") do
                         end
 
                         context("Mx1 + MxN") do
-                            scope = DynamicScope()
-                            gscope = GradScope(scope)
+                            scope = DataScope()
+                            gscope = GradScope()
 
                             a = atype <: DataVariable ? atype(randn(m, 1)) : atype(randn(m, 1), zeros(m, 1))
                             b = btype <: DataVariable ? btype(randn(m, n)) : btype(randn(m, n), zeros(m, n))
@@ -149,8 +149,8 @@ facts("plus (binary)") do
                         end
 
                         context("MxN + Mx1") do
-                            scope = DynamicScope()
-                            gscope = GradScope(scope)
+                            scope = DataScope()
+                            gscope = GradScope()
 
                             a = atype <: DataVariable ? atype(randn(m, n)) : atype(randn(m, n), zeros(m, n))
                             b = btype <: DataVariable ? btype(randn(m, 1)) : btype(randn(m, 1), zeros(m, 1))
@@ -197,8 +197,8 @@ facts("plus (k-ary)") do
                 end, ",")
                 context(ctxstr) do
                     context("MxN + ... + MxN") do
-                        scope = DynamicScope()
-                        gscope = GradScope(scope)
+                        scope = DataScope()
+                        gscope = GradScope()
 
                         xs = map(types) do typ
                             typ <: DataVariable ? DataVariable(randn(m, n)) : GradVariable(randn(m, n), zeros(m, n))
@@ -233,8 +233,8 @@ facts("plus (k-ary)") do
                     end
 
                     context("MxN + Mx1 + ... + Mx1") do
-                        scope = DynamicScope()
-                        gscope = GradScope(scope)
+                        scope = DataScope()
+                        gscope = GradScope()
 
                         xs = map(1:K) do k
                             _m, _n = k == 1 ? (m, n) : (m, 1)
@@ -284,8 +284,8 @@ facts("plus (k-ary)") do
                     end
 
                     context("MxN + ... + MxN + Mx1") do
-                        scope = DynamicScope()
-                        gscope = GradScope(scope)
+                        scope = DataScope()
+                        gscope = GradScope()
 
                         xs = map(1:K) do k
                             _m, _n = k < K ? (m, n) : (m, 1)

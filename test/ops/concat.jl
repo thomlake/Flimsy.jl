@@ -6,8 +6,8 @@ facts("concat") do
         for n in [1, 3]
             context("$(K)xMx$(n)") do
                 context("DataVariable") do
-                    scope = DynamicScope()
-                    gradscope = GradScope(scope)
+                    scope = DataScope()
+                    gradscope = GradScope()
 
                     ms = rand(m_min:m_max, K)
                     m = sum(ms)
@@ -24,8 +24,8 @@ facts("concat") do
                 end
                 
                 context("GradVariable") do
-                    scope = DynamicScope()
-                    gradscope = GradScope(scope)
+                    scope = DataScope()
+                    gradscope = GradScope()
 
                     ms = rand(m_min:m_max, K)
                     m = sum(ms)

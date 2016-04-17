@@ -1,5 +1,5 @@
 
-function norm_param_grad{V<:GradVariable}(paramvec::Vector{V})
+function norm_param_grad(paramvec::Vector{GradVariable})
     ss = 0.0
     for param in paramvec
         for i in eachindex(param)
@@ -9,7 +9,7 @@ function norm_param_grad{V<:GradVariable}(paramvec::Vector{V})
     return sqrt(ss)
 end
 
-Cache{F<:AbstractFloat}(paramvec::Vector{GradVariable{F}}) = Matrix{F}[zero(p.data) for p in paramvec]
+Cache(paramvec::Vector{GradVariable}) = Matrix{FloatX}[zero(p.data) for p in paramvec]
 
 abstract Optimizer
 
@@ -19,9 +19,9 @@ abstract Optimizer
 abstract GradientDescent <: Optimizer
 
 # Plain
-type PlainGradientDescent{T<:AbstractFloat,F<:AbstractFloat} <: GradientDescent
+type PlainGradientDescent{T<:AbstractFloat} <: GradientDescent
     learning_rate::T
-    paramvec::Vector{GradVariable{F}}
+    paramvec::Vector{GradVariable}
 end
 function Base.show(io::IO, opt::PlainGradientDescent)
     p = [
@@ -41,10 +41,10 @@ function update!(opt::GradientDescent)
 end
 
 # Scale
-type ScaledGradientDescent{T<:AbstractFloat,F<:AbstractFloat} <: GradientDescent
+type ScaledGradientDescent{T<:AbstractFloat} <: GradientDescent
     learning_rate::T
     max_norm::T
-    paramvec::Vector{GradVariable{F}}
+    paramvec::Vector{GradVariable}
 end
 
 function Base.show(io::IO, opt::ScaledGradientDescent)
@@ -70,10 +70,10 @@ function update!(opt::ScaledGradientDescent)
 end
 
 # Clip
-type ClippedGradientDescent{T<:AbstractFloat,F<:AbstractFloat} <: GradientDescent
+type ClippedGradientDescent{T<:AbstractFloat} <: GradientDescent
     learning_rate::T
     clip::T
-    paramvec::Vector{GradVariable{F}}
+    paramvec::Vector{GradVariable}
 end
 
 function Base.show(io::IO, opt::ScaledGradientDescent)
@@ -103,11 +103,11 @@ end
 abstract Momentum <: Optimizer
 
 # Plain
-type PlainMomentum{T<:AbstractFloat,F<:AbstractFloat} <: Momentum
+type PlainMomentum{T<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::PlainMomentum)
@@ -134,12 +134,12 @@ function update!(opt::Momentum)
 end
 
 # Scale
-type ScaledMomentum{T<:AbstractFloat,F<:AbstractFloat} <: Momentum
+type ScaledMomentum{T<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
     max_norm::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::ScaledMomentum)
@@ -171,12 +171,12 @@ function update!(opt::ScaledMomentum)
 end
 
 # Clip
-type ClippedMomentum{T<:AbstractFloat,F<:AbstractFloat} <: Momentum
+type ClippedMomentum{T<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
     clip::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::ClippedMomentum)
@@ -212,11 +212,11 @@ end
 abstract Nesterov <: Optimizer
 
 # Plain
-type PlainNesterov{T<:AbstractFloat,F<:AbstractFloat} <: Nesterov
+type PlainNesterov{T<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::PlainNesterov)
@@ -245,12 +245,12 @@ function update!(opt::Nesterov)
 end
 
 # Scale
-type ScaledNesterov{T<:AbstractFloat,F<:AbstractFloat} <: Nesterov
+type ScaledNesterov{T<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
     max_norm::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::ScaledNesterov)
@@ -284,12 +284,12 @@ function update!(opt::ScaledNesterov)
 end
 
 # Clip
-type ClippedNesterov{T<:AbstractFloat,F<:AbstractFloat} <: Nesterov
+type ClippedNesterov{T<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
     clip::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::ClippedNesterov)
@@ -327,11 +327,11 @@ end
 abstract RmsProp <: Optimizer
 
 # Plain
-type PlainRmsProp{T<:AbstractFloat,F<:AbstractFloat} <: RmsProp
+type PlainRmsProp{T<:AbstractFloat} <: RmsProp
     learning_rate::T
     decay::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::PlainRmsProp)
@@ -360,12 +360,12 @@ function update!(opt::RmsProp)
 end
 
 # Scale
-type ScaledRmsProp{T<:AbstractFloat,F<:AbstractFloat} <: RmsProp
+type ScaledRmsProp{T<:AbstractFloat} <: RmsProp
     learning_rate::T
     decay::T
     max_norm::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::ScaledRmsProp)
@@ -400,12 +400,12 @@ function update!(opt::ScaledRmsProp)
 end
 
 # Clip
-type ClippedRmsProp{T<:AbstractFloat,F<:AbstractFloat} <: RmsProp
+type ClippedRmsProp{T<:AbstractFloat} <: RmsProp
     learning_rate::T
     decay::T
     clip::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::ClippedRmsProp)
@@ -447,15 +447,15 @@ Alex Graves, http://arxiv.org/abs/1308.0850
 """
 abstract Graves <: Optimizer
 
-type PlainGraves{T<:AbstractFloat,F<:AbstractFloat} <: Graves
+type PlainGraves{T<:AbstractFloat} <: Graves
     learning_rate::T
     momentum::T
     decay::T
     epsilon::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
-    m1vec::Vector{Matrix{F}}
-    m2vec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
+    m1vec::Vector{Matrix{FloatX}}
+    m2vec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::PlainGraves)
@@ -498,11 +498,11 @@ end
 abstract AdaDelta <: Optimizer
 
 # Plain
-type PlainAdaDelta{T<:AbstractFloat,F<:AbstractFloat} <: AdaDelta
+type PlainAdaDelta{T<:AbstractFloat} <: AdaDelta
     decay::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
-    deltavec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
+    deltavec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::PlainAdaDelta)
@@ -534,12 +534,12 @@ function update!(opt::AdaDelta)
 end
 
 # Scale
-type ScaledAdaDelta{T<:AbstractFloat,F<:AbstractFloat} <: AdaDelta
+type ScaledAdaDelta{T<:AbstractFloat} <: AdaDelta
     decay::T
     max_norm::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
-    deltavec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
+    deltavec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::ScaledAdaDelta)
@@ -576,12 +576,12 @@ function update!(opt::ScaledAdaDelta)
 end
 
 # Clip
-type ClippedAdaDelta{T<:AbstractFloat,F<:AbstractFloat} <: AdaDelta
+type ClippedAdaDelta{T<:AbstractFloat} <: AdaDelta
     decay::T
     clip::T
-    paramvec::Vector{GradVariable{F}}
-    cachevec::Vector{Matrix{F}}
-    deltavec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    cachevec::Vector{Matrix{FloatX}}
+    deltavec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::ClippedAdaDelta)
@@ -623,15 +623,15 @@ end
 abstract Adam <: Optimizer
 
 # Plain
-type PlainAdam{T<:AbstractFloat,F<:AbstractFloat} <: Adam
+type PlainAdam{T<:AbstractFloat} <: Adam
     learning_rate::T
     moment1_decay::T
     moment2_decay::T
     epsilon::T
     timestep::Int
-    paramvec::Vector{GradVariable{F}}
-    moment1_vec::Vector{Matrix{F}}
-    moment2_vec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    moment1_vec::Vector{Matrix{FloatX}}
+    moment2_vec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::PlainAdam)
@@ -678,16 +678,16 @@ function update!(opt::Adam, increment::Bool=false)
 end
 
 # Scale
-type ScaledAdam{T<:AbstractFloat,F<:AbstractFloat} <: Adam
+type ScaledAdam{T<:AbstractFloat} <: Adam
     learning_rate::T
     moment1_decay::T
     moment2_decay::T
     epsilon::T
     max_norm::T
     timestep::Int
-    paramvec::Vector{GradVariable{F}}
-    moment1_vec::Vector{Matrix{F}}
-    moment2_vec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    moment1_vec::Vector{Matrix{FloatX}}
+    moment2_vec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::ScaledAdam)
@@ -737,16 +737,16 @@ function update!(opt::ScaledAdam, increment::Bool=false)
 end
 
 # Clip
-type ClippedAdam{T<:AbstractFloat,F<:AbstractFloat} <: Adam
+type ClippedAdam{T<:AbstractFloat} <: Adam
     learning_rate::T
     moment1_decay::T
     moment2_decay::T
     epsilon::T
     clip::T
     timestep::Int
-    paramvec::Vector{GradVariable{F}}
-    moment1_vec::Vector{Matrix{F}}
-    moment2_vec::Vector{Matrix{F}}
+    paramvec::Vector{GradVariable}
+    moment1_vec::Vector{Matrix{FloatX}}
+    moment2_vec::Vector{Matrix{FloatX}}
 end
 
 function Base.show(io::IO, opt::ClippedAdam)

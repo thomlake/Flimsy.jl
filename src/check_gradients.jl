@@ -28,7 +28,11 @@ check_gradients(cost, params, target)
 """
 function check_gradients end
 
-function check_gradients(f::Function, param::Variable, name; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
+function check_gradients(f::Function, param::Variable, name; eps::AbstractFloat=1e-3, atol::AbstractFloat=0.1, rtol::AbstractFloat=0.1, verbose::Bool=true, throwerr::Bool=true)
+    eps = FloatX(eps)
+    atol = FloatX(atol)
+    rtol = FloatX(rtol)
+    
     for j = 1:size(param, 2)
         for i = 1:size(param, 1)
             xij = param.data[i,j]
@@ -38,17 +42,35 @@ function check_gradients(f::Function, param::Variable, name; eps::AbstractFloat=
             lm = f()
             param.data[i,j] = xij
             dxij = (lp - lm) / (2 * eps)
-            if abs(dxij - param.grad[i,j]) > tol
-                errmsg = "Finite difference gradient check failed!"
-                errelm = "  name => $name, index => ($i, $j), ratio => $(dxij / param.grad[i,j])"
-                errdsc = "  |$(dxij) - $(param.grad[i,j])| > $tol"
-                if throwerr
-                    error("$errmsg\n$errelm\n$errdsc")
-                else
-                    if verbose
-                        println("$errmsg\n$errelm\n$errdsc")
+
+            if abs(dxij) > 1
+                ratio = dxij / param.grad[i,j]
+                if abs(ratio - 1) > rtol
+                    errmsg = "Finite difference gradient check failed!"
+                    errelm = "  name => $name, index => ($i, $j), ratio => $(dxij / param.grad[i,j])"
+                    errdsc = "  |$(dxij) - $(param.grad[i,j])| > $tol"
+                    if throwerr
+                        error("$errmsg\n$errelm\n$errdsc")
+                    else
+                        if verbose
+                            println("$errmsg\n$errelm\n$errdsc")
+                        end
+                        return false
                     end
-                    return false
+                end
+            else
+                if abs(dxij - param.grad[i,j]) > atol
+                    errmsg = "Finite difference gradient check failed!"
+                    errelm = "  name => $name, index => ($i, $j), ratio => $(dxij / param.grad[i,j])"
+                    errdsc = "  |$(dxij) - $(param.grad[i,j])| > $tol"
+                    if throwerr
+                        error("$errmsg\n$errelm\n$errdsc")
+                    else
+                        if verbose
+                            println("$errmsg\n$errelm\n$errdsc")
+                        end
+                        return false
+                    end
                 end
             end
         end
@@ -56,31 +78,31 @@ function check_gradients(f::Function, param::Variable, name; eps::AbstractFloat=
     return true
 end
 
-function check_gradients{V<:Variable}(f::Function, params::AbstractArray{V}, name; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
+function check_gradients{V<:Variable}(f::Function, params::AbstractArray{V}, name; eps::AbstractFloat=1e-3, atol::AbstractFloat=0.1, rtol::AbstractFloat=0.1, verbose::Bool=true, throwerr::Bool=true)
     for param in params
-        if !check_gradients(f, param, name; eps=eps, tol=tol, verbose=verbose, throwerr=throwerr)
+        if !check_gradients(f, param, name; eps=eps, atol=atol, rtol=rtol, verbose=verbose, throwerr=throwerr)
             return false
         end
     end
     return true
 end
 
-function check_gradients(f::Function, params::Dict, name; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
+function check_gradients(f::Function, params::Dict, name; eps::AbstractFloat=1e-3, atol::AbstractFloat=0.1, rtol::AbstractFloat=0.1, verbose::Bool=true, throwerr::Bool=true)
     for (name, value) in params
-        if !check_gradients(f, value, name; eps=eps, tol=tol, verbose=verbose, throwerr=throwerr)
+        if !check_gradients(f, value, name; eps=eps, atol=atol, rtol=rtol, verbose=verbose, throwerr=throwerr)
             return false
         end
     end
     return true
 end
 
-function check_gradients(f::Function, params::Runtime, args...; eps::AbstractFloat=1e-6, tol::AbstractFloat=1e-6, verbose::Bool=true, throwerr::Bool=true)
+function check_gradients(f::Function, params::Runtime, args...; eps::AbstractFloat=1e-3, atol::AbstractFloat=0.1, rtol::AbstractFloat=0.1, verbose::Bool=true, throwerr::Bool=true)
     passed = true
     f(params, args...; grad=true)
     g = () -> f(params, args...; grad=false)
 
     for (name, value) in convert(Dict, params.component)
-        if !check_gradients(g, value, name; eps=eps, tol=tol, verbose=verbose, throwerr=throwerr)
+        if !check_gradients(g, value, name; eps=eps, atol=atol, rtol=rtol, verbose=verbose, throwerr=throwerr)
             return false
         end
     end

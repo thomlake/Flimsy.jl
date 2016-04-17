@@ -59,7 +59,7 @@ end
 Base.showerror(io::IO, e::CtcError) = print(io, "CtcError(", e.dsc, "): ", e.msg)
 
 type DPTable
-    matrix::Matrix{Float64}
+    matrix::Matrix{FloatX}
 end
 
 DPTable(n_symbols::Int, n_timesteps::Int) = DPTable(fill(-Inf, n_symbols, n_timesteps))
@@ -77,9 +77,9 @@ function Base.getindex(table::DPTable, i::Int, j::Int)
     @inbounds return table.matrix[i,j]
 end
 
-Base.setindex!(table::DPTable, x::Float64, i::Int, j::Int) = table.matrix[i, j] = x
+Base.setindex!(table::DPTable, x::AbstractFloat, i::Int, j::Int) = table.matrix[i, j] = x
 
-function forward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
+function forward(xs::Vector{Int}, lpmat::Matrix{FloatX}, blank::Int)
     xs[1] == xs[end] == blank || throw(CTCError("NOT EXPANDED", "sequence must be expanded before running CTC algorithm"))
 
     T = size(lpmat, 2)
@@ -100,7 +100,7 @@ function forward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
     return table.matrix
 end
 
-function backward(xs::Vector{Int}, lpmat::Matrix{Float64}, blank::Int)
+function backward(xs::Vector{Int}, lpmat::Matrix{FloatX}, blank::Int)
     xs[1] == xs[end] == blank || throw(CTCError("NOT EXPANDED", "sequence must be expanded before running CTC algorithm"))
 
     T = size(lpmat, 2)

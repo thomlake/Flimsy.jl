@@ -18,12 +18,6 @@ Base.size(x::Variable) = size(x.data)
 
 Base.size(x::Variable, d::Integer) = size(x.data, d)
 
-Base.eltype{T}(::Type{GradVariable{T}}) = T
-
-Base.eltype{T}(::Type{DataVariable{T}}) = T
-
-Base.eltype{V<:Variable}(x::V) = eltype(V)
-
 Base.eachindex(x::Variable) = eachindex(x.data)
 
 function is_matrix(x::Variable)

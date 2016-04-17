@@ -1,43 +1,20 @@
 """
-Wraps a component and scope in a self contained
-type containing information required for running the model, 
-computing gradients, managing scope, and running gc.
+Wraps a component in a type containing information required 
+for running the model, garbage collection, and computing gradients.
 """
-abstract Runtime{C}
-
-type DynamicRuntime{C<:Component} <: Runtime{C}
+type Runtime{C<:Component}
     component::C
-    scope::DynamicScope
-    gradscope::DynamicGradScope
+    datascope::DataScope
+    gradscope::GradScope
     step::Int
-    gc_step::Int
+    freq::Int
 end
 
-function Base.show(io::IO, runtime::DynamicRuntime)
-    println(io, "DynamicRuntime")
+Runtime{C<:Component}(component::C; freq::Int=10) = Runtime(component, DataScope(), GradScope(), 0, freq)
+
+function Base.show(io::IO, runtime::Runtime)
+    println(io, "Runtime(step=", runtime.step, ", freq=", runtime.freq, ")")
     show(io, runtime.component, 2)
-end
-
-Runtime{C<:Component}(component::C, scope::DynamicScope; gc_step::Int=10) = DynamicRuntime(component, scope, GradScope(scope), 0, gc_step)
-
-type StaticRuntime{C<:Component} <: Runtime{C}
-    component::C
-    scope::StaticScope
-    gradscope::StaticGradScope
-    step::Int
-    gc_step::Int
-end
-
-function Base.show(io::IO, runtime::StaticRuntime)
-    println(io, "StaticRuntime with ", available(runtime.scope.heap), " of ", size(runtime.scope.heap), " bytes available")
-    show(io, runtime.component, 2)
-end
-
-Runtime{C<:Component}(component::C, scope::StaticScope; gc_step::Int=10) = StaticRuntime(component, scope, GradScope(scope), 0, gc_step)
-
-function setup(component::Component; static::Bool=false, heap_size::Int=FLIMSY_DEFAULT_HEAP_SIZE, gc_step::Int=10)
-    scope = static ? StaticScope(heap_size): DynamicScope()
-    return Runtime(component, scope; gc_step=gc_step)
 end
 
 Base.get(runtime::Runtime, args::Symbol...) = foldl((x, f) -> getfield(x, f), runtime.component, args)

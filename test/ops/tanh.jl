@@ -4,7 +4,7 @@ facts("tanh") do
         context("$(m)x$(n)") do
             
             context("Scope") do
-                scope = DynamicScope()
+                scope = DataScope()
                 x = DataVariable(randn(m, n))
                 y = tanh(scope, x)
                 @fact isa(y, DataVariable) --> true
@@ -19,7 +19,7 @@ facts("tanh") do
             end
 
             context("GradScope") do
-                scope = GradScope(DynamicScope())
+                scope = GradScope()
                 x = DataVariable(randn(m, n))
                 y = tanh(scope, x)
                 @fact isa(y, DataVariable) --> true

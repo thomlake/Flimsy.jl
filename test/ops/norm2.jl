@@ -4,8 +4,8 @@ facts("norm2") do
     for (m, n) in [(10, 1), (5, 8)]
         context("$(m)x$(n)") do
             context("DataVariable") do
-                scope = DynamicScope()
-                gscope = GradScope(scope)
+                scope = DataScope()
+                gscope = GradScope()
 
                 x = DataVariable(randn(m, n))
                 y = norm2(scope, x)
@@ -21,8 +21,8 @@ facts("norm2") do
             end
 
             context("GradVariable") do
-                scope = DynamicScope()
-                gscope = GradScope(scope)
+                scope = DataScope()
+                gscope = GradScope()
 
                 x = GradVariable(randn(m, n), zeros(m, n))
                 y = norm2(scope, x)

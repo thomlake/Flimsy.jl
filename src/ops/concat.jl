@@ -1,7 +1,7 @@
 
-type ReverseConcat{Ty<:GradVariable,Tx<:GradVariable} <: ReverseOperation
-    y::Ty
-    xs::Vector{Tx}
+type ReverseConcat <: ReverseOperation
+    y::GradVariable
+    xs::Vector{GradVariable}
 end
 
 function call(rop::ReverseConcat)
@@ -21,7 +21,7 @@ function call(rop::ReverseConcat)
     return nothing
 end
 
-function concat!{T<:AbstractArray}(y::T, xs::Vector{T})
+function concat!{T<:Matrix}(y::T, xs::Vector{T})
     offset = 0
     @flimsy_inbounds for k = 1:length(xs)
         for j = 1:size(xs[k], 2)
@@ -34,34 +34,32 @@ function concat!{T<:AbstractArray}(y::T, xs::Vector{T})
     return y
 end
 
-concat{T<:AbstractArray}(xs::Vector{T}) = vcat(xs...)
+concat{T<:Matrix}(xs::Vector{T}) = vcat(xs...)
 
 function concat{T<:Variable}(scope::Scope, xs::Vector{T})
-    E = eltype(T)
     m, n = size(xs[1])
     for i = 2:length(xs)
         m_i, n_i = size(xs[i])
         m += m_i
         n == n_i || throw(OperationError("can only concatenate vectors with members having the same number of columns"))
     end
-    xs_data = Matrix{E}[x.data for x in xs]
-    ys_data = allocate(scope, E, (m, n))
+    xs_data = Matrix{FloatX}[x.data for x in xs]
+    ys_data = Matrix{FloatX}(m, n)
 
     return DataVariable(concat!(ys_data, xs_data))
 end
 
-function concat{T<:GradVariable}(scope::GradScope, xs::Vector{T})
-    E = eltype(T)
+function concat(scope::GradScope, xs::Vector{GradVariable})
     m, n = size(xs[1])
     for i = 2:length(xs)
         m_i, n_i = size(xs[i])
         m += m_i
         n == n_i || throw(OperationError("can only concatenate vectors with members having the same number of columns"))
     end
-    xs_data = Matrix{E}[x.data for x in xs]
-    ys_data = allocate(scope, E, (m, n))
+    xs_data = Matrix{FloatX}[x.data for x in xs]
+    ys_data = Matrix{FloatX}(m, n)
 
-    y = GradVariable(concat!(ys_data, xs_data), similar(scope, ys_data, 0))
+    y = GradVariable(concat!(ys_data, xs_data), zero(ys_data))
     push_callback!(scope, ReverseConcat(y, xs))
     return y
 end

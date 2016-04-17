@@ -6,8 +6,8 @@ facts("minus(Real, Variable)") do
             for typ in [DataVariable, GradVariable]
                 context(typ <: DataVariable ? "DataVariable" : "GradVariable") do
                     for a in [1.5, 0.5, -0.5, -1.5]
-                        scope = DynamicScope()
-                        gscope = GradScope(scope)
+                        scope = DataScope()
+                        gscope = GradScope()
 
                         x = typ <: DataVariable ? DataVariable(randn(m, n)) : GradVariable(randn(m, n), zeros(m, n))
                         y = minus(scope, a, x)
@@ -44,8 +44,8 @@ facts("minus(Variable, Real)") do
             for typ in [DataVariable, GradVariable]
                 context(typ <: DataVariable ? "DataVariable" : "GradVariable") do
                     for a in [1.5, 0.5, -0.5, -1.5]
-                        scope = DynamicScope()
-                        gscope = GradScope(scope)
+                        scope = DataScope()
+                        gscope = GradScope()
 
                         x = typ <: DataVariable ? DataVariable(randn(m, n)) : GradVariable(randn(m, n), zeros(m, n))
                         y = minus(scope, x, a)

@@ -5,8 +5,6 @@ the correct eltype.
 """
 function Sequence end
 
-Sequence{R<:AbstractFloat}(scope::Scope, ::Type{R}, n::Int) = Array(DataVariable{R}, n)
+Sequence(scope::Scope, n::Int) = Array(DataVariable, n)
 
-Sequence{R<:AbstractFloat}(scope::GradScope, ::Type{R}, n::Int) = Array(GradVariable{R}, n)
-
-Sequence(scope::Scope, n::Int) = Sequence(scope, Float64, n)
+Sequence(scope::GradScope, n::Int) = Array(GradVariable, n)

@@ -1,7 +1,7 @@
 
-type ReverseDecat{T<:GradVariable} <: ReverseOperation
-    ys::Vector{T}
-    x::T
+type ReverseDecat <: ReverseOperation
+    ys::Vector{GradVariable}
+    x::GradVariable
 end
 
 function call(rop::ReverseDecat)
@@ -16,7 +16,7 @@ function call(rop::ReverseDecat)
     return nothing
 end
 
-function decat!{T}(ys::Vector{Matrix{T}}, x::Matrix{T})
+function decat!{T<:Matrix}(ys::Vector{T}, x::T)
     @flimsy_inbounds for j = 1:size(x, 2)
         for i = 1:size(x, 1)
             ys[i][j] = x[i,j]
@@ -25,23 +25,21 @@ function decat!{T}(ys::Vector{Matrix{T}}, x::Matrix{T})
     return ys
 end
 
-decat(x::Matrix) = map(i -> x[i,:], 1:size(x, 1))
+decat{T<:Matrix}(x::T) = T[x[i,:] for i=1:size(x, 1)]
 
 function decat(scope::Scope, x::Variable)
-    E = eltype(x)
     m, n = size(x)
-    ys_data = Matrix{E}[allocate(scope, E, (1, n)) for i = 1:m]
+    ys_data = Matrix{FloatX}[Matrix{FloatX}(1, n) for i = 1:m]
     decat!(ys_data, x.data)
-    ys = DataVariable{E}[DataVariable(y_data) for y_data in ys_data]
+    ys = DataVariable[DataVariable(y_data) for y_data in ys_data]
     return ys
 end
 
 function decat(scope::GradScope, x::GradVariable)
-    E = eltype(x)
     m, n = size(x)
-    ys_data = Matrix{E}[allocate(scope, E, (1, n)) for i = 1:m]
+    ys_data = Matrix{FloatX}[Matrix{FloatX}(1, n) for i = 1:m]
     decat!(ys_data, x.data)
-    ys = GradVariable{E}[GradVariable(y_data, similar(scope, y_data, 0)) for y_data in ys_data]
+    ys = GradVariable[GradVariable(y_data, zero(y_data)) for y_data in ys_data]
     push_callback!(scope, ReverseDecat(ys, x))
     return ys
 end

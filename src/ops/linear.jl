@@ -1,12 +1,12 @@
 
-type ReverseLinear{Ty<:GradVariable,Tw<:Variable,Tx<:Variable} <: ReverseOperation
-    y::Ty
+type ReverseLinear{Tw<:Variable,Tx<:Variable} <: ReverseOperation
+    y::GradVariable
     w::Tw
     x::Tx
 end
 
 
-@generated function call{Ty,Tw,Tx}(rop::ReverseLinear{Ty,Tw,Tx})
+@generated function call{Tw,Tx}(rop::ReverseLinear{Tw,Tx})
     stmts = Any[
         :(y = rop.y),
         :(w = rop.w),
@@ -32,15 +32,15 @@ linear(w::AbstractArray, x::AbstractArray) = w * x
 @generated function linear{Tw<:Variable,Tx<:Variable}(scope::Scope, w::Tw, x::Tx)
     if anygrads(Tw, Tx) && scope <: GradScope
         return quote
-            y_data = allocate(scope, eltype(x.data), (size(w, 1), size(x, 2)))
+            y_data = Matrix{FloatX}(size(w, 1), size(x, 2))
             linear!(y_data, w.data, x.data)
-            y = GradVariable(y_data, similar(scope, y_data, 0))
+            y = GradVariable(y_data, zero(y_data))
             push_callback!(scope, ReverseLinear(y, w, x))
             return y
         end
     else
         return quote
-            y_data = allocate(scope, eltype(x.data), (size(w, 1), size(x, 2)))
+            y_data = Matrix{FloatX}(size(w, 1), size(x, 2))
             linear!(y_data, w.data, x.data)
             return DataVariable(y_data)
         end

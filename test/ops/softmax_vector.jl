@@ -1,10 +1,11 @@
 using Flimsy
 
 facts("softmax_vector") do
+    const stol = 1e-5
     for (m, n) in [(8, 1), (5, 8)]
         context("$(m)x1x$(n)") do
             context("Scope") do
-                scope = DynamicScope()
+                scope = DataScope()
                 xmat = randn(m, n)
                 ymat = softmax(xmat)
                 xs = map(i -> DataVariable(xmat[i,:]), 1:m)
@@ -14,7 +15,7 @@ facts("softmax_vector") do
                 @fact eltype(ys) <: DataVariable --> true
                 for i = 1:m
                     @fact size(ys[i]) --> (1, n)
-                    @fact ys[i].data  --> roughly(ymat[i,:])
+                    @fact ys[i].data  --> roughly(map(FloatX, ymat[i,:]))
                 end
 
                 for j = 1:n
@@ -22,7 +23,7 @@ facts("softmax_vector") do
                     for i = 1:m
                         s += ys[i].data[j]
                     end
-                    @fact s --> roughly(1)
+                    @fact s --> roughly(1, stol)
                 end
 
                 xmat = randn(m, n)
@@ -34,7 +35,7 @@ facts("softmax_vector") do
                 @fact eltype(ys) <: DataVariable --> true
                 for i = 1:m
                     @fact size(ys[i]) --> (1, n)
-                    @fact ys[i].data  --> roughly(ymat[i,:])
+                    @fact ys[i].data  --> roughly(map(FloatX, ymat[i,:]))
                 end
 
                 for j = 1:n
@@ -42,12 +43,12 @@ facts("softmax_vector") do
                     for i = 1:m
                         s += ys[i].data[j]
                     end
-                    @fact s --> roughly(1)
+                    @fact s --> roughly(1, stol)
                 end
             end
 
             context("GradScope") do
-                scope = GradScope(DynamicScope())
+                scope = GradScope()
                 xmat = randn(m, n)
                 ymat = softmax(xmat)
                 xs = map(i -> DataVariable(xmat[i,:]), 1:m)
@@ -57,7 +58,7 @@ facts("softmax_vector") do
                 @fact eltype(ys) <: DataVariable --> true
                 for i = 1:m
                     @fact size(ys[i]) --> (1, n)
-                    @fact ys[i].data  --> roughly(ymat[i,:])
+                    @fact ys[i].data  --> roughly(map(FloatX, ymat[i,:]))
                 end
 
                 for j = 1:n
@@ -65,7 +66,7 @@ facts("softmax_vector") do
                     for i = 1:m
                         s += ys[i].data[j]
                     end
-                    @fact s --> roughly(1)
+                    @fact s --> roughly(1, stol)
                 end
 
                 xmat = randn(m, n)
@@ -77,7 +78,7 @@ facts("softmax_vector") do
                 @fact eltype(ys) <: GradVariable --> true
                 for i = 1:m
                     @fact size(ys[i]) --> (1, n)
-                    @fact ys[i].data  --> roughly(ymat[i,:])
+                    @fact ys[i].data  --> roughly(map(FloatX, ymat[i,:]))
                 end
 
                 for j = 1:n
@@ -85,7 +86,7 @@ facts("softmax_vector") do
                     for i = 1:m
                         s += ys[i].data[j]
                     end
-                    @fact s --> roughly(1)
+                    @fact s --> roughly(1, stol)
                 end
             end
 

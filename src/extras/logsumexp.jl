@@ -11,4 +11,15 @@ function logsumexp{T<:AbstractFloat}(x::Array{T})
     return c
 end
 
-logsumexp{T<:AbstractFloat}(x::T...) = logsumexp(collect(x))
+function logsumexp(x::AbstractFloat...)
+    b = maximum(x)
+    b == -Inf && return -Inf
+    s = 0.0
+    for xi in x
+        s += exp(xi - b)
+    end
+
+    c = b + log(s)
+    return c
+end
+

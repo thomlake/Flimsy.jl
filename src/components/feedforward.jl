@@ -1,6 +1,5 @@
 
 immutable FeedForward{V<:Variable} <: Component{V}
-    f::Function
     w::Vector{V}
     b::Vector{V}
     function FeedForward(f::Function, w::Vector{V}, b::Vector{V})
@@ -16,24 +15,24 @@ immutable FeedForward{V<:Variable} <: Component{V}
         return new(f, w, b)
     end
 end
-FeedForward{V<:Variable}(f::Function, w::Vector{V}, b::Vector{V}) = 
+FeedForward{V<:Variable}(w::Vector{V}, b::Vector{V}) = 
     FeedForward{V}(f, w, b)
 
-function FeedForward(f::Function, sz::Int...)
+function FeedForward(sz::Int...)
     dims = reverse(sz)
     depth = length(dims) - 1
     w = [rand(Normal(0, 0.01), dims[i+1], dims[i]) for i = 1:depth]
     b = [zeros(dims[i+1], 1) for i = 1:depth]
-    return FeedForward(f=f, w=w, b=b)
+    return FeedForward(w=w, b=b)
 end
 
-FeedForward(sz::Int...) = FeedForward(relu, sz...)
+FeedForward(sz::Int...) = FeedForward(sz...)
 
-@component depth(params::FeedForward) = length(params.w)
+@comp depth(params::FeedForward) = length(params.w)
 
-@component function feedforward(params::FeedForward, h::Variable)
+@comp function feedforward(params::FeedForward, h::Variable)
     for i = 1:length(params.w)
-        h = params.f(affine(params.w[i], h, params.b[i]))
+        h = relu(affine(params.w[i], h, params.b[i]))
     end
     return h
 end

@@ -4,8 +4,8 @@ facts("decat") do
     for (m, n) in [(6, 1), (3, 9)]
         context("$(m)x$(n)") do
             context("DataVariable") do
-                scope = DynamicScope()
-                gradscope = GradScope(scope)
+                scope = DataScope()
+                gradscope = GradScope()
 
                 x = DataVariable(randn(m, n))
                 y = decat(scope, x)
@@ -33,8 +33,8 @@ facts("decat") do
             end
 
             context("GradVariable") do
-                scope = DynamicScope()
-                gradscope = GradScope(scope)
+                scope = DataScope()
+                gradscope = GradScope()
 
                 x = GradVariable(randn(m, n), zeros(m, n))
                 y = decat(scope, x)

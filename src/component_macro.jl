@@ -75,14 +75,13 @@ Input:
 Output:
 
     function f{C<:Foo}(__rt__::Runtime{C}, x, y; grad::Bool=false, force_gc::Bool=false)
-        reset!(__rt__.scope)
-        if force_gc || __rt__.step == __rt__.gc_step
+        if force_gc || __rt__.step == __rt__.freq
             gc()
             __rt__.step = 0
         else
             __rt__.step += 1
         end
-        result = f(grad ? __rt__.gradscope : __rt__.scope, __rt__.component, x, y)
+        result = f(grad ? __rt__.gradscope : __rt__.datascope, __rt__.component, x, y)
         grad && backprop!(__rt__.gradscope)
         return result
     end
@@ -97,14 +96,13 @@ function wrapped_component_function(signature::Expr)
     rt_signature = :($name{C<:$component_type}(__rt__::Runtime{C}, $(signature.args[3:end]...); grad::Bool=false, force_gc::Bool=false))
     call_args = [isa(a, Symbol) ? a : a.args[1] for a in signature.args[3:end]]
     rt_body = quote
-        reset!(__rt__.scope)
-        if force_gc || __rt__.step == __rt__.gc_step
+        if force_gc || __rt__.step == __rt__.freq
             gc()
             __rt__.step = 0
         else
             __rt__.step += 1
         end
-        result = $name(grad ? __rt__.gradscope : __rt__.scope, __rt__.component, $(call_args...))
+        result = $name(grad ? __rt__.gradscope : __rt__.datascope, __rt__.component, $(call_args...))
         grad && backprop!(__rt__.gradscope)
         return result
     end
@@ -219,7 +217,7 @@ function create_component_functions(f::Expr)
     return Expr(:block, f1, f2)
 end
 
-macro component(x::Expr)
+macro comp(x::Expr)
     y = create_component_functions(x)
     return esc(y)
 end

@@ -4,8 +4,8 @@ facts("log") do
     for (m, n) in [(3, 1), (5, 8)]
         context("$(m)x$(n)") do
             context("DataVariable") do
-                scope = DynamicScope()
-                gscope = GradScope(scope)
+                scope = DataScope()
+                gscope = GradScope()
 
                 x = DataVariable(rand(m, n))
                 y = log(scope, x)
@@ -21,8 +21,8 @@ facts("log") do
             end
 
             context("GradVariable") do
-                scope = DynamicScope()
-                gscope = GradScope(scope)
+                scope = DataScope()
+                gscope = GradScope()
 
                 x = GradVariable(rand(m, n), zeros(m, n))
                 y = log(scope, x)
@@ -39,7 +39,7 @@ facts("log") do
 
             context("Gradient") do
                 x = GradVariable(rand(m, n), zeros(m, n))
-                test_op_grad_mse(log, x, wrt=x)
+                test_op_grad_mse(log, x; wrt=x)
             end
         end
     end

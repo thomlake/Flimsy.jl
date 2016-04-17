@@ -8,13 +8,13 @@ Gradient propagation
     da[i] += dc[i]
     db[i] -= dc[i]
 """
-type ReverseMinus{Tc<:GradVariable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
-    c::Tc
+type ReverseMinus{Ta<:Variable,Tb<:Variable} <: ReverseOperation
+    c::GradVariable
     a::Ta
     b::Tb
 end
 
-@generated function call{Tc,Ta,Tb}(rop::ReverseMinus{Tc,Ta,Tb})
+@generated function call{Ta,Tb}(rop::ReverseMinus{Ta,Tb})
     updates = Any[]
     if Ta <: GradVariable
         push!(updates, :(a.grad[i] += c.grad[i]))
@@ -44,13 +44,13 @@ Gradient propagation
     da[j] += dc[i,j]
     db[i,j] -= db[i,j]
 """
-type ReverseRowBroadcastMinus{Tc<:GradVariable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
-    c::Tc
+type ReverseRowBroadcastMinus{Ta<:Variable,Tb<:Variable} <: ReverseOperation
+    c::GradVariable
     a::Ta
     b::Tb
 end
 
-@generated function call{Tc,Ta,Tb}(rop::ReverseRowBroadcastMinus{Tc,Ta,Tb})
+@generated function call{Ta,Tb}(rop::ReverseRowBroadcastMinus{Ta,Tb})
     updates = Any[]
     if Ta <: GradVariable
         push!(updates, :(a.grad[j] += c.grad[i,j]))
@@ -82,13 +82,13 @@ Gradient propagation
     da[i] += dc[i,j]
     db[i,j] -= db[i,j]
 """
-type ReverseColBroadcastMinus{Tc<:GradVariable,Ta<:Variable,Tb<:Variable} <: ReverseOperation
-    c::Tc
+type ReverseColBroadcastMinus{Ta<:Variable,Tb<:Variable} <: ReverseOperation
+    c::GradVariable
     a::Ta
     b::Tb
 end
 
-@generated function call{Tc,Ta,Tb}(rop::ReverseColBroadcastMinus{Tc,Ta,Tb})
+@generated function call{Ta,Tb}(rop::ReverseColBroadcastMinus{Ta,Tb})
     updates = Any[]
     if Ta <: GradVariable
         push!(updates, :(a.grad[i] += c.grad[i,j]))
@@ -138,25 +138,28 @@ end
 minus(a::AbstractArray, b::AbstractArray) = a .- b
 
 @generated function minus{Ta<:Variable,Tb<:Variable}(scope::Scope, a::Ta, b::Tb)
-    if anygrads(Ta, Tb) && scope <: GradScope
+    if scope <: GradScope && anygrads(Ta, Tb)
         return quote
             asz, bsz = size(a), size(b)
             if asz == bsz
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
+                c_grad = zero(c_data)
                 minus_elementwise!(c_data, a.data, b.data)
-                c = GradVariable(c_data, similar(scope, c_data, 0))
+                c = GradVariable(c_data, c_grad)
                 push_callback!(scope, ReverseMinus(c, a, b))
                 return c
             elseif asz == (1, bsz[2])
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
+                c_grad = zero(c_data)
                 minus_row_broadcast!(c_data, a.data, b.data)
-                c = GradVariable(c_data, similar(scope, c_data, 0))
+                c = GradVariable(c_data, c_grad)
                 push_callback!(scope, ReverseRowBroadcastMinus(c, a, b))
                 return c
             elseif asz == (bsz[1], 1)
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
+                c_grad = zero(c_data)
                 minus_column_broadcast!(c_data, a.data, b.data)
-                c = GradVariable(c_data, similar(scope, c_data, 0))
+                c = GradVariable(c_data, c_grad)
                 push_callback!(scope, ReverseColBroadcastMinus(c, a, b))
                 return c
             else
@@ -168,17 +171,17 @@ minus(a::AbstractArray, b::AbstractArray) = a .- b
         return quote
             asz, bsz = size(a), size(b)
             if asz == bsz
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
                 minus_elementwise!(c_data, a.data, b.data)
                 c = DataVariable(c_data)
                 return c
             elseif asz == (1, bsz[2])
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
                 minus_row_broadcast!(c_data, a.data, b.data)
                 c = DataVariable(c_data)
                 return c
             elseif asz == (bsz[1], 1)
-                c_data = similar(scope, b.data)
+                c_data = similar(b.data)
                 minus_column_broadcast!(c_data, a.data, b.data)
                 c = DataVariable(c_data)
                 return c

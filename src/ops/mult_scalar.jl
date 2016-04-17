@@ -1,8 +1,8 @@
 
-type ReverseScalarMult{T<:GradVariable,F<:Real} <: ReverseOperation
-    c::T
+type ReverseScalarMult{F<:Real} <: ReverseOperation
+    c::GradVariable
     a::F
-    b::T
+    b::GradVariable
 end
 
 function call(rop::ReverseScalarMult)
@@ -24,10 +24,10 @@ end
 
 mult(a::Real, b::AbstractArray) = a .* b
 
-mult(scope::Scope, a::Real, b::Variable) = DataVariable(mult!(similar(scope, b.data), a, b.data))
+mult(scope::Scope, a::Real, b::Variable) = DataVariable(mult!(similar(b.data), a, b.data))
 
 function mult(scope::GradScope, a::Real, b::GradVariable)
-    c = GradVariable(mult!(similar(scope, b.data), a, b.data), similar(scope, b.data, 0))
+    c = GradVariable(mult!(similar(b.data), a, b.data), zero(b.data))
     push_callback!(scope, ReverseScalarMult(c, a, b))
     return c
 end

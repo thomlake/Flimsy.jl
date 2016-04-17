@@ -17,11 +17,12 @@ export Normal,
        Uniform
 
 export Component,
-       ReverseOperation
+       ReverseOperation,
+       FloatX
 
 export @flimsy_inbounds
 
-export @component
+export @comp
 
 export Variable,
        GradVariable,
@@ -36,18 +37,10 @@ export argmax,
        argmaxneq
 
 export Scope,
+       DataScope,
        GradScope,
-       DynamicScope,
-       DynamicGradScope,
-       StaticScope,
-       StaticGradScope,
        CallbackStack,
-       backprop!,
-       gradient!,
-       reset!,
-       allocate,
-       available,
-       vartype
+       backprop!
 
 export Sequence
 
@@ -70,14 +63,11 @@ export check_gradients
 
 export Cost
 
-export Runtime, 
-       setup
+export Runtime
 
 export Components
 
 export Patience
-
-const FLIMSY_DEFAULT_HEAP_SIZE = 1_073_741_824
 
 include("flimsy_macros.jl")
 include("component_macro.jl")

@@ -30,9 +30,9 @@ end
 Lstm{V<:Variable}(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, bi::V, bf::V, bc::V, bo::V, h0::V, c0::V) = 
     Lstm{V}(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h0, c0)
 
-@component initial_state(params::Lstm) = (params.h0, params.c0)
+@comp initial_state(params::Lstm) = (params.h0, params.c0)
 
-@component function Base.step(params::Lstm, x, state)
+@comp function Base.step(params::Lstm, x, state)
     htm1, ctm1 = state
     i = sigmoid(plus(linear(params.wi, x), linear(params.ui, htm1), params.bi))
     f = sigmoid(plus(linear(params.wf, x), linear(params.uf, htm1), params.bf))
@@ -42,10 +42,8 @@ Lstm{V<:Variable}(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, bi::V,
     return (mult(o, tanh(ct)), ct)
 end
 
-@component Base.step(params::Lstm, x) = step(params, x, initial_state(params))
-
-@component function unfold(params::Lstm, x::Vector)
-    h = Sequence(eltype(params), length(x))
+@comp function unfold(params::Lstm, x::Vector)
+    h = Sequence(length(x))
     h[1], c = step(params, x[1])
     for t = 2:length(x)
         h[t], c = step(params, x[t], (h[t-1], c))
@@ -88,9 +86,9 @@ end
 LstmGradNorm{V<:Variable}(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, bi::V, bf::V, bc::V, bo::V, h0::V, c0::V) = 
     LstmGradNorm{V}(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h0, c0)
 
-@component initial_state(params::LstmGradNorm) = (params.h0, params.c0)
+@comp initial_state(params::LstmGradNorm) = (params.h0, params.c0)
 
-@component function Base.step(params::LstmGradNorm, x, state, gn::AbstractFloat=1.0)
+@comp function Base.step(params::LstmGradNorm, x, state, gn::AbstractFloat=1.0)
     htm1, ctm1 = state
     i = sigmoid(plus(linear(params.wi, x), linear(params.ui, htm1), params.bi))
     f = sigmoid(plus(linear(params.wf, x), linear(params.uf, htm1), params.bf))
@@ -102,10 +100,10 @@ LstmGradNorm{V<:Variable}(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V
     return (mult(o, h), ct)
 end
 
-@component Base.step(params::LstmGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, initial_state(params), gn)
+@comp Base.step(params::LstmGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, initial_state(params), gn)
 
-@component function unfold(params::LstmGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
-    h = Sequence(eltype(params), length(x))
+@comp function unfold(params::LstmGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
+    h = Sequence(length(x))
     h[1], c = step(params, x[1], gn)
     for t = 2:length(x)
         h[t], c = step(params, x[t], (h[t-1], c), gn)

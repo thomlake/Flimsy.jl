@@ -8,8 +8,8 @@ facts("dot") do
                     context(string(Ta, ", ", Tb)) do
                         a = Ta <: DataVariable ? Ta(randn(m, n)) : Ta(randn(m, n), zeros(m, n))
                         b = Tb <: DataVariable ? Tb(randn(m, n)) : Tb(randn(m, n), zeros(m, n))
-                        scope = DynamicScope()
-                        gscope = GradScope(scope)
+                        scope = DataScope()
+                        gscope = GradScope()
                         
                         c = dot(scope, a, b)
                         @fact isa(c, DataVariable) --> true

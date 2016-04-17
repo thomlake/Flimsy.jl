@@ -26,7 +26,7 @@ function Base.read{C<:Component}(group::HDF5Group, ::Type{C})
             gvec = group[string(name)]
             len = read(attrs(gvec), "length")
             vals = [read(gvec, string(i)) for i = 1:len]
-            vars = GradVariable{eltype(vals[1])}[GradVariable(data, zero(data)) for data in vals]
+            vars = GradVariable[GradVariable(data, zero(data)) for data in vals]
             push!(args, vars)
         elseif T <: Component
             gcomp = group[string(name)]

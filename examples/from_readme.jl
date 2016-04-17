@@ -11,10 +11,10 @@ end
 Params(m, n) = Params(w=randn(m, n), b=zeros(m, 1))
 
 # Computation the model performs
-@component score(θ::Params, x::Variable) = affine(θ.w, x, θ.b)
-@component predict(θ::Params, x::Variable) = argmax(score(θ, x))
-@component probs(θ::Params, x::Variable) = softmax(score(θ, x))
-@component cost(θ::Params, x::Variable, y) = Cost.categorical_cross_entropy_with_scores(score(θ, x), y)
+@comp score(θ::Params, x::Variable) = affine(θ.w, x, θ.b)
+@comp predict(θ::Params, x::Variable) = argmax(score(θ, x))
+@comp probs(θ::Params, x::Variable) = softmax(score(θ, x))
+@comp cost(θ::Params, x::Variable, y) = Cost.categorical_cross_entropy_with_scores(score(θ, x), y)
 
 # Check gradients using finite differences
 function check()
@@ -23,7 +23,7 @@ function check()
     data = rand(Synthetic.MixtureTask(n_features, n_classes), n_samples)
     X = hcat(map(first, data)...)
     y = vcat(map(last, data)...)
-    θ = setup(Params(n_classes, n_features))
+    θ = Runtime(Params(n_classes, n_features))
     check_gradients(cost, θ, Input(X), y)
 end
 
@@ -38,7 +38,7 @@ function main()
     X_train, y_train = hcat(map(first, data_train)...), vcat(map(last, data_train)...)
     X_test, y_test = hcat(map(first, data_test)...), vcat(map(last, data_test)...)
 
-    θ = setup(Params(n_classes, n_features))
+    θ = Runtime(Params(n_classes, n_features))
     opt = optimizer(RmsProp, θ, learning_rate=0.01, decay=0.9)
     start_time = time()
     for i = 1:100

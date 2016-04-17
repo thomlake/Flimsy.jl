@@ -28,7 +28,6 @@ Params(n_out::Int, n_hid::Int, n_in::Int) = Params(
         b=zeros(n_out, 1),
     ),
     rnn=SimpleRecurrent(
-        f=tanh,
         w=rand(Normal(0, 0.01), n_hid, n_in),
         u=orthonormal(1, n_hid, n_hid),
         b=zeros(n_hid, 1),

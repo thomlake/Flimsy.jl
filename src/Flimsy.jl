@@ -44,8 +44,15 @@ export Scope,
 
 export Sequence
 
+export Activation,
+       Sigmoid,
+       Tanh,
+       Relu,
+       Wta
+
 export glorot,
-       orthonormal
+       orthonormal,
+       spectral
 
 export GradientDescent,
        Momentum,
@@ -76,6 +83,7 @@ include("argmax.jl")
 include("scope.jl")
 include("sequence.jl")
 include("ops.jl")
+include("activation.jl")
 include("initialization.jl")
 include("gradient_noise.jl")
 include("runtime.jl")

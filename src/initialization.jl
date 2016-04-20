@@ -36,6 +36,21 @@ orthonormal(f::Function, n_out::Int, n_in::Int) = orthonormal(get(ORTHONORMAL_GA
 orthonormal(n_out::Int, n_in::Int) = orthonormal(DEFAULT_ORTHONORMAL_GAIN, n_out, n_in)
 
 
+"""
+    spectral(n_out, n_in[, s])
+
+Init from a normal distribution and scale such that the spectral radius is likely s.
+http://danielrapp.github.io/rnn-spectral-radius/
+"""
+function spectral end
+
+function spectral(n_out::Int, n_in::Int, s::AbstractFloat=1.0)
+    n = max(n_out, n_in)
+    w = scale!(s / sqrt(n), randn(n, n))
+    return w[1:n_out,1:n_in]
+end
+
+
 """Sparse initialization
 title: On the importance of initialization and momentum in deep learning
 paper: http://www.cs.toronto.edu/~fritz/absps/momentum.pdf

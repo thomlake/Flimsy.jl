@@ -19,31 +19,42 @@ function Base.read{C<:Component}(group::HDF5Group, ::Type{C})
     args = Any[]
     for name in fieldnames(C)
         T = fieldtype(C, name)
+        
         if T <: Variable
             data = read(group, string(name))
             push!(args, GradVariable(data, zero(data)))
+        
         elseif T <: Vector && eltype(T) <: Variable
             gvec = group[string(name)]
             len = read(attrs(gvec), "length")
             vals = [read(gvec, string(i)) for i = 1:len]
             vars = GradVariable[GradVariable(data, zero(data)) for data in vals]
             push!(args, vars)
+        
         elseif T <: Component
             gcomp = group[string(name)]
             c = read(gcomp, read_type(gcomp))
             push!(args, c)
+        
         elseif T <: Vector && eltype(T) <: Component
             gcompvec = group[string(name)]
             len = read(attrs(gcompvec), "length")
             cvec = [read(gcompvec["$i"], read_type(gcompvec["$i"])) for i = 1:len]
             push!(args, cvec)
+        
+        elseif T <: Activation
+            activation_name = read(attrs(group), string(name))
+            push!(args, ACTIVATION_LOOKUP[activation_name]())
+
         elseif T <: Real
             val = read(attrs(group), string(name))
             push!(args, val)
+        
         elseif T <: Function
-            functionName = read(attrs(group), string(name))
-            f = eval(Main, parse(functionName))
+            function_name = read(attrs(group), string(name))
+            f = eval(Main, parse(function_name))
             push!(args, f)
+        
         else
             throw(ComponentIoError(string(C), "default reader does not support type => $name::$T"))
         end
@@ -92,10 +103,12 @@ function Base.write{C<:Component}(group::HDF5Group, params::C)
             attrs(gvec)["length"] = length(values)
             for i = 1:length(values)
                 gvec["$i"] = values[i].data
-            end  
+            end
+
         elseif T <: Component
             gcomp = g_create(group, string(name))
             c = write(gcomp, getfield(params, name))
+        
         elseif T <: Vector && eltype(T) <: Component
             gcompvec = g_create(group, string(name))
             values = getfield(params, name)
@@ -104,10 +117,16 @@ function Base.write{C<:Component}(group::HDF5Group, params::C)
                 gcomp = g_create(gcompvec, "$i")
                 write(gcomp, values[i])
             end
+        
+        elseif T <: Activation
+            attrs(group)[string(name)] = string(getfield(params, name))
+
         elseif T <: Real
             attrs(group)[string(name)] = getfield(params, name)
+        
         elseif T <: Function
             attrs(group)[string(name)] = string(getfield(params, name))
+        
         else
             throw(ComponentIoError(string(C), "default writer does not support type => $name::$T"))
         end

@@ -15,25 +15,26 @@ Implements the hidden layer of a Simple Recurrent Neural Network (aka Elman Netw
 * `b::Variable` Hidden bias.
 * `h0::Variable` Initial state.
 """
-immutable SimpleRecurrent{V<:Variable} <: RecurrentComponent1{V}
+immutable SimpleRecurrent{F<:Activation,V<:Variable} <: RecurrentComponent1{V}
+    f::F
     w::V
     u::V
     b::V
     h0::V
-    function SimpleRecurrent(w::V, u::V, b::V, h0::V)
+    function SimpleRecurrent(f::F, w::V, u::V, b::V, h0::V)
         m, n = size(w)
         size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
         size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
         size(h0) == (m, 1) || throw(DimensionMismatch("Bad size(h0) == $(size(h0)) != ($m, 1)"))
-        return new(w, u, b, h0)
+        return new(f, w, u, b, h0)
     end
 end
 
-SimpleRecurrent{V<:Variable}(w::V, u::V, b::V, h0::V) = SimpleRecurrent{V}(w, u, b, h0)
+SimpleRecurrent{F<:Activation,V<:Variable}(f::F, w::V, u::V, b::V, h0::V) = SimpleRecurrent{F,V}(f, w, u, b, h0)
 
 @comp initial_state(params::SimpleRecurrent) = params.h0
 
-@comp Base.step(p::SimpleRecurrent, x, htm1) = tanh(plus(linear(p.w, x), linear(p.u, htm1), p.b))
+@comp Base.step(p::SimpleRecurrent, x, htm1) = p.f(plus(linear(p.w, x), linear(p.u, htm1), p.b))
 
 @comp Base.step(p::SimpleRecurrent, x) = step(p, x, initial_state(p))
 
@@ -60,28 +61,29 @@ end
 SimpleRecurrent component with normalized hidden unit gradients.
 By default gradients are normalized to 1/timesteps.
 """
-immutable SimpleRecurrentGradNorm{V<:Variable} <: RecurrentComponent1{V}
+immutable SimpleRecurrentGradNorm{F<:Activation,V<:Variable} <: RecurrentComponent1{V}
+    f::F
     w::V
     u::V
     b::V
     h0::V
-    function SimpleRecurrentGradNorm(w::V, u::V, b::V, h0::V)
+    function SimpleRecurrentGradNorm(f::F, w::V, u::V, b::V, h0::V)
         m, n = size(w)
         size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
         size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
         size(h0) == (m, 1) || throw(DimensionMismatch("Bad size(h0) == $(size(h0)) != ($m, 1)"))
-        return new(w, u, b, h0)
+        return new(f, w, u, b, h0)
     end
 end
 
-SimpleRecurrentGradNorm{V<:Variable}(f::Function, w::V, u::V, b::V, h0::V) = SimpleRecurrentGradNorm{V}(f, w, u, b, h0)
+SimpleRecurrentGradNorm{F<:Activation,V<:Variable}(f::F, w::V, u::V, b::V, h0::V) = SimpleRecurrentGradNorm{F,V}(f, w, u, b, h0)
 
 @comp initial_state(params::SimpleRecurrentGradNorm) = params.h0
 
 @comp function Base.step(params::SimpleRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
     h_pre = plus(linear(params.w, x), linear(params.u, htm1), params.b)
     gradnorm(h_pre, gn)
-    return tanh(h_pre)
+    return params.f(h_pre)
 end
 
 @comp Base.step(params::SimpleRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, initial_state(params), gn)
@@ -108,16 +110,16 @@ end
 """
 Convenience Constructor
 """
-function SimpleRecurrent(m::Int, n::Int; normed::Bool=false)
+function SimpleRecurrent(m::Int, n::Int; normed::Bool=false, f::Activation=Tanh)
     w = orthonormal(tanh, m, n)
     u = orthonormal(tanh, m, m)
     b = zeros(m, 1)
     h0 = zeros(m, 1)
 
     if normed
-        return SimpleRecurrentGradNorm(w=w, u=u, b=b, h0=h0)
+        return SimpleRecurrentGradNorm(f=f, w=w, u=u, b=b, h0=h0)
     else
-        return SimpleRecurrent(w=w, u=u, b=b, h0=h0)
+        return SimpleRecurrent(f=f, w=w, u=u, b=b, h0=h0)
     end
 end
 

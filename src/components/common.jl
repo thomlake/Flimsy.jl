@@ -15,7 +15,7 @@ function get_component_strings!(strings::Vector{AbstractString}, d::Dict, indent
 end
 
 function Base.show{C<:Component}(io::IO, params::C, indent::Int=0)
-    println(io, repeat(" ", indent), C.name, " =>")
+    println(io, repeat(" ", indent), C, " =>")
     strings = AbstractString[]
     get_component_strings!(strings, convert(Dict, params), indent + 2)
     print(io, join(strings, "\n"))

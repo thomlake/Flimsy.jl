@@ -76,6 +76,8 @@ export Components
 
 export Patience
 
+export ShuffledIter
+
 include("flimsy_macros.jl")
 include("component_macro.jl")
 include("variable.jl")
@@ -97,5 +99,6 @@ include("extras/extras.jl")
 include("progress.jl")
 include("io.jl")
 include("inplace.jl")
+include("shufflediter.jl")
 
 end

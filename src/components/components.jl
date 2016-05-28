@@ -10,6 +10,7 @@ export score,
        probs,
        unfold,
        cost,
+       weighted_cost,
        feedforward,
        initial_state
 
@@ -27,6 +28,7 @@ export LinearModel,
        SigmoidRegression,
        CtcOutput,
        FeedForward,
+       Fusion,
        SimpleRecurrent,
        GatedRecurrent,
        Lstm
@@ -41,6 +43,7 @@ include("value_component.jl")
 include("linear_model.jl")
 include("ctc_output.jl")
 include("feedforward.jl")
+include("fusion.jl")
 include("simple_recurrent.jl")
 include("gated_recurrent.jl")
 include("lstm.jl")

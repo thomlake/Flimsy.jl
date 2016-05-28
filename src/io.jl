@@ -76,7 +76,7 @@ function restore(f::HDF5File; verbose::Bool=true)
     return read(group, T)
 end
 
-function restore(fname::ASCIIString; verbose::Bool=true)
+function restore(fname::AbstractString; verbose::Bool=true)
     return h5open(fname, "r") do f
         return restore(f; verbose=verbose)
     end
@@ -141,7 +141,7 @@ function save{C<:Component}(f::HDF5File, params::C)
     write(group, params)
 end
 
-function save{C<:Component}(fname::ASCIIString, params::C)
+function save{C<:Component}(fname::AbstractString, params::C)
     h5open(fname, "w") do f
         save(f, params)
     end

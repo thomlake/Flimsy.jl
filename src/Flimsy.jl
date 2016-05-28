@@ -40,7 +40,8 @@ export Scope,
        DataScope,
        GradScope,
        CallbackStack,
-       backprop!
+       backprop!,
+       istrain
 
 export Sequence
 
@@ -48,7 +49,9 @@ export Activation,
        Sigmoid,
        Tanh,
        Relu,
-       Wta
+       Wta,
+       Softmax,
+       Identity
 
 export glorot,
        orthonormal,
@@ -80,9 +83,9 @@ export ShuffledIter
 
 include("flimsy_macros.jl")
 include("component_macro.jl")
+include("scope.jl")
 include("variable.jl")
 include("argmax.jl")
-include("scope.jl")
 include("sequence.jl")
 include("ops.jl")
 include("activation.jl")

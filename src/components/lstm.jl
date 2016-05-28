@@ -120,7 +120,7 @@ function Lstm(m::Int, n::Int; normed::Bool=false)
     dist = Normal(0, 0.01)
     wi, wf, wc, wo = rand(dist, m, n), rand(dist, m, n), rand(dist, m, n), rand(dist, m, n)
     ui, uf, uc, uo = orthonormal(m, m), orthonormal(m, m), orthonormal(m, m), orthonormal(m, m)
-    bi, bf, bc, bo = zeros(m, 1), zeros(m, 1), zeros(m, 1), zeros(m, 1)
+    bi, bf, bc, bo = zeros(m, 1), ones(m, 1), zeros(m, 1), zeros(m, 1)
     h0, c0 = zeros(m, 1), zeros(m, 1)
     if normed
         return LstmGradNorm(

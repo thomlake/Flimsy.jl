@@ -1,29 +1,29 @@
 
-function dropout!(scope::Scope, x::Variable, p::AbstractFloat)
-    for i in eachindex(x)
-        x.data[i] *= 1 - p
-    end
-    return x
-end
+# function dropout!(scope::Scope, x::Variable, p::AbstractFloat)
+#     for i in eachindex(x)
+#         x.data[i] *= 1 - p
+#     end
+#     return x
+# end
 
-function dropout!(scope::GradScope, x::Variable, p::AbstractFloat)
-    for i in eachindex(x)
-        if rand() < p
-            x.data[i] = 0
-        end
-    end
-    return x
-end
+# function dropout!(scope::GradScope, x::Variable, p::AbstractFloat)
+#     for i in eachindex(x)
+#         if rand() < p
+#             x.data[i] = 0
+#         end
+#     end
+#     return x
+# end
 
-function dropout!(scope::GradScope, x::Variable, p::Matrix)
+# function dropout!(scope::GradScope, x::Variable, p::Matrix)
     
-    for i in eachindex(x)
-        if p[i]
-            x.data[i] = 0
-        end
-    end
-    return x
-end
+#     for i in eachindex(x)
+#         if p[i]
+#             x.data[i] = 0
+#         end
+#     end
+#     return x
+# end
 
 type ReverseDropout{T<:GradVariable} <: ReverseOperation
     x::T
@@ -43,7 +43,7 @@ end
 
 function dropout_adjust!(x::AbstractArray, p::AbstractFloat)
     for i in eachindex(x)
-        x.data[i] *= 1 - p
+        x[i] *= 1 - p
     end
     return x
 end
@@ -64,13 +64,12 @@ end
 
 function dropout!(scope::GradScope, x::GradVariable, m::BitMatrix)
     size(x) == size(m) || throw(DimensionMismatch("dropout mask with size $(size(m)) cannot be applied to variable with size $(size(x))"))
-    m = rand(size(x)) .< m
     dropout!(x.data, m)
     push_callback!(scope, ReverseDropout(x, m))
     return x
 end
 
 function dropout!(scope::GradScope, x::GradVariable, p::AbstractFloat)
-    m = rand(size(x)) .< m
+    m = rand(size(x)) .< p
     return dropout!(scope, x, m)
 end

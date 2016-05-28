@@ -102,7 +102,7 @@ Convenience Constructor
 function GatedRecurrent(m::Int, n::Int; normed::Bool=false)
     wr, wz, wc = orthonormal(m, n), orthonormal(m, n), orthonormal(m, n)
     ur, uz, uc = orthonormal(m, m), orthonormal(m, m), orthonormal(m, m)
-    br, bz, bc = zeros(m, 1), zeros(m, 1), zeros(m, 1)
+    br, bz, bc = ones(m, 1), zeros(m, 1), zeros(m, 1)
     h0 = zeros(m, 1)
     if normed
         return GatedRecurrentGradNorm(

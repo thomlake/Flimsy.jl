@@ -26,10 +26,16 @@ Base.string(f::Softmax) = "Softmax"
 call(f::Softmax, x) = softmax(x)
 call(f::Softmax, scope::Scope, x) = softmax(scope, x)
 
+immutable Identity <: Activation end
+Base.string(f::Identity) = "Identity"
+call(f::Identity, x) = x
+call(f::Identity, scope::Scope, x) = x
+
 const ACTIVATION_LOOKUP = Dict{ASCIIString,DataType}(
     "Sigmoid" => Sigmoid,
     "Tanh"    => Tanh,
     "Relu"    => Relu,
     "Wta"     => Wta,
     "Softmax" => Softmax,
+    "Identity" => Identity,
 )

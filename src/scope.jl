@@ -21,3 +21,7 @@ end
 function push_callback!(scope::GradScope, cb::ReverseOperation)
     push!(scope.stack, cb)
 end
+
+istrain(scope) = false
+
+istrain(scope::GradScope) = true

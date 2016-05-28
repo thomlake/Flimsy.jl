@@ -7,7 +7,7 @@ Base.showerror(io::IO, e::ComponentParseError) = print(io, "Flimsy.ComponentPars
 
 """Array of function names that Flimsy should not backpropage through"""
 const DEFAULT_BLACKLIST = [
-    :Variable,
+    # :Variable,
     :Array,
     :size,
     :length,
@@ -26,6 +26,7 @@ const DEFAULT_BLACKLIST = [
     :append!,
     :rand,
     :if,
+    :error,
     :!,
     :+,
     :-,
@@ -39,7 +40,9 @@ const DEFAULT_BLACKLIST = [
     :&&,
     :||,
     :argmax,
-    :argmaxneq,   
+    :argmaxneq, 
+    :Input,
+    :bagofwords,
 ]
 
 """Array of supported expression head elements"""

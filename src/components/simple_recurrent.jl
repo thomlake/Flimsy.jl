@@ -110,7 +110,7 @@ end
 """
 Convenience Constructor
 """
-function SimpleRecurrent(m::Int, n::Int; normed::Bool=false, f::Activation=Tanh)
+function SimpleRecurrent(m::Int, n::Int; normed::Bool=false, f::Activation=Tanh())
     w = orthonormal(tanh, m, n)
     u = orthonormal(tanh, m, m)
     b = zeros(m, 1)

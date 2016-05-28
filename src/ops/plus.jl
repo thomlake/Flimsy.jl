@@ -217,6 +217,7 @@ end
 
 # -- Plus > 2 -- #
 function plus{T<:AbstractArray}(xs::Vector{T})
+    length(xs) == 1 && return xs[1]
     y = plus(xs[1], xs[2])
     for i = 3:length(xs)
         y = plus(y, xs[i])
@@ -225,6 +226,7 @@ function plus{T<:AbstractArray}(xs::Vector{T})
 end
 
 function plus{V<:Variable}(scope::Scope, xs::Vector{V})
+    length(xs) == 1 && return xs[1]
     y = plus(scope, xs[1], xs[2])
     for i = 3:length(xs)
         y = plus(scope, y, xs[i])

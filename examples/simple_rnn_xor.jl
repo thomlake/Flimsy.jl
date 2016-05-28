@@ -6,9 +6,9 @@ using Flimsy.Components
 import Flimsy.Components: cost, predict
 
 
-immutable Params{V<:Variable} <: Component{V}
+immutable Params{F<:Activation,V<:Variable} <: Component{V}
     clf::SoftmaxRegression{V}
-    rnn::SimpleRecurrent{V}
+    rnn::SimpleRecurrent{F,V}
 end
 
 @comp predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
@@ -28,6 +28,7 @@ Params(n_out::Int, n_hid::Int, n_in::Int) = Params(
         b=zeros(n_out, 1),
     ),
     rnn=SimpleRecurrent(
+        f=Tanh(),
         w=rand(Normal(0, 0.01), n_hid, n_in),
         u=orthonormal(1, n_hid, n_hid),
         b=zeros(n_hid, 1),

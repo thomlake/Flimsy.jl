@@ -76,7 +76,7 @@ type ClippedGradientDescent{T<:AbstractFloat} <: GradientDescent
     paramvec::Vector{GradVariable}
 end
 
-function Base.show(io::IO, opt::ScaledGradientDescent)
+function Base.show(io::IO, opt::ClippedGradientDescent)
     p = [
         string("learning_rate=", opt.learning_rate),
         string("clip=", opt.clip),

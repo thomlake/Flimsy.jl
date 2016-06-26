@@ -43,7 +43,8 @@ export Scope,
        backprop!,
        istrain
 
-export Sequence
+export Sequence,
+       NTupleSequence
 
 export Activation,
        Sigmoid,

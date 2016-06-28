@@ -25,51 +25,53 @@
 #     return x
 # end
 
-type ReverseDropout{T<:GradVariable} <: ReverseOperation
-    x::T
+type ReverseDropout <: ReverseOperation
+    y::GradVariable
+    x::GradVariable
     m::BitMatrix
 end
 
 function call(rop::ReverseDropout)
+    y = rop.y
     x = rop.x
     m = rop.m
     for i in eachindex(x)
         if m[i]
             x.grad[i] = 0
+            y.grad[i] = 0
+        else:
+            x.grad[i] += y.grad[i]
         end
     end
     return nothing
 end
 
-function dropout_adjust!(x::AbstractArray, p::AbstractFloat)
-    for i in eachindex(x)
-        x[i] *= 1 - p
+function dropout_adjust!(y::AbstractArray, x::AbstractArray, p::AbstractFloat)
+    s = 1 - p
+    @flimsy_inbounds for i in eachindex(x)
+        y[i] = s * x[i] 
     end
-    return x
+    return y
 end
 
-function dropout!(x::AbstractArray, m::BitMatrix)
-    for i in eachindex(x)
-        if m[i]
-            x[i] = 0
-        end
+function dropout!(y::AbstractArray, x::AbstractArray, m::BitMatrix)
+    @assert size(y) == size(x)
+    @flimsy_inbounds for i in eachindex(x)
+        y[i] = m[i] ? 0 : x[i]
     end
-    return x
+    return y
 end
 
-function dropout!(scope::Scope, x::Variable, p::AbstractFloat)
-    dropout_adjust!(x.data, p)
-    return x
-end
+dropout(scope::Scope, x::Variable, p::AbstractFloat) = DataVariable(dropout_adjust!(similar(x.data), x.data))
 
-function dropout!(scope::GradScope, x::GradVariable, m::BitMatrix)
+function dropout(scope::GradScope, x::GradVariable, m::BitMatrix)
     size(x) == size(m) || throw(DimensionMismatch("dropout mask with size $(size(m)) cannot be applied to variable with size $(size(x))"))
-    dropout!(x.data, m)
-    push_callback!(scope, ReverseDropout(x, m))
-    return x
+    y = GradVariable(dropout!(similar(x.data), x.data, m))
+    push_callback!(scope, ReverseDropout(y, x, m))
+    return y
 end
 
-function dropout!(scope::GradScope, x::GradVariable, p::AbstractFloat)
+function dropout(scope::GradScope, x::GradVariable, p::AbstractFloat)
     m = rand(size(x)) .< p
-    return dropout!(scope, x, m)
+    return dropout(scope, x, m)
 end

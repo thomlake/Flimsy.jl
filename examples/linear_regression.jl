@@ -16,7 +16,7 @@ function check()
     n_targets, n_features = 3, 10
     X = randn(n_features, n_samples)
     Y = randn(n_targets, n_samples)
-    params = Runtime(LinearRegression(n_targets, n_features))
+    params = LinearRegression(n_targets, n_features)
     check_gradients(cost, params, Input(X), Y)
 end
 
@@ -40,18 +40,22 @@ function main()
     n_samples = size(features, 2)
     n_features = length(expl)
     n_targets = length(resp)
-    params = Runtime(LinearRegression(n_targets, n_features))
+    params = LinearRegression(n_targets, n_features)
 
     # Learning Algorithm
     opt = optimizer(GradientDescent, params, learning_rate=0.01 / n_samples)
 
     # Main training loop
+    ds = DataScope()
+    gs = GradScope()
+
     nll_prev, nll = Inf, -Inf
     n_epochs = 0
     start_time = time()
     while true
         n_epochs += 1
-        nll = cost(params, Input(features), targets; grad=true)
+        nll = cost(gs, params, Input(features), targets)
+        backprop!(gs)
         update!(opt)
         nll_prev - nll > 1e-6 || break
         nll_prev = nll
@@ -66,7 +70,7 @@ function main()
     println("  cpu time           => ", round(stop_time - start_time, 2), " seconds")
     println("  final train nll    => ", nll)
     println("[Coefficients]")
-    for (k, v) in zip(expl, get(params, :w, :data))
+    for (k, v) in zip(expl, params.w.data)
         println("  ", rpad(k, 7), " => ", sign(v) > 0 ? "+" : "-", round(abs(v), 3))
     end
 end

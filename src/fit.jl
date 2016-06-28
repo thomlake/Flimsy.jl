@@ -798,7 +798,7 @@ end
 ########################################################
 # --- Convenience function for creating optimizers --- #
 ########################################################
-function optimizer{O<:Optimizer}(::Type{O}, runtime::Runtime;
+function optimizer{O<:Optimizer}(::Type{O}, theta::Component;
     learning_rate::Real=0.1,
     clipping_type::Union{Symbol,AbstractString}=:none,
     clip::Real=5.0,
@@ -813,7 +813,6 @@ function optimizer{O<:Optimizer}(::Type{O}, runtime::Runtime;
         clipping_type = Symbol(clipping_type)
     end
 
-    theta = runtime.component
     if O <: GradientDescent
         paramvec = convert(Vector, theta)
         if clipping_type == :none

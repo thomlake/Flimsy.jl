@@ -49,7 +49,8 @@ export sigmoid,
        affine,
        decat,
        concat,
-       gradnorm
+       gradnorm,
+       dropout
 
 export OperationError
 
@@ -77,9 +78,6 @@ function anygrads(types::DataType...)
     return false
 end
 
-export dropout!
-include("dropout.jl")
-
 include("ops/identity.jl")
 include("ops/tanh.jl")
 include("ops/sigmoid.jl")
@@ -103,3 +101,5 @@ include("ops/decat.jl")
 include("ops/concat.jl")
 include("ops/embed.jl")
 include("ops/gradnorm.jl")
+include("ops/dropout.jl")
+

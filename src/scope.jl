@@ -22,6 +22,8 @@ function push_callback!(scope::GradScope, cb::ReverseOperation)
     push!(scope.stack, cb)
 end
 
-istrain(scope) = false
+computing_grads() = false
 
-istrain(scope::GradScope) = true
+computing_grads(scope) = false
+
+computing_grads(scope::GradScope) = true

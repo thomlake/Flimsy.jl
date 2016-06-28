@@ -9,7 +9,7 @@ typealias FloatX Float32
 
 include("configure.jl")
 
-abstract Component{T}
+abstract Component
 abstract ReverseOperation
 
 # Distributions exports
@@ -22,7 +22,7 @@ export Component,
 
 export @flimsy_inbounds
 
-export @comp
+export @with
 
 export Variable,
        GradVariable,

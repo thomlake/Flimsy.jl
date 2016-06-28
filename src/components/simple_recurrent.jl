@@ -13,32 +13,32 @@ Implements the hidden layer of a Simple Recurrent Neural Network (aka Elman Netw
 * `w::Variable` Input to hidden weights.
 * `u::Variable` Hidden to hidden weights.
 * `b::Variable` Hidden bias.
-* `h0::Variable` Initial state.
+* `h::Variable` Initial state.
 """
-immutable SimpleRecurrent{F<:Activation,V<:Variable} <: RecurrentComponent1{V}
+immutable SimpleRecurrent{F<:Activation} <: RecurrentComponent1
     f::F
-    w::V
-    u::V
-    b::V
-    h0::V
-    function SimpleRecurrent(f::F, w::V, u::V, b::V, h0::V)
+    w::GradVariable
+    u::GradVariable
+    b::GradVariable
+    h::GradVariable
+    function SimpleRecurrent(f::F, w, u, b, h)
         m, n = size(w)
         size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
         size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
-        size(h0) == (m, 1) || throw(DimensionMismatch("Bad size(h0) == $(size(h0)) != ($m, 1)"))
-        return new(f, w, u, b, h0)
+        size(h) == (m, 1) || throw(DimensionMismatch("Bad size(h) == $(size(h)) != ($m, 1)"))
+        return new(f, w, u, b, h)
     end
 end
 
-SimpleRecurrent{F<:Activation,V<:Variable}(f::F, w::V, u::V, b::V, h0::V) = SimpleRecurrent{F,V}(f, w, u, b, h0)
+SimpleRecurrent{F<:Activation}(f::F, w, u, b, h) = SimpleRecurrent{F}(f, w, u, b, h)
 
-@comp initial_state(params::SimpleRecurrent) = params.h0
+initial_state(params::SimpleRecurrent) = params.h
 
-@comp Base.step(p::SimpleRecurrent, x, htm1) = p.f(plus(linear(p.w, x), linear(p.u, htm1), p.b))
+Base.step(scope::Scope, p::SimpleRecurrent, x::Variable, h::Variable=initial_state(p)) = @with scope begin
+    activate(p.f, plus(linear(p.w, x), linear(p.u, h), p.b))
+end
 
-@comp Base.step(p::SimpleRecurrent, x) = step(p, x, initial_state(p))
-
-@comp function unfold(p::SimpleRecurrent, x::Vector)
+unfold(scope::Scope, p::SimpleRecurrent, x::Vector) = @with scope begin
     h = Sequence(length(x))
     h[1] = step(p, x[1])
     for t = 2:length(x)
@@ -47,9 +47,9 @@ SimpleRecurrent{F<:Activation,V<:Variable}(f::F, w::V, u::V, b::V, h0::V) = Simp
     return h
 end
 
-@comp function unfold(p::SimpleRecurrent, x::Vector, h0::Variable)
-    h = Sequence(eltype(p), length(x))
-    h[1] = step(p, x[1], h0)
+unfold(scope::Scope, p::SimpleRecurrent, x::Vector, h_init::Variable) = @with scope begin
+    h = Sequence(length(x))
+    h[1] = step(p, x[1], h_prev)
     for t = 2:length(x)
         h[t] = step(p, x[t], h[t-1])
     end 

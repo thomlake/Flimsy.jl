@@ -1,11 +1,11 @@
 
-function Base.convert{V<:Variable}(::Type{Vector}, params::Component{V})
-    param_vector = V[]
+function Base.convert(::Type{Vector}, params::Component)
+    param_vector = GradVariable[]
     for f in fieldnames(params)
         T = fieldtype(typeof(params), f)
-        if T <: Variable
+        if T <: GradVariable
             push!(param_vector, getfield(params, f))
-        elseif T <: AbstractArray && eltype(T) <: Variable
+        elseif T <: AbstractArray && eltype(T) <: GradVariable
             append!(param_vector, getfield(params, f)[:])
         elseif T <: Component
             append!(param_vector, convert(Vector, getfield(params, f)))

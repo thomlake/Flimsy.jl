@@ -5,8 +5,8 @@ facts("categorical_cross_entropy_with_scores") do
     K = 4
     context("$(K)x1") do
         for k = 1:K
-            params = Runtime(ValueComponent(value=randn(K, 1)))
-            @comp cost(params::ValueComponent, target) = Cost.categorical_cross_entropy_with_scores(params.value, target)
+            params = ValueComponent(value=randn(K, 1))
+            cost = (scope, params, target) -> @with scope Cost.categorical_cross_entropy_with_scores(params.value, target)
             @fact check_gradients(cost, params, k; verbose=false) --> true
         end
     end
@@ -14,8 +14,8 @@ facts("categorical_cross_entropy_with_scores") do
     n = 7
     context("$(K)x$(n)") do
         targets = rand(1:K, n)
-        params = Runtime(ValueComponent(value=randn(K, n)))
-        @comp cost(params::ValueComponent, target) = Cost.categorical_cross_entropy_with_scores(params.value, target)
+        params = ValueComponent(value=randn(K, n))
+        cost = (scope, params, target) -> @with scope Cost.categorical_cross_entropy_with_scores(params.value, target)
         @fact check_gradients(cost, params, targets; verbose=false) --> true
     end
 end

@@ -3,33 +3,33 @@ abstract Activation
 
 immutable Sigmoid <: Activation end
 Base.string(f::Sigmoid) = "Sigmoid"
-call(f::Sigmoid, x) = sigmoid(x)
-call(f::Sigmoid, scope::Scope, x) = sigmoid(scope, x)
+activate(f::Sigmoid, x) = sigmoid(x)
+activate(scope::Scope, f::Sigmoid, x) = sigmoid(scope, x)
 
 immutable Tanh <: Activation end
 Base.string(f::Tanh) = "Tanh"
-call(f::Tanh, x) = tanh(x)
-call(f::Tanh, scope::Scope, x) = tanh(scope, x)
+activate(f::Tanh, x) = tanh(x)
+activate(scope::Scope, f::Tanh, x) = tanh(scope, x)
 
 immutable Relu <: Activation end
 Base.string(f::Relu) = "Relu"
-call(f::Relu, x) = relu(x)
-call(f::Relu, scope::Scope, x) = relu(scope, x)
+activate(f::Relu, x) = relu(x)
+activate(scope::Scope, f::Relu, x) = relu(scope, x)
 
 immutable Wta <: Activation end
 Base.string(f::Wta) = "Wta"
-call(f::Wta, x) = wta(x)
-call(f::Wta, scope::Scope, x) = wta(scope, x)
+activate(f::Wta, x) = wta(x)
+activate(scope::Scope, f::Wta, x) = wta(scope, x)
 
 immutable Softmax <: Activation end
 Base.string(f::Softmax) = "Softmax"
-call(f::Softmax, x) = softmax(x)
-call(f::Softmax, scope::Scope, x) = softmax(scope, x)
+activate(f::Softmax, x) = softmax(x)
+activate(scope::Scope, f::Softmax, x) = softmax(scope, x)
 
 immutable Identity <: Activation end
 Base.string(f::Identity) = "Identity"
-call(f::Identity, x) = x
-call(f::Identity, scope::Scope, x) = x
+activate(f::Identity, x) = x
+activate(scope::Scope, f::Identity, x) = x
 
 const ACTIVATION_LOOKUP = Dict{ASCIIString,DataType}(
     "Sigmoid" => Sigmoid,

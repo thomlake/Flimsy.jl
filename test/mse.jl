@@ -11,8 +11,8 @@ facts("mse") do
             randn(m, n)
         end
 
-        params = Runtime(ValueComponent(value=randn(m, n)))
-        @comp cost(params::ValueComponent, target) = Cost.mse(params.value, target)
+        params = ValueComponent(value=randn(m, n))
+        cost = (scope, params, target) -> @with scope Cost.mse(params.value, target)
         @fact check_gradients(cost, params, target; verbose=false) --> true
     end
 end

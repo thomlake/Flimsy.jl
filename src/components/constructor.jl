@@ -13,7 +13,7 @@ function is_variable_array(T)
 end
 
 
-function call{T<:Component}(::Type{T}; kwargs...)#, kwargs::Dict{Symbol,V})
+function call{T<:Component}(::Type{T}; kwargs...)
     @assert length(kwargs) == length(fieldnames(T))
     kwdict = Dict(kwargs)
     args = []

@@ -61,8 +61,8 @@ facts("ctc_with_scores") do
         S = 5
         T = 20
         targets = rand(SYMBOLS, S)
-        params = Runtime(VectorComponent(values=[randn(LL, 1) for t = 1:T]))
-        @comp cost(params::VectorComponent, target) = Cost.ctc_with_scores(params.values, targets, BLANK)
+        params = VectorComponent(values=[randn(LL, 1) for t = 1:T])
+        cost = (scope, params, target) -> @with scope Cost.ctc_with_scores(params.values, targets, BLANK)
         @fact check_gradients(cost, params, targets; verbose=false) --> true
     end
 end

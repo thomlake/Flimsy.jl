@@ -1,12 +1,12 @@
 
-type ComponentParseError <: Exception
+type ParseError <: Exception
     msg::ASCIIString
 end
 
-Base.showerror(io::IO, e::ComponentParseError) = print(io, "Flimsy.ComponentParseError: ", e.msg)
+Base.showerror(io::IO, e::ParseError) = print(io, "Flimsy.ParseError: ", e.msg)
 
 """Array of function names that Flimsy should not backpropage through"""
-const DEFAULT_BLACKLIST = [
+const BLACKLIST = [
     # :Variable,
     :Array,
     :size,
@@ -68,71 +68,21 @@ const SUPPORTED_SYNTAX = [
 ]
 
 """
-Create a wrapper function from the signature of a component function
-to handle running, computing gradients, managing scope, and running gc.
+Recursively rewrite expr so all :call expression have scope as their first argument.
 
-Input:
+Example
 
-    f(c::Foo, x, y) 
+    insert_scope(:scope, :(foo(a, b, c)))
 
-Output:
+Result
 
-    function f{C<:Foo}(__rt__::Runtime{C}, x, y; grad::Bool=false, force_gc::Bool=false)
-        if force_gc || __rt__.step == __rt__.freq
-            gc()
-            __rt__.step = 0
-        else
-            __rt__.step += 1
-        end
-        result = f(grad ? __rt__.gradscope : __rt__.datascope, __rt__.component, x, y)
-        grad && backprop!(__rt__.gradscope)
-        return result
-    end
-"""
-function wrapped_component_function(signature::Expr)
-    name = signature.args[1]
-    arg1 = signature.args[2]
-    arg1.head == :(::) || error("expected name::Type but got $arg1")
-    component_type = arg1.args[2]
-    # TODO: Figure out how to check if component_type is actuall a subtype of Component
-    # eval(component_type) <: Component || error("first arg must be subtype of Component")
-    rt_signature = :($name{C<:$component_type}(__rt__::Runtime{C}, $(signature.args[3:end]...); grad::Bool=false, force_gc::Bool=false))
-    call_args = [isa(a, Symbol) ? a : a.args[1] for a in signature.args[3:end]]
-    rt_body = quote
-        if force_gc || __rt__.step == __rt__.freq
-            gc()
-            __rt__.step = 0
-        else
-            __rt__.step += 1
-        end
-        result = $name(grad ? __rt__.gradscope : __rt__.datascope, __rt__.component, $(call_args...))
-        grad && backprop!(__rt__.gradscope)
-        return result
-    end
-    return Expr(:(=), rt_signature, rt_body)
-end
+    foo(a, b, c) 
+    == Expr(:call, :foo, :a, :b, :c)
+    -> Expr(:call, :foo, scope, :a, :b, :c) 
+    == foo(scope, a, b, c)
 
 """
-Add a Scope type as the first argument in a function signature.
-
-    f(x, y) => f(__scope__::Scope, x, y)
-"""
-function signature_with_scope(signature::Expr)
-    new_signature = deepcopy(signature)
-    insert!(new_signature.args, 2, Expr(:(::), :__scope__, :Scope))
-    return new_signature
-end
-
-"""
-Recursively rewrite expr so all non-blacklisted 
-:call expression have __scope___ as their first argument.
-
-For example, the following statment is tranformed as follows
-    foo(a, b, c) ==  Expr(:call, :foo, :a, :b, :c)
-                 =>  Expr(:call, :foo, __scope__, :a, :b, :c)
-                 ==  foo(__scope__, a, b, c)
-"""
-function insert_scope(expr::Expr, blacklist::Vector)
+function insert_scope(scope::Symbol, expr::Expr)
     head = expr.head
     args = expr.args
     newargs = Any[]
@@ -140,58 +90,20 @@ function insert_scope(expr::Expr, blacklist::Vector)
     # Special cases: line numbers and directives
     if head == :line
         return expr, blacklist
-    elseif head == :macrocall && args[1] == symbol("@blacklist")
-        if all(a -> isa(a, Symbol), args[2:end])
-            return nothing, [blacklist..., args[2:end]...]
-        else
-            throw(ComponentParseError("Malformed @blacklist directive: $args"))
-        end
     end
 
     if head == :call
-        if !in(args[1], blacklist)
+        if !in(args[1], BLACKLIST)
             push!(newargs, shift!(args))
-            push!(newargs, :__scope__)
+            push!(newargs, scope)
         end
-    elseif in(head, blacklist)
-        pass
     elseif !in(head, SUPPORTED_SYNTAX)
-        throw(ComponentParseError("Unsupported Expr: ($head, $args)"))
-    end
-    
-    inner_blacklist = deepcopy(blacklist)
-
-    for arg in args
-        if typeof(arg) <: Expr
-            newarg, inner_blacklist = insert_scope(arg, inner_blacklist)
-            if newarg != nothing
-                push!(newargs, newarg)
-            end
-        else
-            push!(newargs, arg)
-        end
-    end
-    return Expr(head, newargs...), blacklist
-end
-
-function remove_directives(expr::Expr)
-    head = expr.head
-    args = expr.args
-    newargs = Any[]
-
-    if head == :macrocall && expr.args[1] == symbol("@blacklist")
-        return nothing
-    elseif head == :macrocall && args[1] == symbol("@similar_variable_type")
-        if length(args) == 3 && isa(args[2], Symbol) && isa(args[3], Symbol)
-            return :($(args[2]) = DataVariable{eltype($(args[3]))})
-        else
-            throw(ComponentParseError("Malformed @vartype directive: $args"))
-        end
+        throw(ParseError("Unsupported Expr: ($head, $args)"))
     end
 
     for arg in args
         if typeof(arg) <: Expr
-            newarg = remove_directives(arg)
+            newarg = insert_scope(scope, arg)
             if newarg != nothing
                 push!(newargs, newarg)
             end
@@ -202,25 +114,7 @@ function remove_directives(expr::Expr)
     return Expr(head, newargs...)
 end
 
-
-function create_component_functions(f::Expr)
-    f.head == :(=) || f.head == :function || throw(ComponentParseError("expected = or function but got $(f.head)"))
-    ok = length(f.args) == 2 && f.args[1].head == :call && f.args[2].head == :block
-    if !ok 
-        throw(ComponentParseError("expected :call or :block but got $(map(x->x.head, f.args))"))
-    end
-
-    signature = f.args[1]
-    body = f.args[2]
-
-    new_signature = signature_with_scope(signature)
-    new_body, _ = insert_scope(body, DEFAULT_BLACKLIST)
-    f1 = Expr(f.head, new_signature, new_body)
-    f2 = wrapped_component_function(signature)
-    return Expr(:block, f1, f2)
-end
-
-macro comp(x::Expr)
-    y = create_component_functions(x)
-    return esc(y)
+macro with(scope::Symbol, body::Expr)
+    body = insert_scope(scope, body)
+    return esc(body)
 end

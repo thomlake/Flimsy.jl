@@ -62,7 +62,7 @@ function check_gradients(f::Function, param::Variable, name; eps::AbstractFloat=
                 if abs(dxij - param.grad[i,j]) > atol
                     errmsg = "Finite difference gradient check failed!"
                     errelm = "  name => $name, index => ($i, $j), ratio => $(dxij / param.grad[i,j])"
-                    errdsc = "  |$(dxij) - $(param.grad[i,j])| > $tol"
+                    errdsc = "  |$(dxij) - $(param.grad[i,j])| > $atol"
                     if throwerr
                         error("$errmsg\n$errelm\n$errdsc")
                     else

@@ -19,8 +19,6 @@ function Base.convert(::Type{Vector}, params::Component)
     return param_vector
 end
 
-Base.convert(::Type{Vector}, runtime::Runtime) = convert(Vector, runtime.component)
-
 function Base.convert{C<:Component}(::Type{Dict}, params::C, prefix::ASCIIString="")
     if length(prefix) > 0
         prefix = string(prefix, ".")
@@ -28,10 +26,10 @@ function Base.convert{C<:Component}(::Type{Dict}, params::C, prefix::ASCIIString
     param_dict = Dict{ASCIIString,Any}()
     for name in fieldnames(params)
         T = fieldtype(typeof(params), name)
-        if T <: Variable
+        if T <: GradVariable
             key = string(prefix, name)
             param_dict[key] = getfield(params, name)
-        elseif T <: AbstractArray && eltype(T) <: Variable
+        elseif T <: AbstractArray && eltype(T) <: GradVariable
             key = string(prefix, name)
             param_dict[key] = getfield(params, name)
         elseif T <: Component
@@ -45,5 +43,3 @@ function Base.convert{C<:Component}(::Type{Dict}, params::C, prefix::ASCIIString
     end
     return param_dict
 end
-
-Base.convert(::Type{Dict}, runtime::Runtime) = convert(Dict, runtime.component)

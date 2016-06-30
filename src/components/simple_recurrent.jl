@@ -20,91 +20,85 @@ immutable SimpleRecurrent{F<:Activation} <: RecurrentComponent1
     w::GradVariable
     u::GradVariable
     b::GradVariable
-    h::GradVariable
-    function SimpleRecurrent(f::F, w, u, b, h)
+    h_init::GradVariable
+    function SimpleRecurrent(f::F, w::GradVariable, u::GradVariable, b::GradVariable, h_init::GradVariable)
         m, n = size(w)
         size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
         size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
-        size(h) == (m, 1) || throw(DimensionMismatch("Bad size(h) == $(size(h)) != ($m, 1)"))
-        return new(f, w, u, b, h)
+        size(h_init) == (m, 1) || throw(DimensionMismatch("Bad size(h_init) == $(size(h_init)) != ($m, 1)"))
+        return new(f, w, u, b, h_init)
     end
 end
 
 SimpleRecurrent{F<:Activation}(f::F, w, u, b, h) = SimpleRecurrent{F}(f, w, u, b, h)
 
-initial_state(params::SimpleRecurrent) = params.h
+initial_state(scope::Scope, params::SimpleRecurrent) = params.h_init
 
-Base.step(scope::Scope, p::SimpleRecurrent, x::Variable, h::Variable=initial_state(p)) = @with scope begin
+Base.step(scope::Scope, p::SimpleRecurrent, x, h) = @with scope begin
     activate(p.f, plus(linear(p.w, x), linear(p.u, h), p.b))
 end
 
-unfold(scope::Scope, p::SimpleRecurrent, x::Vector) = @with scope begin
-    h = Sequence(length(x))
-    h[1] = step(p, x[1])
-    for t = 2:length(x)
-        h[t] = step(p, x[t], h[t-1])
-    end 
-    return h
+Base.step(scope::Scope, p::SimpleRecurrent, x) = @with scope step(p, x, initial_state(p))
+
+function unfold(scope::Scope, p::SimpleRecurrent, x::Vector, h_init::Variable) 
+    @with scope begin
+        h = Sequence(length(x))
+        h[1] = step(p, x[1], h_init)
+        for t = 2:length(x)
+            h[t] = step(p, x[t], h[t-1])
+        end 
+        return h
+    end
 end
 
-unfold(scope::Scope, p::SimpleRecurrent, x::Vector, h_init::Variable) = @with scope begin
-    h = Sequence(length(x))
-    h[1] = step(p, x[1], h_prev)
-    for t = 2:length(x)
-        h[t] = step(p, x[t], h[t-1])
-    end 
-    return h
-end
+unfold(scope::Scope, p::SimpleRecurrent, x::Vector) = @with scope unfold(p, x, initial_state(p))
 
 
 """
 SimpleRecurrent component with normalized hidden unit gradients.
 By default gradients are normalized to 1/timesteps.
 """
-immutable SimpleRecurrentGradNorm{F<:Activation,V<:Variable} <: RecurrentComponent1{V}
+immutable SimpleRecurrentGradNorm{F<:Activation} <: RecurrentComponent1
     f::F
-    w::V
-    u::V
-    b::V
-    h0::V
-    function SimpleRecurrentGradNorm(f::F, w::V, u::V, b::V, h0::V)
+    w::GradVariable
+    u::GradVariable
+    b::GradVariable
+    h_init::GradVariable
+    function SimpleRecurrentGradNorm(f::F, w::GradVariable, u::GradVariable, b::GradVariable, h_init::GradVariable)
         m, n = size(w)
         size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
         size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
-        size(h0) == (m, 1) || throw(DimensionMismatch("Bad size(h0) == $(size(h0)) != ($m, 1)"))
-        return new(f, w, u, b, h0)
+        size(h_init) == (m, 1) || throw(DimensionMismatch("Bad size(h_init) == $(size(h_init)) != ($m, 1)"))
+        return new(f, w, u, b, h_init)
     end
 end
 
-SimpleRecurrentGradNorm{F<:Activation,V<:Variable}(f::F, w::V, u::V, b::V, h0::V) = SimpleRecurrentGradNorm{F,V}(f, w, u, b, h0)
+SimpleRecurrentGradNorm{F<:Activation}(f::F, w::GradVariable, u::GradVariable, b::GradVariable, h_init::GradVariable) = SimpleRecurrentGradNorm{F}(f, w, u, b, h_init)
 
-@comp initial_state(params::SimpleRecurrentGradNorm) = params.h0
+initial_state(scope::Scope, p::SimpleRecurrentGradNorm) = p.h_init
 
-@comp function Base.step(params::SimpleRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
-    h_pre = plus(linear(params.w, x), linear(params.u, htm1), params.b)
-    gradnorm(h_pre, gn)
-    return params.f(h_pre)
-end
-
-@comp Base.step(params::SimpleRecurrentGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, initial_state(params), gn)
-
-@comp function unfold(params::SimpleRecurrentGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
-    h = Sequence(length(x))
-    h[1] = step(params, x[1], gn)
-    for t = 2:length(x)
-        h[t] = step(params, x[t], h[t-1], gn)
+function Base.step(scope, p::SimpleRecurrentGradNorm, x, h, gn::AbstractFloat=1.0)
+    @with scope begin
+        h = activate(p.f, plus(linear(p.w, x), linear(p.u, h), p.b))
+        gradnorm(h, gn)
+        return h
     end
-    return h
 end
 
-@comp function unfold(p::SimpleRecurrent, x::Vector, h0::Variable)
-    h = Sequence(length(x))
-    h[1] = step(p, x[1], h0, gn)
-    for t = 2:length(x)
-        h[t] = step(p, x[t], h[t-1])
-    end 
-    return h
+Base.step(scope::Scope, p::SimpleRecurrentGradNorm, x, gn::AbstractFloat=1.0) = @with scope step(p, x, initial_state(p), gn)
+
+function unfold(scope::Scope, p::SimpleRecurrentGradNorm, x::Vector, h_init::Variable, gn::AbstractFloat=inv(length(x)))
+    @with scope begin
+        h = Sequence(length(x))
+        h[1] = step(p, x[1], h_init, gn)
+        for t = 2:length(x)
+            h[t] = step(p, x[t], h[t-1], gn)
+        end
+        return h
+    end
 end
+
+unfold(scope::Scope, p::SimpleRecurrentGradNorm, x::Vector, gn::AbstractFloat=inv(length(x))) = @with scope unfold(p, x, initial_state(p), gn)
 
 
 """
@@ -114,12 +108,11 @@ function SimpleRecurrent(m::Int, n::Int; normed::Bool=false, f::Activation=Tanh(
     w = orthonormal(tanh, m, n)
     u = orthonormal(tanh, m, m)
     b = zeros(m, 1)
-    h0 = zeros(m, 1)
+    h_init = zeros(m, 1)
 
     if normed
-        return SimpleRecurrentGradNorm(f=f, w=w, u=u, b=b, h0=h0)
+        return SimpleRecurrentGradNorm(f=f, w=w, u=u, b=b, h_init=h_init)
     else
-        return SimpleRecurrent(f=f, w=w, u=u, b=b, h0=h0)
+        return SimpleRecurrent(f=f, w=w, u=u, b=b, h_init=h_init)
     end
 end
-

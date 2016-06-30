@@ -55,6 +55,10 @@ const SUPPORTED_SYNTAX = [
     :(:),
     :(=>),
     :(.),
+    :+=,
+    :-=,
+    :*=,
+    :/=,
     :quote,
     :ref,
     :comparison,
@@ -89,7 +93,7 @@ function insert_scope(scope::Symbol, expr::Expr)
 
     # Special cases: line numbers and directives
     if head == :line
-        return expr, blacklist
+        return expr
     end
 
     if head == :call

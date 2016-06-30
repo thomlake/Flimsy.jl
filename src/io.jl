@@ -1,10 +1,10 @@
 
-type ComponentIoError <: Exception
+type IOError <: Exception
     info::ASCIIString
     msg::ASCIIString
 end
 
-Base.showerror(io::IO, e::ComponentIoError) = print(io, "ComponentIoError(", e.info, "): ", e.msg)
+Base.showerror(io::IO, e::IOError) = print(io, "IOError(", e.info, "): ", e.msg)
 
 # ----------------- #
 # Component Reading #
@@ -146,5 +146,3 @@ function save{C<:Component}(fname::AbstractString, params::C)
         save(f, params)
     end
 end
-
-save(file, runtime::Runtime) = save(file, runtime.component)

@@ -52,7 +52,8 @@ export Activation,
        Relu,
        Wta,
        Softmax,
-       Identity
+       Identity,
+       activate
 
 export glorot,
        orthonormal,
@@ -80,7 +81,7 @@ export Components
 
 export Patience
 
-export ShuffledIter
+# export shuffled
 
 include("flimsy_macros.jl")
 include("component_macro.jl")
@@ -92,7 +93,7 @@ include("ops.jl")
 include("activation.jl")
 include("initialization.jl")
 include("gradient_noise.jl")
-include("runtime.jl")
+# include("runtime.jl")
 include("conversion.jl")
 include("check_gradients.jl")
 include("ctc.jl")
@@ -103,6 +104,6 @@ include("extras/extras.jl")
 include("progress.jl")
 include("io.jl")
 include("inplace.jl")
-include("shufflediter.jl")
+# include("shufflediter.jl")
 
 end

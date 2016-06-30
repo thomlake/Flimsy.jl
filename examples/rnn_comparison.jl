@@ -15,18 +15,20 @@ Sequence Tagger Params
     h[t] = g(x[t], h[t-1]) : Recurrent Hidden Layer
     y[t] = f(h[t])         : Classifier
 """
-immutable Params{V<:Variable} <: Component{V}
-    clf::SoftmaxRegression{V}
-    rnn::RecurrentComponent{V}
+immutable Params{R<:RecurrentComponent} <: Component
+    clf::SoftmaxRegression
+    rnn::R
 end
-Params{V}(clf::SoftmaxRegression{V}, rnn::RecurrentComponent{V}) = Params{V}(clf, rnn)
+# Params{V}(clf::SoftmaxRegression{V}, rnn::RecurrentComponent{V}) = Params{V}(clf, rnn)
 
-@comp predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
+predict(scope::Scope, params::Params, xs::Vector) = @with scope [predict(params.clf, h) for h in unfold(params.rnn, xs)]
 
-@comp function cost(params::Params, xs::Vector, ys::Vector)
+function cost(scope::Scope, params::Params, xs::Vector, ys::Vector)
     nll = 0.0
-    for (h, y) in zip(unfold(params.rnn, xs), ys)
-        nll += cost(params.clf, h, y)
+    @with scope begin
+        for (h, y) in zip(unfold(params.rnn, xs), ys)
+            nll += cost(params.clf, h, y)
+        end
     end
     return nll
 end
@@ -42,9 +44,9 @@ function check()
     n_out, n_hid, n_in = 2, 5, 2
     x, y = rand(Synthetic.XORTask(20))
     for R in recurrent_layer_types
-        params = Runtime(Params(R, n_out, n_hid, n_in))
+        params = Params(R, n_out, n_hid, n_in)
         println(R.name)
-        println(params.component)
+        println(params)
         check_gradients(cost, params, x, y)
     end
 end
@@ -101,10 +103,11 @@ function main()
     println("  max seq length   => ", max_len_test)
 
     for R in recurrent_layer_types
-        params = Runtime(Params(R, n_out, n_hid, n_in))
+        ds, gs = DataScope(), GradScope()
+        params = Params(R, n_out, n_hid, n_in)
         opt = optimizer(GradientDescent, params, learning_rate=0.1, clip=1.0, clipping_type=:scale)
         n_params = sum(map(x -> prod(size(x)), convert(Vector, params)))
-        println("[", typeof(params.component.rnn).name, "]")
+        println("[", typeof(params.rnn).name, "]")
         indices = collect(1:n_train)
         max_epochs, n_epochs = 200, 0
         start_time = time()
@@ -114,12 +117,13 @@ function main()
             nll = 0.0
             for i in indices
                 x, y = data_train[i]
-                nll += cost(params, x, y; grad=true)
+                nll += cost(gs, params, x, y)
+                backprop!(gs)
                 update!(opt)
             end
             errors = 0
             for (x, y) in data_valid
-                errors += count_errors(predict(params, x), y)
+                errors += count_errors(predict(ds, params, x), y)
             end
             errors == 0 && break
         end
@@ -127,7 +131,7 @@ function main()
         stop_time = time()
         errors = 0
         for (x, y) in data_test
-            errors += count_errors(predict(params, x), y)
+            errors += count_errors(predict(ds, params, x), y)
         end
 
         println("  wall time              => ", stop_time - start_time)

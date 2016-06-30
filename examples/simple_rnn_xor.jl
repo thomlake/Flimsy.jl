@@ -6,18 +6,20 @@ using Flimsy.Components
 import Flimsy.Components: cost, predict
 
 
-immutable Params{F<:Activation,V<:Variable} <: Component{V}
-    clf::SoftmaxRegression{V}
-    rnn::SimpleRecurrent{F,V}
+immutable Params{F<:Activation} <: Component
+    clf::SoftmaxRegression
+    rnn::SimpleRecurrent{F}
 end
 
-@comp predict(params::Params, xs::Vector) = [predict(params.clf, h) for h in unfold(params.rnn, xs)]
+predict(scope::Scope, params::Params, xs::Vector) = @with scope [predict(params.clf, h) for h in unfold(params.rnn, xs)]
 
-@comp function cost(params::Params, xs::Vector, ys::Vector)
+function cost(scope::Scope, params::Params, xs::Vector, ys::Vector)
     nll = 0.0
-    hs = unfold(params.rnn, xs)
-    for (h, y) in zip(hs, ys)
-        nll += cost(params.clf, h, y)
+    @with scope begin
+        hs = unfold(params.rnn, xs)
+        for (h, y) in zip(hs, ys)
+            nll += cost(params.clf, h, y)
+        end
     end
     return nll
 end
@@ -32,14 +34,14 @@ Params(n_out::Int, n_hid::Int, n_in::Int) = Params(
         w=rand(Normal(0, 0.01), n_hid, n_in),
         u=orthonormal(1, n_hid, n_hid),
         b=zeros(n_hid, 1),
-        h0=zeros(n_hid, 1),
+        h_init=zeros(n_hid, 1),
     )
 )
 
 function check()
     n_out, n_hid, n_in = 2, 10, 2
     x, y = rand(Synthetic.XORTask(20))
-    params = Runtime(Params(n_out, n_hid, n_in))
+    params = Params(n_out, n_hid, n_in)
     println(params)
     check_gradients(cost, params, x, y)
 end
@@ -56,18 +58,22 @@ function sequence_error_count(y_pred, y_true)
 end
 
 function main()
-    srand(1235)
+    srand(123)
     max_epochs = 500
     converged = false
     n_epochs = 0
     print_freq = 10
     n_out, n_hid, n_in = 2, 7, 2
-    n_train = 20
-    xortask = Synthetic.XORTask(20)
-    dset = rand(xortask, n_train)
+    n_train = 50
+    n_test = 20
+    xor_dist_train = Synthetic.XORTask(5:20)
+    xor_dist_test = Synthetic.XORTask(100:200)
+    train_data = rand(xor_dist_train, n_train)
+    test_data = rand(xor_dist_test, n_train)
     indices = collect(1:n_train)
 
-    params = Runtime(Params(n_out, n_hid, n_in))
+    dscope, gscope = DataScope(), GradScope()
+    params = Params(n_out, n_hid, n_in)
     opt = optimizer(GradientDescent, params, learning_rate=0.1, clip=1.0, clipping_type=:scale)
 
     start_time = time()
@@ -76,14 +82,15 @@ function main()
         shuffle!(indices)
         nll = 0.0
         for i in indices
-            x, y = dset[i]
-            nll += cost(params, x, y; grad=true)
+            x, y = train_data[i]
+            nll += cost(gscope, params, x, y)
+            backprop!(gscope)
             update!(opt)
         end
         if n_epochs % print_freq == 0
             errors = 0
-            for (x, y) in dset
-                errors += sequence_error_count(predict(params, x), y)
+            for (x, y) in train_data
+                errors += sequence_error_count(predict(dscope, params, x), y)
             end
             println(n_epochs, ": nll => ", round(nll, 2), ", errors => ", errors)
             if errors < 1 
@@ -93,7 +100,12 @@ function main()
         end
     end
     stop_time = time()
+    errors = 0
+    for (x, y) in test_data
+        errors += sequence_error_count(predict(dscope, params, x), y)
+    end
     println("converged => ", converged)
+    println("avg test error per sequence => ", errors / n_test)
     println("ran ", n_epochs, " epochs in ", round(stop_time - start_time, 2), " seconds")
 end
 

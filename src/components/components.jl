@@ -30,6 +30,7 @@ export LinearModel,
        FeedForward,
        Fusion,
        SimpleRecurrent,
+       SimpleRecurrentGradNorm,
        GatedRecurrent,
        Lstm
 
@@ -44,8 +45,8 @@ include("linear_model.jl")
 # include("ctc_output.jl")
 # include("feedforward.jl")
 # include("fusion.jl")
-# include("simple_recurrent.jl")
-# include("gated_recurrent.jl")
-# include("lstm.jl")
+include("simple_recurrent.jl")
+include("gated_recurrent.jl")
+include("lstm.jl")
 
 end

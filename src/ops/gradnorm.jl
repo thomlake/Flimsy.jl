@@ -12,9 +12,9 @@ function call(rop::ReverseGradNorm)
         for i = 1:size(dx, 1)
             ss += abs2(dx[i,j])
         end
-        rss = sqrt(ss)
+        c = s / sqrt(ss)
         for i = 1:size(dx, 1)
-            dx[i,j] /= rss
+            dx[i,j] *= c
         end
     end
     return nothing

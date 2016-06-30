@@ -1,10 +1,10 @@
 
-immutable Lstm{V<:Variable} <: RecurrentComponent2{V}
-    wi::V; wf::V; wc::V; wo::V;
-    ui::V; uf::V; uc::V; uo::V;
-    bi::V; bf::V; bc::V; bo::V;
-    h0::V; c0::V
-    function Lstm(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, bi::V, bf::V, bc::V, bo::V, h0::V, c0::V)
+immutable Lstm <: RecurrentComponent2
+    wi::GradVariable; wf::GradVariable; wc::GradVariable; wo::GradVariable;
+    ui::GradVariable; uf::GradVariable; uc::GradVariable; uo::GradVariable;
+    bi::GradVariable; bf::GradVariable; bc::GradVariable; bo::GradVariable;
+    h_init::GradVariable; c_init::GradVariable;
+    function Lstm(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h_init, c_init)
         m, n = size(wi)
         size(wf) == (m, n) || error("Bad size(wf) == $(size(wf)) != ($m, $n)")
         size(wc) == (m, n) || error("Bad size(wc) == $(size(wc)) != ($m, $n)")
@@ -20,35 +20,37 @@ immutable Lstm{V<:Variable} <: RecurrentComponent2{V}
         size(bc) == (m, 1) || error("Bad size(bc) == $(size(bc)) != ($m, 1)")
         size(bo) == (m, 1) || error("Bad size(bo) == $(size(bo)) != ($m, 1)")
         
-        size(h0) == (m, 1) || error("Bad size(h0) == $(size(h0)) != ($m, 1)")
-        size(c0) == (m, 1) || error("Bad size(c0) == $(size(c0)) != ($m, 1)")
+        size(h_init) == (m, 1) || error("Bad size(h_init) == $(size(h_init)) != ($m, 1)")
+        size(c_init) == (m, 1) || error("Bad size(c_init) == $(size(c_init)) != ($m, 1)")
 
-        return new(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h0, c0)
+        return new(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h_init, c_init)
     end
 end
 
-Lstm{V<:Variable}(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, bi::V, bf::V, bc::V, bo::V, h0::V, c0::V) = 
-    Lstm{V}(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h0, c0)
+initial_state(scope::Scope, params::Lstm) = (params.h_init, params.c_init)
 
-@comp initial_state(params::Lstm) = (params.h0, params.c0)
-
-@comp function Base.step(params::Lstm, x, state)
+function Base.step(scope::Scope, params::Lstm, x, state)
     htm1, ctm1 = state
-    i = sigmoid(plus(linear(params.wi, x), linear(params.ui, htm1), params.bi))
-    f = sigmoid(plus(linear(params.wf, x), linear(params.uf, htm1), params.bf))
-    o = sigmoid(plus(linear(params.wo, x), linear(params.uo, htm1), params.bo))
-    c = tanh(plus(linear(params.wc, x), linear(params.uc, htm1), params.bc))
-    ct = plus(mult(i, c), mult(f, ctm1))
-    return (mult(o, tanh(ct)), ct)
+    @with scope begin
+        i = sigmoid(plus(linear(params.wi, x), linear(params.ui, htm1), params.bi))
+        f = sigmoid(plus(linear(params.wf, x), linear(params.uf, htm1), params.bf))
+        o = sigmoid(plus(linear(params.wo, x), linear(params.uo, htm1), params.bo))
+        c = tanh(plus(linear(params.wc, x), linear(params.uc, htm1), params.bc))
+        ct = plus(mult(i, c), mult(f, ctm1))
+        ht = mult(o, tanh(ct))
+    end
+    return (ht, ct)
 end
 
-@comp Base.step(params::Lstm, x) = step(params, x, initial_state(params))
+Base.step(scope::Scope, params::Lstm, x) = @with scope step(params, x, initial_state(params))
 
-@comp function unfold(params::Lstm, x::Vector)
-    h = Sequence(length(x))
-    h[1], c = step(params, x[1])
-    for t = 2:length(x)
-        h[t], c = step(params, x[t], (h[t-1], c))
+function unfold(scope::Scope, params::Lstm, x::Vector)
+    @with scope begin
+        h = Sequence(length(x))
+        h[1], c = step(params, x[1])
+        for t = 2:length(x)
+            h[t], c = step(params, x[t], (h[t-1], c))
+        end
     end
     return h
 end
@@ -57,12 +59,12 @@ end
 Lstm Component with normalized hidden unit gradients.
 By default gradients are normalized to 1/timesteps.
 """
-immutable LstmGradNorm{V<:Variable} <: RecurrentComponent2{V}
-    wi::V; wf::V; wc::V; wo::V;
-    ui::V; uf::V; uc::V; uo::V;
-    bi::V; bf::V; bc::V; bo::V;
-    h0::V; c0::V
-    function LstmGradNorm(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, bi::V, bf::V, bc::V, bo::V, h0::V, c0::V)
+immutable LstmGradNorm <: RecurrentComponent2
+    wi::GradVariable; wf::GradVariable; wc::GradVariable; wo::GradVariable;
+    ui::GradVariable; uf::GradVariable; uc::GradVariable; uo::GradVariable;
+    bi::GradVariable; bf::GradVariable; bc::GradVariable; bo::GradVariable;
+    h_init::GradVariable; c_init::GradVariable;
+    function LstmGradNorm(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h_init, c_init)
         m, n = size(wi)
         size(wf) == (m, n) || error("Bad size(wf) == $(size(wf)) != ($m, $n)")
         size(wc) == (m, n) || error("Bad size(wc) == $(size(wc)) != ($m, $n)")
@@ -78,37 +80,41 @@ immutable LstmGradNorm{V<:Variable} <: RecurrentComponent2{V}
         size(bc) == (m, 1) || error("Bad size(bc) == $(size(bc)) != ($m, 1)")
         size(bo) == (m, 1) || error("Bad size(bo) == $(size(bo)) != ($m, 1)")
         
-        size(h0) == (m, 1) || error("Bad size(h0) == $(size(h0)) != ($m, 1)")
-        size(c0) == (m, 1) || error("Bad size(c0) == $(size(c0)) != ($m, 1)")
+        size(h_init) == (m, 1) || error("Bad size(h_init) == $(size(h_init)) != ($m, 1)")
+        size(c_init) == (m, 1) || error("Bad size(c_init) == $(size(c_init)) != ($m, 1)")
 
-        return new(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h0, c0)
+        return new(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h_init, c_init)
     end
 end
 
-LstmGradNorm{V<:Variable}(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, bi::V, bf::V, bc::V, bo::V, h0::V, c0::V) = 
-    LstmGradNorm{V}(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h0, c0)
+# LstmGradNorm{V<:Variable}(wi::V, wf::V, wc::V, wo::V, ui::V, uf::V, uc::V, uo::V, bi::V, bf::V, bc::V, bo::V, h0::V, c0::V) = 
+#     LstmGradNorm{V}(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h0, c0)
 
-@comp initial_state(params::LstmGradNorm) = (params.h0, params.c0)
+initial_state(scope::Scope, params::LstmGradNorm) = (params.h_init, params.c_init)
 
-@comp function Base.step(params::LstmGradNorm, x, state, gn::AbstractFloat=1.0)
+function Base.step(scope::Scope, params::LstmGradNorm, x, state, gn::AbstractFloat=1.0)
     htm1, ctm1 = state
-    i = sigmoid(plus(linear(params.wi, x), linear(params.ui, htm1), params.bi))
-    f = sigmoid(plus(linear(params.wf, x), linear(params.uf, htm1), params.bf))
-    o = sigmoid(plus(linear(params.wo, x), linear(params.uo, htm1), params.bo))
-    c = tanh(plus(linear(params.wc, x), linear(params.uc, htm1), params.bc))
-    ct = plus(mult(i, c), mult(f, ctm1))
-    gradnorm(ct, gn)
-    h = tanh(ct)
-    return (mult(o, h), ct)
+    @with scope begin
+        i = sigmoid(plus(linear(params.wi, x), linear(params.ui, htm1), params.bi))
+        f = sigmoid(plus(linear(params.wf, x), linear(params.uf, htm1), params.bf))
+        o = sigmoid(plus(linear(params.wo, x), linear(params.uo, htm1), params.bo))
+        c = tanh(plus(linear(params.wc, x), linear(params.uc, htm1), params.bc))
+        ct = plus(mult(i, c), mult(f, ctm1))
+        gradnorm(ct, gn)
+        ht = mult(o, tanh(ct))
+    end
+    return (ht, ct)
 end
 
-@comp Base.step(params::LstmGradNorm, x, gn::AbstractFloat=1.0) = step(params, x, initial_state(params), gn)
+Base.step(scope::Scope, params::LstmGradNorm, x, gn::AbstractFloat=1.0) = @with scope step(params, x, initial_state(params), gn)
 
-@comp function unfold(params::LstmGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
-    h = Sequence(length(x))
-    h[1], c = step(params, x[1], gn)
-    for t = 2:length(x)
-        h[t], c = step(params, x[t], (h[t-1], c), gn)
+function unfold(scope::Scope, params::LstmGradNorm, x::Vector, gn::AbstractFloat=inv(length(x)))
+    @with scope begin
+        h = Sequence(length(x))
+        h[1], c = step(params, x[1], gn)
+        for t = 2:length(x)
+            h[t], c = step(params, x[t], (h[t-1], c), gn)
+        end
     end
     return h
 end
@@ -117,24 +123,27 @@ end
 Convenience Constructor
 """
 function Lstm(m::Int, n::Int; normed::Bool=false)
-    dist = Normal(0, 0.01)
-    wi, wf, wc, wo = rand(dist, m, n), rand(dist, m, n), rand(dist, m, n), rand(dist, m, n)
+    # dist = Normal(0, 0.1)
+    # wi, wf, wc, wo = rand(dist, m, n), rand(dist, m, n), rand(dist, m, n), rand(dist, m, n)
+    wi, wf, wc, wo = orthonormal(m, n), orthonormal(m, n), orthonormal(m, n), orthonormal(m, n)
     ui, uf, uc, uo = orthonormal(m, m), orthonormal(m, m), orthonormal(m, m), orthonormal(m, m)
     bi, bf, bc, bo = zeros(m, 1), ones(m, 1), zeros(m, 1), zeros(m, 1)
-    h0, c0 = zeros(m, 1), zeros(m, 1)
+    h_init, c_init = zeros(m, 1), zeros(m, 1)
     if normed
         return LstmGradNorm(
             wi=wi, wf=wf, wc=wc, wo=wo, 
             ui=ui, uf=uf, uc=uc, uo=uo, 
             bi=bi, bf=bf, bc=bc, bo=bo,
-            h0=h0, c0=c0
+            h_init=h_init, 
+            c_init=c_init,
         )
     else
         return Lstm(
             wi=wi, wf=wf, wc=wc, wo=wo, 
             ui=ui, uf=uf, uc=uc, uo=uo, 
             bi=bi, bf=bf, bc=bc, bo=bo,
-            h0=h0, c0=c0
+            h_init=h_init, 
+            c_init=c_init,
         )
     end
 end

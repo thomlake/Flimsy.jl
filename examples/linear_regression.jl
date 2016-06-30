@@ -46,16 +46,17 @@ function main()
     opt = optimizer(GradientDescent, params, learning_rate=0.01 / n_samples)
 
     # Main training loop
-    ds = DataScope()
-    gs = GradScope()
+    ds, gs = DataScope(), GradScope()
 
     nll_prev, nll = Inf, -Inf
     n_epochs = 0
     start_time = time()
     while true
         n_epochs += 1
-        nll = cost(gs, params, Input(features), targets)
-        backprop!(gs)
+        @with gs begin
+            nll = cost(params, Input(features), targets)
+            backprop!()
+        end
         update!(opt)
         nll_prev - nll > 1e-6 || break
         nll_prev = nll

@@ -32,7 +32,8 @@ export LinearModel,
        SimpleRecurrent,
        SimpleRecurrentGradNorm,
        GatedRecurrent,
-       Lstm
+       Lstm,
+       Bidirectional
 
 abstract RecurrentComponent <: Component
 abstract RecurrentComponent1 <: RecurrentComponent
@@ -42,11 +43,12 @@ include("constructor.jl")
 include("common.jl")
 include("value_component.jl")
 include("linear_model.jl")
-# include("ctc_output.jl")
-# include("feedforward.jl")
+include("ctc_output.jl")
+include("feedforward.jl")
 # include("fusion.jl")
 include("simple_recurrent.jl")
 include("gated_recurrent.jl")
 include("lstm.jl")
+include("bidirectional.jl")
 
 end

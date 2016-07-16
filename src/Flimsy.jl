@@ -24,6 +24,9 @@ export @flimsy_inbounds
 
 export @with
 
+export @backprop,
+       @run
+
 export Variable,
        GradVariable,
        DataVariable,
@@ -85,6 +88,7 @@ export Patience
 
 include("flimsy_macros.jl")
 include("component_macro.jl")
+include("graph_macros.jl")
 include("scope.jl")
 include("variable.jl")
 include("argmax.jl")

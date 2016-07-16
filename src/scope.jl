@@ -3,18 +3,17 @@ typealias CallbackStack Array{ReverseOperation,1}
 
 abstract Scope
 
-type DataScope <: Scope end
+immutable DataScope <: Scope end
 
-type GradScope <: Scope
+immutable GradScope <: Scope
     stack::CallbackStack
 end
 
 GradScope() = GradScope(CallbackStack())
 
 function backprop!(scope::GradScope)
-    stack = scope.stack
-    while length(stack) > 0
-        pop!(stack)()
+    while length(scope.stack) > 0
+        pop!(scope.stack)()
     end
 end
 

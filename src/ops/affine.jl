@@ -1,40 +1,34 @@
 
-type ReverseAffine{Tw<:Variable,Tx<:Variable,Tb<:Variable} <: ReverseOperation
-    y::GradVariable
-    w::Tw
-    x::Tx
-    b::Tb
+using Iterators
+
+type ReverseAffine{W<:AbstractValue,X<:AbstractValue,B<:AbstractValue} <: ReverseOperation
+    y::Variable
+    w::W
+    x::X
+    b::B
 end
 
-@generated function call{Tw,Tx,Tb}(rop::ReverseAffine{Tw,Tx,Tb})
-    stmts = Any[
-        :(y = rop.y),
-        :(w = rop.w),
-        :(x = rop.x),
-        :(b = rop.b),
-    ]
+for (W, X, B) in product([(Constant,Variable) for i = 1:3]...)
+    any(T -> T <: Variable, [W, X, B]) || continue
 
-    if Tw <: GradVariable
-        push!(stmts, :(add_to_A_mul_Bt!(w.grad, y.grad, x.data)))
-    end
-
-    if Tx <: GradVariable
-        push!(stmts, :(add_to_At_mul_B!(x.grad, w.data, y.grad)))
-    end
-
-    if Tb <: GradVariable
-        s = quote
-            @flimsy_inbounds for j = 1:size(y, 2)
-                for i = 1:size(y, 1)
-                    b.grad[i] += y.grad[i,j]
-                end
-            end
+    updates = Any[]
+    W <: Variable && push!(updates, :(add_to_A_mul_Bt!(w.grad, y.grad, x.data)))
+    X <: Variable && push!(updates, :(add_to_At_mul_B!(x.grad, w.data, y.grad)))
+    B <: Variable && push!(updates, :(@flimsy_inbounds for j = 1:size(y, 2)
+        for i = 1:size(y, 1)
+            b.grad[i] += y.grad[i,j]
         end
-        push!(stmts, s)
-    end
-
-    push!(stmts, :(return nothing))
-    return Expr(:block, stmts...)
+    end))
+    update_block = Expr(:block, updates...)
+    defn = :(function call(rop::ReverseAffine{$W,$X,$B})
+        y = rop.y
+        w = rop.w
+        x = rop.x
+        b = rop.b
+        $update_block
+        nothing
+    end)
+    eval(defn)
 end
 
 function affine!(y::AbstractMatrix, w::AbstractMatrix, x::AbstractMatrix, b::AbstractMatrix)
@@ -55,23 +49,16 @@ function affine!(y::AbstractMatrix, w::AbstractMatrix, x::AbstractMatrix, b::Abs
     return y
 end
 
-affine(w::AbstractArray, x::AbstractArray, b::AbstractArray) = affine!(zeros(size(w, 1), size(x, 2)), w, x, b)
+affine(w::AbstractMatrix, x::AbstractMatrix, b::AbstractMatrix) = affine!(zeros(FloatX, size(w, 1), size(x, 2)), w, x, b)
 
-@generated function affine{Tw<:Variable,Tx<:Variable,Tb<:Variable}(scope::Scope, w::Tw, x::Tx, b::Tb)
-    if anygrads(Tw, Tx, Tb) && scope <: GradScope
-        return quote
-            y_data = Matrix{FloatX}(size(w, 1), size(x, 2))
-            affine!(y_data, w.data, x.data, b.data)
-            y = GradVariable(y_data, zero(y_data))
-            push_callback!(scope, ReverseAffine(y, w, x, b))
-            return y
-        end
-    else
-        return quote
-            y_data = Matrix{FloatX}(size(w, 1), size(x, 2))
-            affine!(y_data, w.data, x.data, b.data)
-            y = DataVariable(y_data)
-            return y
-        end
-    end
+affine(scope::Scope, w::AbstractValue, x::AbstractValue, b::AbstractValue) = Constant(affine(w.data, x.data, b.data))
+
+for (W, X, B) in product([(Constant, Variable) for i = 1:3]...)
+    any(T -> T <: Variable, [W, X, B]) || continue
+    defn = :(function affine(scope::GradScope, w::$W, x::$X, b::$B)
+        y = Variable(affine(w.data, x.data, b.data))
+        push_callback!(scope, ReverseAffine(y, w, x, b))
+        return y
+    end)
+    eval(defn)
 end

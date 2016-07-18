@@ -1,7 +1,7 @@
 
 type ReverseRecip <: ReverseOperation
-    y::GradVariable
-    x::GradVariable
+    y::Variable
+    x::Variable
 end
 
 function call(rop::ReverseRecip)
@@ -22,10 +22,10 @@ end
 
 recip(x::AbstractArray) = recip!(similar(x), x)
 
-recip(scope::Scope, x::Variable) = DataVariable(recip!(similar(x.data), x.data))
+recip(scope::Scope, x::AbstractValue) = Constant(recip!(similar(x.data), x.data))
 
-function recip(scope::GradScope, x::GradVariable)
-    y = GradVariable(recip!(similar(x.data), x.data), zero(x.data))
+function recip(scope::GradScope, x::Variable)
+    y = Variable(recip!(similar(x.data), x.data), zero(x.data))
     push_callback!(scope, ReverseRecip(y, x))
     return y
 end

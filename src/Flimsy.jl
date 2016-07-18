@@ -7,8 +7,6 @@ import StatsBase: softmax, softmax!
 
 typealias FloatX Float32
 
-include("configure.jl")
-
 abstract Component
 abstract ReverseOperation
 
@@ -27,9 +25,9 @@ export @with
 export @backprop,
        @run
 
-export Variable,
-       GradVariable,
-       DataVariable,
+export AbstractValue,
+       Constant,
+       Variable,
        Input,
        is_matrix,
        is_column_vector,
@@ -40,11 +38,11 @@ export argmax,
        argmaxneq
 
 export Scope,
-       DataScope,
+       RunScope,
        GradScope,
-       CallbackStack,
+       BackpropStack,
        backprop!,
-       istrain
+       computing_grads
 
 export Sequence,
        NTupleSequence
@@ -86,28 +84,32 @@ export Patience
 
 # export shuffled
 
+include("configure.jl")
 include("flimsy_macros.jl")
-include("component_macro.jl")
-include("graph_macros.jl")
+include("inplace.jl")
 include("scope.jl")
 include("variable.jl")
-include("argmax.jl")
-include("sequence.jl")
 include("ops.jl")
-include("activation.jl")
-include("initialization.jl")
-include("gradient_noise.jl")
-# include("runtime.jl")
-include("conversion.jl")
-include("check_gradients.jl")
-include("ctc.jl")
 include("cost/cost.jl")
-include("fit.jl")
-include("components/components.jl")
-include("extras/extras.jl")
-include("progress.jl")
-include("io.jl")
-include("inplace.jl")
-# include("shufflediter.jl")
+
+# include("component_macro.jl")
+# include("graph_macros.jl")
+# include("argmax.jl")
+# include("sequence.jl")
+# include("ops.jl")
+# include("activation.jl")
+# include("initialization.jl")
+# include("gradient_noise.jl")
+# # include("runtime.jl")
+# include("conversion.jl")
+# include("check_gradients.jl")
+# include("ctc.jl")
+# include("cost/cost.jl")
+# include("fit.jl")
+# include("components/components.jl")
+# include("extras/extras.jl")
+# include("progress.jl")
+# include("io.jl")
+# # include("shufflediter.jl")
 
 end

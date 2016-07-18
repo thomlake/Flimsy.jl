@@ -2,37 +2,40 @@ include("../src/Flimsy.jl")
 using Flimsy
 using FactCheck
 
-FactCheck.setstyle(:compact)
+# FactCheck.setstyle(:compact)
 
 tests = [
     "inplace.jl",
     "ops/identity.jl",
-    "ops/tanh.jl",
-    "ops/sigmoid.jl",
-    "ops/relu.jl",
-    "ops/softmax.jl",
-    "ops/softmax_vector.jl",
     "ops/wta.jl",
+    "ops/tanh.jl",
+    "ops/softmax_vector.jl",
+    "ops/softmax.jl",
+    "ops/sigmoid.jl",
+    "ops/scale.jl",
+    "ops/relu.jl",
     "ops/recip.jl",
+    "ops/plus_cols.jl",
+    "ops/plus.jl",
     "ops/norm2.jl",
-    "ops/exp.jl",
+    "ops/mult_cols.jl",
+    "ops/mult.jl",
+    "ops/minus.jl",
     "ops/log.jl",
     "ops/linear.jl",
-    "ops/affine.jl",
-    "ops/plus.jl",
-    "ops/minus_scalar.jl",
-    "ops/minus.jl",
-    "ops/mult_scalar.jl",
-    "ops/mult.jl",
-    "ops/concat.jl",
-    "ops/decat.jl",
+    "ops/exp.jl",
     "ops/embed.jl",
     "ops/dot.jl",
-    # "ops/dropout.jl",
-    "mse.jl",
-    "categorical_cross_entropy.jl",
-    "categorical_cross_entropy_with_scores.jl",
-    "ctc.jl",
+    "ops/decat.jl",
+    "ops/concat.jl",
+    "ops/affine.jl",
+    # "ops/minus_scalar.jl",
+    # "ops/mult_scalar.jl",
+    # # "ops/dropout.jl",
+    # "mse.jl",
+    # "categorical_cross_entropy.jl",
+    # "categorical_cross_entropy_with_scores.jl",
+    # "ctc.jl",
 ]
 
 srand(sum(map(Int, collect("Flimsy"))))
@@ -46,12 +49,12 @@ function test_op_grad_mse(f::Function, args...; wrt=nothing, eps=1e-3, atol=0.1,
         wrt = typeof(wrt)[wrt]
     end
 
-    scope = DataScope()
-    gradscope = GradScope()
-    output = f(gradscope, args...)
+    rscope = RunScope()
+    gscope = GradScope()
+    output = f(gscope, args...)
     target = map(FloatX, randn(size(output)))
-    Cost.mse(gradscope, output, target)
-    backprop!(gradscope)
+    Cost.mse(gscope, output, target)
+    backprop!(gscope)
 
     eps = FloatX(eps)
     atol = FloatX(atol)
@@ -61,9 +64,9 @@ function test_op_grad_mse(f::Function, args...; wrt=nothing, eps=1e-3, atol=0.1,
         for i in eachindex(x)
             xi = x.data[i]
             x.data[i] = xi + eps
-            lp = Cost.mse(scope, f(scope, args...), target)
+            lp = Cost.mse(rscope, f(rscope, args...), target)
             x.data[i] = xi - eps
-            lm = Cost.mse(scope, f(scope, args...), target)
+            lm = Cost.mse(rscope, f(rscope, args...), target)
             x.data[i] = xi
             dx = FloatX(lp - lm) / FloatX(2 * eps)
             if abs(dx) > 1

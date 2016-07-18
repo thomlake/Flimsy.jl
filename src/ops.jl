@@ -42,8 +42,10 @@ export sigmoid,
        softmax,
        recip,
        norm2,
+       plus_cols,
        plus,
        minus,
+       mult_cols,
        mult,
        linear,
        affine,
@@ -60,46 +62,52 @@ end
 
 Base.showerror(io::IO, e::OperationError) = print(io, "Flimsy.OperationError: ", e.msg)
 
-function anygrads(types::Vector{DataType})
+function anyvars(types::Vector{DataType})
     for typ in types
-        if typ <: GradVariable
+        if typ <: Variable
             return true
         end
     end
     return false
 end
 
-function anygrads(types::DataType...)
+function anyvars(types::DataType...)
     for typ in types
-        if typ <: GradVariable
+        if typ <: Variable
             return true
         end
     end
     return false
 end
 
-include("ops/identity.jl")
-include("ops/tanh.jl")
-include("ops/sigmoid.jl")
-include("ops/relu.jl")
+
 include("ops/wta.jl")
-include("ops/softmax.jl")
+include("ops/tanh.jl")
 include("ops/softmax_vector.jl")
+include("ops/softmax.jl")
+include("ops/sigmoid.jl")
+include("ops/scale.jl")
+include("ops/relu.jl")
 include("ops/recip.jl")
-include("ops/norm2.jl")
-include("ops/exp.jl")
-include("ops/log.jl")
+include("ops/plus_cols.jl")
 include("ops/plus.jl")
-include("ops/minus_scalar.jl")
-include("ops/minus.jl")
-include("ops/mult_scalar.jl")
+include("ops/norm2.jl")
+include("ops/mult_cols.jl")
 include("ops/mult.jl")
-include("ops/dot.jl")
+include("ops/minus.jl")
+include("ops/log.jl")
 include("ops/linear.jl")
-include("ops/affine.jl")
+include("ops/identity.jl")
+include("ops/gradnorm.jl")
+include("ops/exp.jl")
+include("ops/embed.jl")
+include("ops/dropout.jl")
+include("ops/dot.jl")
 include("ops/decat.jl")
 include("ops/concat.jl")
-include("ops/embed.jl")
-include("ops/gradnorm.jl")
-include("ops/dropout.jl")
+include("ops/affine.jl")
+
+
+
+
 

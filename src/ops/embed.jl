@@ -1,7 +1,7 @@
 
 type ReverseLinearEmbed <: ReverseOperation
-    y::GradVariable
-    w::GradVariable
+    y::Variable
+    w::Variable
     x::Vector{Vector{Int}}
 end
 
@@ -9,7 +9,6 @@ function call(rop::ReverseLinearEmbed)
     y = rop.y
     w = rop.w
     x = rop.x
-
     for k = 1:length(x)
         for j in x[k]
             for i = 1:size(y, 1)
@@ -33,26 +32,20 @@ function linear!(y::AbstractArray, w::AbstractArray, x::Vector{Vector{Int}})
     return y
 end
 
-linear!(y::AbstractArray, w::AbstractArray, x::Vector{Int}) = linear!(y, w, Vector{Int}[x])
+linear{T}(w::Array{T}, x::Vector{Vector{Int}}) = linear!(zeros(T, size(w, 1), length(x)), w, x)
 
-linear(w::AbstractArray, x::Vector{Vector{Int}}) = linear!(zeros(size(w, 1), length(x)), w, x)
-
-linear(w::AbstractArray, x::Vector{Int}) = linear(w, Vector{Int}[x])
-
-linear(w::AbstractArray, x::Int) = linear(w, Int[x])
-
-function linear(scope::Scope, w::Variable, x::Vector{Vector{Int}})
+function linear(scope::Scope, w::AbstractValue, x::Vector{Vector{Int}})
     y_data = zeros(FloatX, size(w, 1), length(x))
-    return DataVariable(linear!(y_data, w.data, x))
+    return Constant(linear!(y_data, w.data, x))
 end
 
-function linear(scope::GradScope, w::GradVariable, x::Vector{Vector{Int}})
+function linear(scope::GradScope, w::Variable, x::Vector{Vector{Int}})
     y_data = zeros(FloatX, size(w, 1), length(x))
-    y = GradVariable(linear!(y_data, w.data, x), zero(y_data))
+    y = Variable(linear!(y_data, w.data, x), zero(y_data))
     push_callback!(scope, ReverseLinearEmbed(y, w, x))
     return y
 end
 
-linear(scope::Scope, w::Variable, x::Vector{Int}) = linear(scope, w, Vector{Int}[x])
+linear(scope::Scope, w::AbstractValue, x::Vector{Int}) = linear(scope, w, Vector{Int}[x])
 
-linear(scope::Scope, w::Variable, x::Int) = linear(scope, w, Int[x])
+linear(scope::Scope, w::AbstractValue, x::Int) = linear(scope, w, Int[x])

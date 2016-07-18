@@ -1,7 +1,7 @@
 
 type ReverseExp <: ReverseOperation
-    y::GradVariable
-    x::GradVariable
+    y::Variable
+    x::Variable
 end
 
 function call(rop::ReverseExp)
@@ -20,10 +20,10 @@ function exp!(y::AbstractArray, x::AbstractArray)
     return y
 end
 
-Base.exp(scope::Scope, x::Variable) = DataVariable(exp!(similar(x.data), x.data))
+Base.exp(scope::Scope, x::AbstractValue) = Constant(exp!(similar(x.data), x.data))
 
-function Base.exp(scope::GradScope, x::GradVariable)
-    y = GradVariable(exp!(similar(x.data), x.data), zero(x.data))
+function Base.exp(scope::GradScope, x::Variable)
+    y = Variable(exp!(similar(x.data), x.data))
     push_callback!(scope, ReverseExp(y, x))
     return y
 end

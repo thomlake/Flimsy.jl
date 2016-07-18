@@ -26,8 +26,8 @@
 # end
 
 type ReverseDropout <: ReverseOperation
-    y::GradVariable
-    x::GradVariable
+    y::Variable
+    x::Variable
     m::BitMatrix
 end
 
@@ -38,7 +38,6 @@ function call(rop::ReverseDropout)
     for i in eachindex(x)
         if m[i]
             x.grad[i] = 0
-            y.grad[i] = 0
         else:
             x.grad[i] += y.grad[i]
         end
@@ -62,16 +61,16 @@ function dropout!(y::AbstractArray, x::AbstractArray, m::BitMatrix)
     return y
 end
 
-dropout(scope::Scope, x::Variable, p::AbstractFloat) = DataVariable(dropout_adjust!(similar(x.data), x.data))
+dropout(scope::Scope, x::AbstractValue, p::AbstractFloat) = DataVariable(dropout_adjust!(similar(x.data), x.data))
 
-function dropout(scope::GradScope, x::GradVariable, m::BitMatrix)
+function dropout(scope::GradScope, x::Variable, m::BitMatrix)
     size(x) == size(m) || throw(DimensionMismatch("dropout mask with size $(size(m)) cannot be applied to variable with size $(size(x))"))
-    y = GradVariable(dropout!(similar(x.data), x.data, m))
+    y = Variable(dropout!(similar(x.data), x.data, m))
     push_callback!(scope, ReverseDropout(y, x, m))
     return y
 end
 
-function dropout(scope::GradScope, x::GradVariable, p::AbstractFloat)
+function dropout(scope::GradScope, x::Variable, p::AbstractFloat)
     m = rand(size(x)) .< p
     return dropout(scope, x, m)
 end

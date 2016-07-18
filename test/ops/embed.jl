@@ -4,14 +4,10 @@ using Distributions
 facts("embed") do
     for (wsz, xsz) in [((1, 4), (4, 1)), ((4, 3), (3, 1)), ((1, 4), (4, 5)), ((3, 6), (6, 7))]
         context(string(join(wsz, "x"), " * ", join(xsz, "x"))) do
-            for wtype in [DataVariable, GradVariable]
-                context(wtype <: DataVariable ? "DataVariable" : "GradVariable",) do
-                    scope = DataScope()
-                    gscope = GradScope()
-
+            for W in [Constant, Variable]
+                context(W <: Constant ? "Constant" : "Variable",) do
                     ysz = (wsz[1], xsz[2])
-                    
-                    w = wtype <: DataVariable ? wtype(randn(wsz)) : wtype(randn(wsz), zeros(wsz))
+                    w = W(randn(wsz))
                     x = if xsz[2] > 1
                         Vector{Int}[sample(1:xsz[1], rand(1:xsz[1]), replace=false) for i = 1:xsz[2]]
                     else
@@ -29,13 +25,13 @@ facts("embed") do
                             x_arr[i] = 1
                         end
                     end
-                    y = linear(scope, w, x)
-                    @fact isa(y, DataVariable) --> true
-                    @fact size(y)              --> ysz
-                    @fact y.data               --> roughly(w.data * x_arr)
+                    y = linear(RunScope(), w, x)
+                    @fact isa(y, Constant) --> true
+                    @fact size(y) --> ysz
+                    @fact y.data --> roughly(w.data * x_arr)
 
                     
-                    w = wtype <: DataVariable ? wtype(randn(wsz)) : wtype(randn(wsz), zeros(wsz))
+                    w = W(randn(wsz))
                     x = if xsz[2] > 1
                         Vector{Int}[sample(1:xsz[1], rand(1:xsz[1]), replace=false) for i = 1:xsz[2]]
                     else
@@ -53,14 +49,14 @@ facts("embed") do
                             x_arr[i] = 1
                         end
                     end
-                    y = linear(gscope, w, x)
-                    @fact isa(y, wtype) --> true
-                    @fact size(y)       --> ysz
-                    @fact y.data        --> roughly(w.data * x_arr)
+                    y = linear(GradScope(), w, x)
+                    @fact isa(y, W) --> true
+                    @fact size(y) --> ysz
+                    @fact y.data --> roughly(w.data * x_arr)
 
-                    if isa(wtype, GradVariable)
+                    if isa(w, Variable)
                         context("Gradient") do
-                            w = wtype <: DataVariable ? wtype(randn(wsz)) : wtype(randn(wsz), zeros(wsz))
+                            w = W(randn(wsz))
                             x = if xsz[2] > 1
                                 Vector{Int}[sample(1:xsz[1], rand(1:xsz[1]), replace=false) for i = 1:xsz[2]]
                             else

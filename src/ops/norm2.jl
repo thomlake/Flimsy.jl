@@ -1,7 +1,7 @@
 
 type ReverseNorm2 <: ReverseOperation
-    y::GradVariable
-    x::GradVariable
+    y::Variable
+    x::Variable
 end
 
 function call(rop::ReverseNorm2)
@@ -23,12 +23,11 @@ function norm2!(y::Matrix, x::Matrix)
     return y
 end
 
-norm2(scope::Scope, x::Variable) = DataVariable(norm2!(Matrix{FloatX}(1, size(x, 2)), x.data))
+norm2(scope::Scope, x::AbstractValue) = Constant(norm2!(Matrix{FloatX}(1, size(x, 2)), x.data))
 
-function norm2(scope::GradScope, x::GradVariable)
+function norm2(scope::GradScope, x::Variable)
     y_data = Matrix{FloatX}(1, size(x, 2))
-    y_grad = zero(y_data)
-    y = GradVariable(norm2!(y_data, x.data), y_grad)
+    y = Variable(norm2!(y_data, x.data))
     push_callback!(scope, ReverseNorm2(y, x))
     return y
 end

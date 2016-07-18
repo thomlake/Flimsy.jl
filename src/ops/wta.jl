@@ -1,7 +1,7 @@
 
 type ReverseWta <: ReverseOperation
-    y::GradVariable
-    x::GradVariable
+    y::Variable
+    x::Variable
 end
 
 function call(rop::ReverseWta)
@@ -24,10 +24,10 @@ end
 
 wta(x::AbstractMatrix) = wta!(zero(x), x)
 
-wta(scope::Scope, x::Variable) = DataVariable(wta!(zero(x.data), x.data))
+wta(scope::Scope, x::AbstractValue) = Constant(wta!(zero(x.data), x.data))
 
-function wta(scope::GradScope, x::GradVariable)
-    y = GradVariable(wta!(zero(x.data), x.data), zero(x.data))
+function wta(scope::GradScope, x::Variable)
+    y = Variable(wta!(zero(x.data), x.data), zero(x.data))
     push_callback!(scope, ReverseWta(y, x))
     return y
 end

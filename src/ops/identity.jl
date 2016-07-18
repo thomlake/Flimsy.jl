@@ -1,3 +1,4 @@
 
-Base.identity(scope::Scope, x::Variable) = x
-Base.identity(scope::DataScope, x::GradVariable) = DataVariable(x.data)
+Base.identity(scope::Scope, x::AbstractValue) = x
+
+Base.identity(scope::RunScope, x::Variable) = Constant(x.data)

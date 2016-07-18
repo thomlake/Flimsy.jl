@@ -16,46 +16,46 @@ const stol = 1e-5
                     @fact sum(y)         --> roughly(n)
                 end
 
-                context("Scope") do
-                    scope = DataScope()
-                    x = DataVariable(randn(m, n))
+                context("RunScope") do
+                    scope = RunScope()
+                    x = Constant(randn(m, n))
                     y = softmax(scope, x)
-                    @fact isa(y, DataVariable) --> true
-                    @fact size(y)              --> (m, n)
-                    @fact y.data               --> roughly(softmax(x.data))
-                    @fact sum(y.data, 1)       --> roughly(ones(1, n), stol)
-                    @fact sum(y.data)          --> roughly(n, stol)
+                    @fact isa(y, Constant) --> true
+                    @fact size(y)          --> (m, n)
+                    @fact y.data           --> roughly(softmax(x.data))
+                    @fact sum(y.data, 1)   --> roughly(ones(1, n), stol)
+                    @fact sum(y.data)      --> roughly(n, stol)
 
-                    x = GradVariable(randn(m, n), zeros(m, n))
+                    x = Variable(randn(m, n))
                     y = softmax(scope, x)
-                    @fact isa(y, DataVariable) --> true
-                    @fact size(y)              --> (m, n)
-                    @fact y.data               --> roughly(softmax(x.data))
-                    @fact sum(y.data, 1)       --> roughly(ones(1, n), stol)
-                    @fact sum(y.data)          --> roughly(n, stol)
+                    @fact isa(y, Constant) --> true
+                    @fact size(y)          --> (m, n)
+                    @fact y.data           --> roughly(softmax(x.data))
+                    @fact sum(y.data, 1)   --> roughly(ones(1, n), stol)
+                    @fact sum(y.data)      --> roughly(n, stol)
                 end
 
                 context("GradScope") do
                     scope = GradScope()
-                    x = DataVariable(randn(m, n))
+                    x = Constant(randn(m, n))
                     y = softmax(scope, x)
-                    @fact isa(y, DataVariable) --> true
-                    @fact size(y)              --> (m, n)
-                    @fact y.data               --> roughly(softmax(x.data))
-                    @fact sum(y.data, 1)       --> roughly(ones(1, n), stol)
-                    @fact sum(y.data)          --> roughly(n, stol)
+                    @fact isa(y, Constant) --> true
+                    @fact size(y)          --> (m, n)
+                    @fact y.data           --> roughly(softmax(x.data))
+                    @fact sum(y.data, 1)   --> roughly(ones(1, n), stol)
+                    @fact sum(y.data)      --> roughly(n, stol)
 
-                    x = GradVariable(randn(m, n), zeros(m, n))
+                    x = Variable(randn(m, n))
                     y = softmax(scope, x)
-                    @fact isa(y, GradVariable) --> true
-                    @fact size(y)              --> (m, n)
-                    @fact y.data               --> roughly(softmax(x.data))
-                    @fact sum(y.data, 1)       --> roughly(ones(1, n), stol)
-                    @fact sum(y.data)          --> roughly(n, stol)
+                    @fact isa(y, Variable) --> true
+                    @fact size(y)          --> (m, n)
+                    @fact y.data           --> roughly(softmax(x.data))
+                    @fact sum(y.data, 1)   --> roughly(ones(1, n), stol)
+                    @fact sum(y.data)      --> roughly(n, stol)
                 end
 
                 context("Gradient") do
-                    x = GradVariable(randn(m, n), zeros(m, n))
+                    x = Variable(randn(m, n))
                     test_op_grad_mse(softmax, x, wrt=x)
                 end
             end

@@ -1,8 +1,8 @@
 
 # -- Softmax over vector of 1xN -- #
 type ReverseVectorSoftmax <: ReverseOperation
-    ys::Vector{GradVariable}
-    xs::Vector{GradVariable}
+    ys::Vector{Variable}
+    xs::Vector{Variable}
 end
 
 function call(rop::ReverseVectorSoftmax)
@@ -56,18 +56,18 @@ end
 
 softmax{T<:Matrix}(xs::Vector{T}) = softmax!([zero(x) for x in xs], xs)
 
-function softmax{T<:Variable}(scope::Scope, xs::Vector{T})
+function softmax{T<:AbstractValue}(scope::Scope, xs::Vector{T})
     xs_data = Matrix{FloatX}[x.data for x in xs]
     ys_data = Matrix{FloatX}[similar(x_data) for x_data in xs_data]
     softmax_vector!(ys_data, xs_data)
-    return DataVariable[DataVariable(y_data) for y_data in ys_data]
+    return Constant[Constant(y_data) for y_data in ys_data]
 end
 
-function softmax(scope::GradScope, xs::Vector{GradVariable})
+function softmax(scope::GradScope, xs::Vector{Variable})
     xs_data = Matrix{FloatX}[x.data for x in xs]
     ys_data = Matrix{FloatX}[similar(x_data) for x_data in xs_data]
     softmax_vector!(ys_data, xs_data)
-    ys = GradVariable[GradVariable(y_data, zero(y_data)) for y_data in ys_data]
+    ys = Variable[Variable(y_data, zero(y_data)) for y_data in ys_data]
     push_callback!(scope, ReverseVectorSoftmax(ys, xs))
     return ys
 end

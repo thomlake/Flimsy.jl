@@ -1,15 +1,15 @@
 
-typealias CallbackStack Array{ReverseOperation,1}
+typealias BackpropStack Array{ReverseOperation,1}
 
 abstract Scope
 
-immutable DataScope <: Scope end
+immutable RunScope <: Scope end
 
 immutable GradScope <: Scope
-    stack::CallbackStack
+    stack::BackpropStack
 end
 
-GradScope() = GradScope(CallbackStack())
+GradScope() = GradScope(BackpropStack())
 
 function backprop!(scope::GradScope)
     while length(scope.stack) > 0

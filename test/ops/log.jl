@@ -3,42 +3,36 @@ using Flimsy
 facts("log") do
     for (m, n) in [(3, 1), (5, 8)]
         context("$(m)x$(n)") do
-            context("DataVariable") do
-                scope = DataScope()
-                gscope = GradScope()
+            context("Constant") do
+                x = Constant(rand(m, n))
+                y = log(RunScope(), x)
+                @fact isa(y, Constant) --> true
+                @fact size(y) --> (m, n)
+                @fact y.data --> roughly(log(x.data))
 
-                x = DataVariable(rand(m, n))
-                y = log(scope, x)
-                @fact isa(y, DataVariable) --> true
-                @fact size(y)              --> (m, n)
-                @fact y.data               --> roughly(log(x.data))
-
-                x = DataVariable(rand(m, n))
-                y = log(gscope, x)
-                @fact isa(y, DataVariable) --> true
-                @fact size(y)              --> (m, n)
-                @fact y.data               --> roughly(log(x.data))
+                x = Constant(rand(m, n))
+                y = log(GradScope(), x)
+                @fact isa(y, Constant) --> true
+                @fact size(y) --> (m, n)
+                @fact y.data --> roughly(log(x.data))
             end
 
-            context("GradVariable") do
-                scope = DataScope()
-                gscope = GradScope()
+            context("Variable") do
+                x = Variable(rand(m, n))
+                y = log(RunScope(), x)
+                @fact isa(y, Constant) --> true
+                @fact size(y) --> (m, n)
+                @fact y.data --> roughly(log(x.data))
 
-                x = GradVariable(rand(m, n), zeros(m, n))
-                y = log(scope, x)
-                @fact isa(y, DataVariable) --> true
-                @fact size(y)              --> (m, n)
-                @fact y.data               --> roughly(log(x.data))
-
-                x = GradVariable(rand(m, n), zeros(m, n))
-                y = log(gscope, x)
-                @fact isa(y, GradVariable) --> true
-                @fact size(y)              --> (m, n)
-                @fact y.data               --> roughly(log(x.data))
+                x = Variable(rand(m, n), zeros(m, n))
+                y = log(GradScope(), x)
+                @fact isa(y, Variable) --> true
+                @fact size(y) --> (m, n)
+                @fact y.data --> roughly(log(x.data))
             end
 
             context("Gradient") do
-                x = GradVariable(rand(m, n), zeros(m, n))
+                x = Variable(rand(m, n))
                 test_op_grad_mse(log, x; wrt=x)
             end
         end

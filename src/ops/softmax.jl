@@ -1,7 +1,7 @@
 
 type ReverseSoftmax <: ReverseOperation
-    y::GradVariable
-    x::GradVariable
+    y::Variable
+    x::Variable
 end
 
 function call(rop::ReverseSoftmax)
@@ -57,13 +57,13 @@ end
 
 softmax(x::Matrix) = softmax!(similar(x), x)
 
-softmax(scope::Scope, x::Variable) = DataVariable(softmax!(similar(x.data), x.data))
+softmax(scope::Scope, x::AbstractValue) = Constant(softmax!(similar(x.data), x.data))
 
-function softmax(scope::GradScope, x::GradVariable)
+function softmax(scope::GradScope, x::Variable)
     y_data = similar(x.data)
     y_grad = zero(y_data)
     softmax!(y_data, x.data)
-    y = GradVariable(y_data, y_grad)
+    y = Variable(y_data, y_grad)
     push_callback!(scope, ReverseSoftmax(y, x))
     return y
 end

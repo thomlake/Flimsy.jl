@@ -1,7 +1,7 @@
 
-type ReverseGradNorm{F<:AbstractFloat} <: ReverseOperation
-    s::F
-    x::GradVariable
+type ReverseGradNorm{T<:Real} <: ReverseOperation
+    s::T
+    x::Variable
 end
 
 function call(rop::ReverseGradNorm)
@@ -20,9 +20,9 @@ function call(rop::ReverseGradNorm)
     return nothing
 end
 
-gradnorm(scope::Scope, x::Variable, s::AbstractFloat=1.0) = x
+gradnorm(scope::Scope, x::AbstractValue, s::Real=1.0) = x
 
-function gradnorm(scope::GradScope, x::GradVariable, s::AbstractFloat=1.0)
+function gradnorm(scope::GradScope, x::Variable, s::Real=1.0)
     push_callback!(scope, ReverseGradNorm(s, x))
     return x
 end

@@ -1,7 +1,7 @@
 
 type ReverseTanh <: ReverseOperation
-    y::GradVariable
-    x::GradVariable
+    y::Variable
+    x::Variable
 end
 
 function call(rop::ReverseTanh)
@@ -20,13 +20,12 @@ function tanh!(y::AbstractArray, x::AbstractArray)
     return y
 end
 
-Base.tanh(scope::Scope, x::Variable) = DataVariable(tanh!(similar(x.data), x.data))
+Base.tanh(scope::Scope, x::AbstractValue) = Constant(tanh!(similar(x.data), x.data))
 
-function Base.tanh(scope::GradScope, x::GradVariable)
+function Base.tanh(scope::GradScope, x::Variable)
     y_data = similar(x.data)
-    y_grad = zero(y_data)
     tanh!(y_data, x.data)
-    y = GradVariable(y_data, y_grad)
+    y = Variable(y_data)
     push_callback!(scope, ReverseTanh(y, x))
     return y
 end

@@ -1,7 +1,7 @@
 
 type ReverseConcat <: ReverseOperation
-    y::GradVariable
-    xs::Vector{GradVariable}
+    y::Variable
+    xs::Vector{AbstractValue}
 end
 
 function call(rop::ReverseConcat)
@@ -9,7 +9,7 @@ function call(rop::ReverseConcat)
     xs = rop.xs
     offset = 0
     @flimsy_inbounds for k = 1:length(xs)
-        if isa(xs[k], GradVariable)
+        if isa(xs[k], Variable)
             for j = 1:size(xs[k], 2)
                 for i = 1:size(xs[k], 1)
                     xs[k].grad[i,j] += y.grad[offset + i,j]
@@ -36,7 +36,7 @@ end
 
 concat{T<:Matrix}(xs::Vector{T}) = vcat(xs...)
 
-function concat{T<:Variable}(scope::Scope, xs::Vector{T})
+function concat{T<:AbstractValue}(scope::Scope, xs::Vector{T})
     m, n = size(xs[1])
     for i = 2:length(xs)
         m_i, n_i = size(xs[i])
@@ -46,10 +46,10 @@ function concat{T<:Variable}(scope::Scope, xs::Vector{T})
     xs_data = Matrix{FloatX}[x.data for x in xs]
     ys_data = Matrix{FloatX}(m, n)
 
-    return DataVariable(concat!(ys_data, xs_data))
+    return Constant(concat!(ys_data, xs_data))
 end
 
-function concat(scope::GradScope, xs::Vector{GradVariable})
+function concat{T<:AbstractValue}(scope::GradScope, xs::Vector{T})
     m, n = size(xs[1])
     for i = 2:length(xs)
         m_i, n_i = size(xs[i])
@@ -59,9 +59,22 @@ function concat(scope::GradScope, xs::Vector{GradVariable})
     xs_data = Matrix{FloatX}[x.data for x in xs]
     ys_data = Matrix{FloatX}(m, n)
 
-    y = GradVariable(concat!(ys_data, xs_data), zero(ys_data))
+    y = Variable(concat!(ys_data, xs_data))
     push_callback!(scope, ReverseConcat(y, xs))
     return y
 end
 
-concat{V<:Variable}(scope, xs::V...) = concat(scope, [x for x in xs])
+function concat(scope::GradScope, xs::Vector{Constant})
+    m, n = size(xs[1])
+    for i = 2:length(xs)
+        m_i, n_i = size(xs[i])
+        m += m_i
+        n == n_i || throw(OperationError("can only concatenate vectors with members having the same number of columns"))
+    end
+    xs_data = Matrix{FloatX}[x.data for x in xs]
+    ys_data = Matrix{FloatX}(m, n)
+
+    return Constant(concat!(ys_data, xs_data))
+end
+
+concat{V<:AbstractValue}(scope, xs::V...) = concat(scope, [x for x in xs])

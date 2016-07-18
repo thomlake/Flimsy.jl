@@ -1,48 +1,36 @@
 
-type ReverseLinear{Tw<:Variable,Tx<:Variable} <: ReverseOperation
-    y::GradVariable
-    w::Tw
-    x::Tx
+type ReverseLinear{W<:AbstractValue,X<:AbstractValue} <: ReverseOperation
+    y::Variable
+    w::W
+    x::X
 end
 
-
-@generated function call{Tw,Tx}(rop::ReverseLinear{Tw,Tx})
-    stmts = Any[
-        :(y = rop.y),
-        :(w = rop.w),
-        :(x = rop.x),
-    ]
-    
-    if Tw <: GradVariable
-        push!(stmts, :(add_to_A_mul_Bt!(w.grad, y.grad, x.data)))
-    end
-    
-    if Tx <: GradVariable
-        push!(stmts, :(add_to_At_mul_B!(x.grad, w.data, y.grad)))
-    end
-
-    push!(stmts, :(return nothing))
-    return Expr(:block, stmts...)
+for (W, X) in [(Constant,Variable), (Variable,Constant), (Variable,Variable)]
+    updates = Any[]
+    W <: Variable && push!(updates, :(add_to_A_mul_Bt!(w.grad, y.grad, x.data)))
+    X <: Variable && push!(updates, :(add_to_At_mul_B!(x.grad, w.data, y.grad)))
+    update_block = Expr(:block, updates...)
+    defn = :(function call(rop::ReverseLinear{$W,$X})
+        y = rop.y
+        w = rop.w
+        x = rop.x
+        $update_block
+        nothing
+    end)
+    eval(defn)
 end
 
 linear!(y::AbstractArray, w::AbstractArray, x::AbstractArray) = A_mul_B!(y, w, x)
 
 linear(w::AbstractArray, x::AbstractArray) = w * x
 
-@generated function linear{Tw<:Variable,Tx<:Variable}(scope::Scope, w::Tw, x::Tx)
-    if anygrads(Tw, Tx) && scope <: GradScope
-        return quote
-            y_data = Matrix{FloatX}(size(w, 1), size(x, 2))
-            linear!(y_data, w.data, x.data)
-            y = GradVariable(y_data, zero(y_data))
-            push_callback!(scope, ReverseLinear(y, w, x))
-            return y
-        end
-    else
-        return quote
-            y_data = Matrix{FloatX}(size(w, 1), size(x, 2))
-            linear!(y_data, w.data, x.data)
-            return DataVariable(y_data)
-        end
-    end
+linear(scope::Scope, w::AbstractValue, x::AbstractValue) = Constant(linear(w.data, x.data))
+
+for (W, X) in [(Constant,Variable), (Variable,Constant), (Variable,Variable)]
+    defn = :(function linear(scope::GradScope, w::$W, x::$X)
+        y = Variable(linear(w.data, x.data))
+        push_callback!(scope, ReverseLinear(y, w, x))
+        return y
+    end)
+    eval(defn)
 end

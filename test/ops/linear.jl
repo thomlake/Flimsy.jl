@@ -3,40 +3,40 @@ using Flimsy
 facts("linear") do
     for (wsz, xsz) in [((1, 4), (4, 1)), ((4, 3), (3, 1)), ((1, 4), (4, 5)), ((3, 6), (6, 7))]
         context(string(join(wsz, "x"), " * ", join(xsz, "x"))) do
-            for wtype in [DataVariable, GradVariable]
-                for xtype in [DataVariable, GradVariable]
+            for W in [Constant, Variable]
+                for X in [Constant, Variable]
                     ctxstr = string(
-                        wtype <: DataVariable ? "DataVariable" : "GradVariable",
+                        W <: Constant ? "Constant" : "Variable",
                         ",", 
-                        xtype <: DataVariable ? "DataVariable" : "GradVariable",
+                        X <: Constant ? "Constant" : "Variable",
                     )
                     context(ctxstr) do
-                        scope = DataScope()
-                        gscope = GradScope()
-
                         ysz = (wsz[1], xsz[2])
-                        w = wtype <: DataVariable ? wtype(randn(wsz)) : wtype(randn(wsz), zeros(wsz))
-                        x = xtype <: DataVariable ? xtype(randn(xsz)) : xtype(randn(xsz), zeros(xsz))
-                        y = linear(scope, w, x)
-                        @fact isa(y, DataVariable) --> true
-                        @fact size(y)              --> ysz
-                        @fact y.data               --> w.data * x.data
+                        w = W(randn(wsz))
+                        x = X(randn(xsz))
+                        y = linear(RunScope(), w, x)
+                        @fact isa(y, Constant) --> true
+                        @fact size(y) --> ysz
+                        @fact y.data --> w.data * x.data
 
-                        w = wtype <: DataVariable ? wtype(randn(wsz)) : wtype(randn(wsz), zeros(wsz))
-                        x = xtype <: DataVariable ? xtype(randn(xsz)) : xtype(randn(xsz), zeros(xsz))
-                        y = linear(gscope, w, x)
-                        target_type = anygrads(wtype, xtype) ? GradVariable : DataVariable 
-                        @fact isa(y, target_type) --> true
-                        @fact size(y)             --> ysz
-                        @fact y.data              --> w.data * x.data
+                        w = W(randn(wsz))
+                        x = X(randn(xsz))
+                        y = linear(GradScope(), w, x)
+                        if any(T -> T <: Variable, [W, X])
+                            @fact isa(y, Variable) --> true
+                        else
+                            @fact isa(y, Constant) --> true
+                        end
+                        @fact size(y) --> ysz
+                        @fact y.data --> w.data * x.data
 
-                        if anygrads(wtype, xtype)
+                        if any(T -> T <: Variable, [W, X])
                             context("Gradient") do
-                                w = wtype <: DataVariable ? wtype(randn(wsz)) : wtype(randn(wsz), zeros(wsz))
-                                x = xtype <: DataVariable ? xtype(randn(xsz)) : xtype(randn(xsz), zeros(xsz))
+                                w = W(randn(wsz))
+                                x = X(randn(xsz))
                                 wrt = []
-                                wtype <: GradVariable && push!(wrt, w)
-                                xtype <: GradVariable && push!(wrt, x)
+                                isa(w, Variable) && push!(wrt, w)
+                                isa(x, Variable) && push!(wrt, x)
                                 test_op_grad_mse(linear, w, x, wrt=wrt)
                             end
                         end

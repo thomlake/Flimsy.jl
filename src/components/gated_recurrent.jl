@@ -1,9 +1,9 @@
 
 immutable GatedRecurrent <: RecurrentComponent1
-    wr::GradVariable; wz::GradVariable; wc::GradVariable;
-    ur::GradVariable; uz::GradVariable; uc::GradVariable;
-    br::GradVariable; bz::GradVariable; bc::GradVariable;
-    h_init::GradVariable;
+    wr::Variable; wz::Variable; wc::Variable;
+    ur::Variable; uz::Variable; uc::Variable;
+    br::Variable; bz::Variable; bc::Variable;
+    h_init::Variable;
     function GatedRecurrent(wr, wz, wc, ur, uz, uc, br, bz, bc, h_init)
         m, n = size(wr)
         size(wz) == (m, n) || error("Bad size(wz) == $(size(wz)) != ($m, $n)")
@@ -26,16 +26,16 @@ initial_state(scope::Scope, params::GatedRecurrent) = params.h_init
 
 function Base.step(scope::Scope, params::GatedRecurrent, x, htm1)
     @with scope begin
-        r = sigmoid(plus(linear(params.wr, x), linear(params.ur, htm1), params.br))
-        z = sigmoid(plus(linear(params.wz, x), linear(params.uz, htm1), params.bz))
-        c = tanh(plus(linear(params.wc, x), mult(r, linear(params.uc, htm1)), params.bc))
+        r = sigmoid(plus(affine(params.wr, x, params.br), linear(params.ur, htm1)))
+        z = sigmoid(plus(affine(params.wz, x, params.bz), linear(params.uz, htm1)))
+        c = tanh(plus(affine(params.wc, x, params.bc), mult(r, linear(params.uc, htm1))))
         return plus(mult(z, htm1), mult(minus(1.0, z), c))
     end
 end
 
 Base.step(scope::Scope, params::GatedRecurrent, x) = @with scope step(params, x, initial_state(params))
 
-function unfold(scope::Scope, params::GatedRecurrent, x::Vector, h_init::Variable)
+function unfold(scope::Scope, params::GatedRecurrent, x::Vector, h_init)
     @with scope begin
         h = Sequence(length(x))
         h[1] = step(params, x[1], h_init)
@@ -53,10 +53,10 @@ GatedRecurrent Component with normalized hidden unit gradients.
 By default gradients are normalized to 1/timesteps.
 """
 immutable GatedRecurrentGradNorm <: RecurrentComponent1
-    wr::GradVariable; wz::GradVariable; wc::GradVariable;
-    ur::GradVariable; uz::GradVariable; uc::GradVariable;
-    br::GradVariable; bz::GradVariable; bc::GradVariable;
-    h_init::GradVariable;
+    wr::Variable; wz::Variable; wc::Variable;
+    ur::Variable; uz::Variable; uc::Variable;
+    br::Variable; bz::Variable; bc::Variable;
+    h_init::Variable;
     function GatedRecurrentGradNorm(wr, wz, wc, ur, uz, uc, br, bz, bc, h_init)
         m, n = size(wr)
         size(wz) == (m, n) || error("Bad size(wz) == $(size(wz)) != ($m, $n)")
@@ -79,9 +79,9 @@ initial_state(scope::Scope, params::GatedRecurrentGradNorm) = params.h_init
 
 function Base.step(scope::Scope, params::GatedRecurrentGradNorm, x, htm1, gn::AbstractFloat=1.0)
     @with scope begin
-        r = sigmoid(plus(linear(params.wr, x), linear(params.ur, htm1), params.br))
-        z = sigmoid(plus(linear(params.wz, x), linear(params.uz, htm1), params.bz))
-        c_pre = plus(linear(params.wc, x), mult(r, linear(params.uc, htm1)), params.bc)
+        r = sigmoid(plus(affine(params.wr, x, params.br), linear(params.ur, htm1)))
+        z = sigmoid(plus(affine(params.wz, x, params.bz), linear(params.uz, htm1)))
+        c_pre = plus(affine(params.wc, x, params.bc), mult(r, linear(params.uc, htm1)))
         gradnorm(c_pre, gn)
         c = tanh(c_pre)
         return plus(mult(z, htm1), mult(minus(1.0, z), c))
@@ -90,7 +90,7 @@ end
 
 Base.step(scope::Scope, params::GatedRecurrentGradNorm, x, gn::AbstractFloat=1.0) = @with scope step(params, x, initial_state(params), gn)
 
-function unfold(scope::Scope, params::GatedRecurrentGradNorm, x::Vector, h_init::Variable, gn::AbstractFloat=inv(length(x)))
+function unfold(scope::Scope, params::GatedRecurrentGradNorm, x::Vector, h_init, gn::AbstractFloat=inv(length(x)))
     @with scope begin
         h = Sequence(length(x))
         h[1] = step(params, x[1], h_init, gn)

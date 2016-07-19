@@ -21,9 +21,9 @@ function call{T<:Component}(::Type{T}; kwargs...)
         value = kwdict[field]
         ftype = fieldtype(T, field)
         if is_variable(ftype)
-            push!(args, typeof(value) <: Variable ? value : GradVariable(value, zero(value)))
+            push!(args, typeof(value) <: Variable ? value : Variable(value, zero(value)))
         elseif is_variable_array(ftype)
-            push!(args, eltype(value) <: Variable ? value : map(v -> GradVariable(v, zero(v)), value))
+            push!(args, eltype(value) <: Variable ? value : map(v -> Variable(v, zero(v)), value))
         else
             push!(args, value)
         end

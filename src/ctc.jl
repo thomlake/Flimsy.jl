@@ -126,7 +126,7 @@ function backward(xs::Vector{Int}, lpmat::Matrix{FloatX}, blank::Int)
     return table.matrix
 end
 
-function make_lpmat{V<:Variable}(output::Vector{V})
+function make_lpmat{V<:AbstractValue}(output::Vector{V})
     T = length(output)
     p = [softmax(output[t].data) for t=1:T]
     pmat = hcat([p[t] for t=1:T]...)

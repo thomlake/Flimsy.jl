@@ -1,9 +1,9 @@
 immutable EmptyComponent <: Component end
 
 immutable ValueComponent <: Component
-    value::GradVariable
+    value::Variable
 end
 
 immutable VectorComponent <: Component
-    values::Vector{GradVariable}
+    values::Vector{Variable}
 end

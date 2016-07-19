@@ -1,9 +1,9 @@
 
 immutable FeedForward{F<:Activation} <: Component
     f::F
-    w::Vector{GradVariable}
-    b::Vector{GradVariable}
-    function FeedForward(f::F, w::Vector{GradVariable}, b::Vector{GradVariable})
+    w::Vector{Variable}
+    b::Vector{Variable}
+    function FeedForward(f::F, w::Vector{Variable}, b::Vector{Variable})
         length(w) == length(b) || error("w and b must have the same number of elements")
         m_prev = size(w[1], 1)
         size(b[1]) == (m_prev, 1) || throw(DimensionMismatch("Bad size(b[1]) != ($m_prev, 1)"))
@@ -17,7 +17,7 @@ immutable FeedForward{F<:Activation} <: Component
     end
 end
 
-FeedForward{F<:Activation}(f::F, w::Vector{GradVariable}, b::Vector{GradVariable}) = FeedForward{F}(f, w, b)
+FeedForward{F<:Activation}(f::F, w::Vector{Variable}, b::Vector{Variable}) = FeedForward{F}(f, w, b)
 
 function FeedForward{F<:Activation}(f::F, sz::Int...)
     dims = reverse(sz)
@@ -33,7 +33,7 @@ depth(params::FeedForward) = length(params.w)
 
 depth(scope::Scope, params::FeedForward) = depth(params.w)
 
-function feedforward(scope::Scope, params::FeedForward, h::Variable)
+function feedforward(scope::Scope, params::FeedForward, h)
     @with scope begin
         for i = 1:length(params.w)
             h = activate(params.f, affine(params.w[1], h, params.b[1]))

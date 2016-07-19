@@ -17,11 +17,11 @@ Implements the hidden layer of a Simple Recurrent Neural Network (aka Elman Netw
 """
 immutable SimpleRecurrent{F<:Activation} <: RecurrentComponent1
     f::F
-    w::GradVariable
-    u::GradVariable
-    b::GradVariable
-    h_init::GradVariable
-    function SimpleRecurrent(f::F, w::GradVariable, u::GradVariable, b::GradVariable, h_init::GradVariable)
+    w::Variable
+    u::Variable
+    b::Variable
+    h_init::Variable
+    function SimpleRecurrent(f::F, w::Variable, u::Variable, b::Variable, h_init::Variable)
         m, n = size(w)
         size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
         size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
@@ -40,7 +40,7 @@ end
 
 Base.step(scope::Scope, p::SimpleRecurrent, x) = @with scope step(p, x, initial_state(p))
 
-function unfold(scope::Scope, p::SimpleRecurrent, x::Vector, h_init::Variable) 
+function unfold(scope::Scope, p::SimpleRecurrent, x::Vector, h_init::AbstractValue) 
     @with scope begin
         h = Sequence(length(x))
         h[1] = step(p, x[1], h_init)
@@ -53,18 +53,17 @@ end
 
 unfold(scope::Scope, p::SimpleRecurrent, x::Vector) = @with scope unfold(p, x, initial_state(p))
 
-
 """
 SimpleRecurrent component with normalized hidden unit gradients.
 By default gradients are normalized to 1/timesteps.
 """
 immutable SimpleRecurrentGradNorm{F<:Activation} <: RecurrentComponent1
     f::F
-    w::GradVariable
-    u::GradVariable
-    b::GradVariable
-    h_init::GradVariable
-    function SimpleRecurrentGradNorm(f::F, w::GradVariable, u::GradVariable, b::GradVariable, h_init::GradVariable)
+    w::Variable
+    u::Variable
+    b::Variable
+    h_init::Variable
+    function SimpleRecurrentGradNorm(f::F, w::Variable, u::Variable, b::Variable, h_init::Variable)
         m, n = size(w)
         size(u) == (m, m) || throw(DimensionMismatch("Bad size(u) == $(size(u)) != ($m, $m)"))
         size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
@@ -73,7 +72,7 @@ immutable SimpleRecurrentGradNorm{F<:Activation} <: RecurrentComponent1
     end
 end
 
-SimpleRecurrentGradNorm{F<:Activation}(f::F, w::GradVariable, u::GradVariable, b::GradVariable, h_init::GradVariable) = SimpleRecurrentGradNorm{F}(f, w, u, b, h_init)
+SimpleRecurrentGradNorm{F<:Activation}(f::F, w::Variable, u::Variable, b::Variable, h_init::Variable) = SimpleRecurrentGradNorm{F}(f, w, u, b, h_init)
 
 initial_state(scope::Scope, p::SimpleRecurrentGradNorm) = p.h_init
 
@@ -87,7 +86,7 @@ end
 
 Base.step(scope::Scope, p::SimpleRecurrentGradNorm, x, gn::AbstractFloat=1.0) = @with scope step(p, x, initial_state(p), gn)
 
-function unfold(scope::Scope, p::SimpleRecurrentGradNorm, x::Vector, h_init::Variable, gn::AbstractFloat=inv(length(x)))
+function unfold(scope::Scope, p::SimpleRecurrentGradNorm, x::Vector, h_init::AbstractValue, gn::AbstractFloat=inv(length(x)))
     @with scope begin
         h = Sequence(length(x))
         h[1] = step(p, x[1], h_init, gn)

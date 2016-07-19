@@ -14,7 +14,7 @@ function categorical_cross_entropy_with_scores end
 # ----------- #
 # Mx1 Integer #
 # ----------- #
-function categorical_cross_entropy_with_scores(scope::Scope, output::Variable, target::Integer)
+function categorical_cross_entropy_with_scores(scope::Scope, output::AbstractValue, target::Integer)
     size(output, 2) == 1 || throw(DimensionMismatch("output must be size Mx1 for Integer target but got $(size(output))"))
     pr = softmax(output.data)
     pr_target = pr[target] + CROSS_ENTROPY_EPS
@@ -23,7 +23,7 @@ function categorical_cross_entropy_with_scores(scope::Scope, output::Variable, t
     return nll
 end
 
-function categorical_cross_entropy_with_scores(scope::GradScope, output::GradVariable, target::Integer)
+function categorical_cross_entropy_with_scores(scope::GradScope, output::Variable, target::Integer)
     size(output, 2) == 1 || throw(DimensionMismatch("output must be size Mx1 for Integer target but got $(size(output))"))
     pr = softmax(output.data)
     pr_target = pr[target] + CROSS_ENTROPY_EPS
@@ -35,11 +35,11 @@ function categorical_cross_entropy_with_scores(scope::GradScope, output::GradVar
     return nll
 end
 
-function categorical_cross_entropy_with_scores(scope::Scope, output::Variable, target::Integer, weight::Real)
+function categorical_cross_entropy_with_scores(scope::Scope, output::AbstractValue, target::Integer, weight::Real)
     return weight * categorical_cross_entropy_with_scores(scope, output, target)
 end
 
-function categorical_cross_entropy_with_scores(scope::GradScope, output::GradVariable, target::Integer, weight::Real)
+function categorical_cross_entropy_with_scores(scope::GradScope, output::Variable, target::Integer, weight::Real)
     size(output, 2) == 1 || throw(DimensionMismatch("output must be size Mx1 for Integer target but got $(size(output))"))
     pr = softmax(output.data)
     pr_target = pr[target] + CROSS_ENTROPY_EPS
@@ -54,7 +54,7 @@ end
 # ------------------- #
 # MxN Vector{Integer} #
 # ------------------- #
-function categorical_cross_entropy_with_scores{I<:Integer}(scope::Scope, output::Variable, target::Vector{I})
+function categorical_cross_entropy_with_scores{I<:Integer}(scope::Scope, output::AbstractValue, target::Vector{I})
     size(output, 2) == length(target) || throw(DimensionMismatch("output must be size Mx$(length(target)) for Integer target vector with length $(length(target)) but got $(size(output))"))
     pr = softmax(output.data)
     nll = 0.0
@@ -65,7 +65,7 @@ function categorical_cross_entropy_with_scores{I<:Integer}(scope::Scope, output:
     return nll
 end
 
-function categorical_cross_entropy_with_scores{I<:Integer}(scope::GradScope, output::GradVariable, target::Vector{I})
+function categorical_cross_entropy_with_scores{I<:Integer}(scope::GradScope, output::Variable, target::Vector{I})
     size(output, 2) == length(target) || throw(DimensionMismatch("output must be size Mx$(length(target)) for Integer target vector with length $(length(target)) but got $(size(output))"))
     pr = softmax(output.data)
     nll = 0.0
@@ -79,11 +79,11 @@ function categorical_cross_entropy_with_scores{I<:Integer}(scope::GradScope, out
     return nll
 end
 
-function categorical_cross_entropy_with_scores{I<:Integer}(scope::Scope, output::Variable, target::Vector{I}, weight::Real)
+function categorical_cross_entropy_with_scores{I<:Integer}(scope::Scope, output::AbstractValue, target::Vector{I}, weight::Real)
     return weight * categorical_cross_entropy_with_scores(scope, output, target)
 end
 
-function categorical_cross_entropy_with_scores{I<:Integer}(scope::GradScope, output::GradVariable, target::Vector{I}, weight::Real)
+function categorical_cross_entropy_with_scores{I<:Integer}(scope::GradScope, output::Variable, target::Vector{I}, weight::Real)
     size(output, 2) == length(target) || throw(DimensionMismatch("output must be size Mx$(length(target)) for Integer target vector with length $(length(target)) but got $(size(output))"))
     pr = softmax(output.data)
     nll = 0.0

@@ -23,8 +23,8 @@ end
 @comp function feedforward(params::Fusion, x::Vector)
     length(x) == length(params.w) || error("Expected ", length(params.w), " inputs, got ", length(x))
 
-    y = params.b
-    for i = 1:length(params.w)
+    y = affine(params.w[1], x[1], params.b)
+    for i = 2:length(params.w)
         y = plus(y, linear(params.w[i], x[i]))
     end
     return y

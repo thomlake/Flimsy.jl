@@ -1,9 +1,9 @@
 
 immutable Lstm <: RecurrentComponent2
-    wi::GradVariable; wf::GradVariable; wc::GradVariable; wo::GradVariable;
-    ui::GradVariable; uf::GradVariable; uc::GradVariable; uo::GradVariable;
-    bi::GradVariable; bf::GradVariable; bc::GradVariable; bo::GradVariable;
-    h_init::GradVariable; c_init::GradVariable;
+    wi::Variable; wf::Variable; wc::Variable; wo::Variable;
+    ui::Variable; uf::Variable; uc::Variable; uo::Variable;
+    bi::Variable; bf::Variable; bc::Variable; bo::Variable;
+    h_init::Variable; c_init::Variable;
     function Lstm(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h_init, c_init)
         m, n = size(wi)
         size(wf) == (m, n) || error("Bad size(wf) == $(size(wf)) != ($m, $n)")
@@ -60,10 +60,10 @@ Lstm Component with normalized hidden unit gradients.
 By default gradients are normalized to 1/timesteps.
 """
 immutable LstmGradNorm <: RecurrentComponent2
-    wi::GradVariable; wf::GradVariable; wc::GradVariable; wo::GradVariable;
-    ui::GradVariable; uf::GradVariable; uc::GradVariable; uo::GradVariable;
-    bi::GradVariable; bf::GradVariable; bc::GradVariable; bo::GradVariable;
-    h_init::GradVariable; c_init::GradVariable;
+    wi::Variable; wf::Variable; wc::Variable; wo::Variable;
+    ui::Variable; uf::Variable; uc::Variable; uo::Variable;
+    bi::Variable; bf::Variable; bc::Variable; bo::Variable;
+    h_init::Variable; c_init::Variable;
     function LstmGradNorm(wi, wf, wc, wo, ui, uf, uc, uo, bi, bf, bc, bo, h_init, c_init)
         m, n = size(wi)
         size(wf) == (m, n) || error("Bad size(wf) == $(size(wf)) != ($m, $n)")

@@ -10,7 +10,7 @@ Bernoulli cross entropy is equivalent to the negative joint log likelihood of in
 `bernoulli_cross_entropy_with_scores(output::Variable, target::Union{Bool, Vector{Bool}, Matrix{Bool}}, weight::Real)`
 """
 
-function bernoulli_cross_entropy_with_scores(scope::Scope, output::Variable, target::AbstractMatrix{Bool})
+function bernoulli_cross_entropy_with_scores(scope::Scope, output::AbstractValue, target::AbstractMatrix{Bool})
     size(output) == size(target) || throw(DimensionMismatch("output and target do not have the same size"))
     pr = sigmoid(output.data)
     nll = 0.0
@@ -23,7 +23,7 @@ function bernoulli_cross_entropy_with_scores(scope::Scope, output::Variable, tar
     return nll
 end
 
-function bernoulli_cross_entropy_with_scores(scope::GradScope, output::GradVariable, target::AbstractMatrix{Bool})
+function bernoulli_cross_entropy_with_scores(scope::GradScope, output::Variable, target::AbstractMatrix{Bool})
     size(output) == size(target) || throw(DimensionMismatch("output and target do not have the same size"))
     pr = sigmoid(output.data)
     nll = 0.0
@@ -43,11 +43,11 @@ function bernoulli_cross_entropy_with_scores(scope::GradScope, output::GradVaria
     return nll
 end
 
-function bernoulli_cross_entropy_with_scores(scope::Scope, output::Variable, target::AbstractMatrix{Bool}, weight::Real)
+function bernoulli_cross_entropy_with_scores(scope::Scope, output::AbstractValue, target::AbstractMatrix{Bool}, weight::Real)
     return weight * bernoulli_cross_entropy_with_scores(output, target)
 end
 
-function bernoulli_cross_entropy_with_scores(scope::GradScope, output::GradVariable, target::AbstractMatrix{Bool}, weight::Real)
+function bernoulli_cross_entropy_with_scores(scope::GradScope, output::Variable, target::AbstractMatrix{Bool}, weight::Real)
     size(output) == size(target) || throw(DimensionMismatch("output and target do not have the same size"))
     pr = sigmoid(output.data)
     nll = 0.0
@@ -67,26 +67,26 @@ function bernoulli_cross_entropy_with_scores(scope::GradScope, output::GradVaria
     return weight * nll
 end
 
-bernoulli_cross_entropy_with_scores(scope::Scope, o::Variable, t::Bool) = 
+bernoulli_cross_entropy_with_scores(scope::Scope, o::AbstractValue, t::Bool) = 
     bernoulli_cross_entropy_with_scores(scope, o, fill(t, 1, 1))
 
-bernoulli_cross_entropy_with_scores(scope::GradScope, o::Variable, t::Bool) = 
+bernoulli_cross_entropy_with_scores(scope::GradScope, o::AbstractValue, t::Bool) = 
     bernoulli_cross_entropy_with_scores(scope, o, fill(t, 1, 1))
 
-bernoulli_cross_entropy_with_scores(scope::Scope, o::Variable, t::Bool, w::Real) = 
+bernoulli_cross_entropy_with_scores(scope::Scope, o::AbstractValue, t::Bool, w::Real) = 
     bernoulli_cross_entropy_with_scores(scope, o, fill(t, 1, 1), w)
 
-bernoulli_cross_entropy_with_scores(scope::GradScope, o::Variable, t::Bool, w::Real) = 
+bernoulli_cross_entropy_with_scores(scope::GradScope, o::AbstractValue, t::Bool, w::Real) = 
     bernoulli_cross_entropy_with_scores(scope, o, fill(t, 1, 1), w)
 
-bernoulli_cross_entropy_with_scores(scope::Scope, o::Variable, t::AbstractVector{Bool}) = 
+bernoulli_cross_entropy_with_scores(scope::Scope, o::AbstractValue, t::AbstractVector{Bool}) = 
     bernoulli_cross_entropy_with_scores(scope, o, reshape(t, length(t), 1))
 
-bernoulli_cross_entropy_with_scores(scope::GradScope, o::Variable, t::AbstractVector{Bool}) = 
+bernoulli_cross_entropy_with_scores(scope::GradScope, o::AbstractValue, t::AbstractVector{Bool}) = 
     bernoulli_cross_entropy_with_scores(scope, o, reshape(t, length(t), 1))
 
-bernoulli_cross_entropy_with_scores(scope::Scope, o::Variable, t::AbstractVector{Bool}, w::Real) = 
+bernoulli_cross_entropy_with_scores(scope::Scope, o::AbstractValue, t::AbstractVector{Bool}, w::Real) = 
     bernoulli_cross_entropy_with_scores(scope, o, reshape(t, length(t), 1), w)
 
-bernoulli_cross_entropy_with_scores(scope::GradScope, o::Variable, t::AbstractVector{Bool}, w::Real) = 
+bernoulli_cross_entropy_with_scores(scope::GradScope, o::AbstractValue, t::AbstractVector{Bool}, w::Real) = 
     bernoulli_cross_entropy_with_scores(scope, o, reshape(t, length(t), 1), w)

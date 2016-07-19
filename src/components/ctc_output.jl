@@ -1,9 +1,9 @@
 
 immutable CtcOutput <: LinearModel
-    w::GradVariable
-    b::GradVariable
+    w::Variable
+    b::Variable
     blank::Int
-    function CtcOutput(w::GradVariable, b::GradVariable, blank::Int)
+    function CtcOutput(w::Variable, b::Variable, blank::Int)
         m, n = size(w)
         size(b) == (m, 1) || throw(DimensionMismatch("Bad size(b) == $(size(b)) != ($m, 1)"))
         return new(w, b, blank)

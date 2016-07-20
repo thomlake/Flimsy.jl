@@ -78,7 +78,7 @@ function check_gradients(f::Function, param::Variable, name; eps::AbstractFloat=
     return true
 end
 
-function check_gradients{V<:Variable}(f::Function, params::AbstractArray{V}, name; eps::AbstractFloat=1e-3, atol::AbstractFloat=0.1, rtol::AbstractFloat=0.1, verbose::Bool=true, throwerr::Bool=true)
+function check_gradients{V<:AbstractValue}(f::Function, params::AbstractArray{V}, name; eps::AbstractFloat=1e-3, atol::AbstractFloat=0.1, rtol::AbstractFloat=0.1, verbose::Bool=true, throwerr::Bool=true)
     for param in params
         if !check_gradients(f, param, name; eps=eps, atol=atol, rtol=rtol, verbose=verbose, throwerr=throwerr)
             return false
@@ -98,15 +98,11 @@ end
 
 function check_gradients(cost::Function, params::Component, args...; eps::AbstractFloat=1e-3, atol::AbstractFloat=0.1, rtol::AbstractFloat=0.1, verbose::Bool=true, throwerr::Bool=true)
     passed = true
-    ds = DataScope()
-    gs = GradScope()
-
     # Compute gradients
-    cost(gs, params, args...)
-    backprop!(gs)
+    @backprop cost(params, args...)
 
     # Get cost
-    f = () -> cost(ds, params, args...)
+    f = () -> @run cost(params, args...)
 
     for (name, value) in convert(Dict, params)
         if !check_gradients(f, value, name; eps=eps, atol=atol, rtol=rtol, verbose=verbose, throwerr=throwerr)

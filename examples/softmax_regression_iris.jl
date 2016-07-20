@@ -12,7 +12,7 @@ function check()
     n_labels, n_features = 3, 10
     X = randn(n_features, n_sample)
     y = rand(1:n_labels, n_sample)
-    params = Runtime(SoftmaxRegression(n_labels, n_features))
+    params = SoftmaxRegression(n_labels, n_features)
     check_gradients(cost, params, Input(X), y)
 end
 
@@ -48,7 +48,7 @@ function demo()
     println("  number of test samples  => ", n_test)
 
     # Setup parameters and create optimizer
-    params = Runtime(SoftmaxRegression(n_labels, n_features))
+    params = SoftmaxRegression(n_labels, n_features)
     opt = optimizer(GradientDescent, params, learning_rate=0.01)
     
     # Main training loop
@@ -57,15 +57,15 @@ function demo()
     start_time = time()
     while n_epochs < max_epochs
         n_epochs += 1
-        nll = cost(params, Input(X_train), y_train; grad=true)
+        nll = @backprop cost(params, Input(X_train), y_train)
         update!(opt)
         nll_prev - nll > 1e-6 || break
         nll_prev = nll
     end
     stop_time = time()
 
-    p_train = predict(params, Input(X_train))
-    p_test = predict(params, Input(X_test))
+    p_train = @run predict(params, Input(X_train))
+    p_test = @run predict(params, Input(X_test))
 
     println("[Results]")
     println("  number of epochs => ", n_epochs)

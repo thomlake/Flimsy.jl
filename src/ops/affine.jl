@@ -62,3 +62,5 @@ for (W, X, B) in product([(Constant, Variable) for i = 1:3]...)
     end)
     eval(defn)
 end
+
+affine(scope::Scope, w::AbstractValue, x, b::AbstractValue) = plus_cols(scope, linear(scope, w, x), b)

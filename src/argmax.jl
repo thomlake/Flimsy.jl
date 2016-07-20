@@ -16,7 +16,7 @@ function argmax(x::Matrix)
     return imax
 end
 
-argmax(x::Variable) = argmax(x.data)
+argmax(x::AbstractValue) = argmax(x.data)
 
 
 """
@@ -58,4 +58,4 @@ function argmaxneq{I<:Integer}(x::Matrix, ks::Vector{I})
     return imax
 end
 
-argmaxneq{I<:Integer}(x::Variable, ks::Vector{I}) = argmaxneq(x.data, ks)
+argmaxneq{I<:Integer}(x::AbstractValue, ks::Vector{I}) = argmaxneq(x.data, ks)

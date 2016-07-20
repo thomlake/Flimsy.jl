@@ -41,7 +41,7 @@ end
 # Mx1 Vector{Real} #
 # ---------------- #
 function mse(scope::Scope, output::AbstractValue, target::AbstractVector)
-    size(output) == (length(target), 1) || throw(DimensionMismatch("expected output size: ", (length(target), 1), ", got : ", size(output)))
+    size(output) == (length(target), 1) || throw(DimensionMismatch(string("expected output size: ", (length(target), 1), ", got : ", size(output))))
     sse = 0
     for i in eachindex(target)
         delta = output.data[i] - target[i]
@@ -53,7 +53,7 @@ end
 mse(scope::Scope, output::AbstractValue, target::AbstractVector, weight::Real) = weight * mse(output, target)
 
 function mse(scope::GradScope, output::Variable, target::AbstractVector)
-    size(output) == (length(target), 1) || throw(DimensionMismatch("expected output size: ", (length(target), 1), ", got : ", size(output)))
+    size(output) == (length(target), 1) || throw(DimensionMismatch(string("expected output size: ", (length(target), 1), ", got : ", size(output))))
     sse = 0
     for i in eachindex(target)
         delta = output.data[i] - target[i]
@@ -64,7 +64,7 @@ function mse(scope::GradScope, output::Variable, target::AbstractVector)
 end
 
 function mse(scope::GradScope, output::Variable, target::AbstractVector, weight::Real)
-    size(output) == (length(target), 1) || throw(DimensionMismatch("expected output size: ", (length(target), 1), ", got : ", size(output)))
+    size(output) == (length(target), 1) || throw(DimensionMismatch(string("expected output size: ", (length(target), 1), ", got : ", size(output))))
     sse = 0
     for i in eachindex(target)
         delta = output.data[i] - target[i]

@@ -52,22 +52,22 @@ This and several other builtin components are available in the `Flimsy.Component
 
 ```julia
 using Flimsy
-using Synthetic # Data generation: https://github.com/thomlake/Synthetic.jl
+using Synthetic
 
 # Parameter definition
-immutable Params{V<:Variable} <: Component{V}
-    w::V
-    b::V
+immutable Params <: Component
+    w::Variable
+    b::Variable
 end
 
 # Default constructor
 Params(m, n) = Params(w=randn(m, n), b=zeros(m, 1))
 
 # Computation the model performs
-@comp score(θ::Params, x::Variable) = affine(θ.w, x, θ.b)
-@comp predict(θ::Params, x::Variable) = argmax(score(θ, x))
-@comp probs(θ::Params, x::Variable) = softmax(score(θ, x))
-@comp cost(θ::Params, x::Variable, y) = Cost.categorical_cross_entropy_with_scores(score(θ, x), y)
+score(scope::Scope, θ::Params, x) = @with scope affine(θ.w, x, θ.b)
+predict(scope::Scope, θ::Params, x) = @with scope argmax(score(θ, x))
+probs(scope::Scope, θ::Params, x) = @with scope softmax(score(θ, x))
+cost(scope::Scope, θ::Params, x, y) = @with scope Cost.categorical_cross_entropy_with_scores(score(θ, x), y)
 
 # Check gradients using finite differences
 function check()
@@ -76,7 +76,7 @@ function check()
     data = rand(Synthetic.MixtureTask(n_features, n_classes), n_samples)
     X = hcat(map(first, data)...)
     y = vcat(map(last, data)...)
-    θ = Runtime(Params(n_classes, n_features))
+    θ = Params(n_classes, n_features)
     check_gradients(cost, θ, Input(X), y)
 end
 
@@ -91,17 +91,18 @@ function main()
     X_train, y_train = hcat(map(first, data_train)...), vcat(map(last, data_train)...)
     X_test, y_test = hcat(map(first, data_test)...), vcat(map(last, data_test)...)
 
-    θ = Runtime(Params(n_classes, n_features))
+    θ = Params(n_classes, n_features)
     opt = optimizer(RmsProp, θ, learning_rate=0.01, decay=0.9)
     start_time = time()
     for i = 1:100
-        nll = cost(θ, Input(X_train), y_train; grad=true)
+        nll = @backprop cost(θ, Input(X_train), y_train)
         update!(opt)
         i % 10 == 0 && println("epoch => $i, nll => $nll")
     end
-    println("wall time   => ", time() - start_time)
-    println("train error => ", sum(y_train .!= predict(θ, Input(X_train))) / n_train)
-    println("test error  => ", sum(y_test .!= predict(θ, Input(X_test))) / n_test)
+    stop_time = time()
+    println("wall time   => ", stop_time - start_time)
+    println("train error => ", sum(y_train .!= @run(predict(θ, Input(X_train)))) / n_train)
+    println("test error  => ", sum(y_test .!= @run(predict(θ, Input(X_test)))) / n_test)
 end
 
 ("-c" in ARGS || "--check" in ARGS) && check()

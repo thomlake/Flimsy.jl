@@ -44,24 +44,21 @@ function demo()
     X_train, X_test = X[:,1:n_train], X[:,n_train+1:end]
     Y_train, Y_test = Y[:,1:n_train], Y[:,n_train+1:end]
 
-    dscope, gscope = DataScope(), GradScope()
     params = SigmoidRegression(n_classes, n_features)
     opt = optimizer(GradientDescent, params, learning_rate=0.1)
     nll = Inf
     start_time = time()
     for epoch = 1:500
-        @with gscope begin
-            nll_curr = cost(params, Input(X_train), Y_train)
-            backprop!()
-        end
+        nll_curr = @backprop cost(params, Input(X_train), Y_train)
         update!(opt)
         nll_curr <= nll || error(nll_curr, " > ", nll)
         nll = nll_curr
         epoch % 50 == 0 && println("[$epoch] nll => $nll")
     end
     stop_time = time()
+    Y_pred = @run predict(params, Input(X_test))
     println("wall time  => ", stop_time - start_time)
-    println("test error => ", sum(Y_test .!= predict(dscope, params, Input(X_test))) / n_test)
+    println("test error => ", sum(Y_test .!= Y_pred) / n_test)
 end
 
 ("-c" in ARGS || "--check" in ARGS) && check()

@@ -1,5 +1,5 @@
 
-function norm_param_grad(paramvec::Vector{GradVariable})
+function norm_param_grad(paramvec::Vector{Variable})
     ss = 0.0
     for param in paramvec
         for i in eachindex(param)
@@ -9,7 +9,7 @@ function norm_param_grad(paramvec::Vector{GradVariable})
     return sqrt(ss)
 end
 
-Cache(paramvec::Vector{GradVariable}) = Matrix{FloatX}[zero(p.data) for p in paramvec]
+Cache(paramvec::Vector{Variable}) = Matrix{FloatX}[zero(p.data) for p in paramvec]
 
 abstract Optimizer
 
@@ -21,7 +21,7 @@ abstract GradientDescent <: Optimizer
 # Plain
 type PlainGradientDescent{T<:AbstractFloat} <: GradientDescent
     learning_rate::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
 end
 function Base.show(io::IO, opt::PlainGradientDescent)
     p = [
@@ -44,7 +44,7 @@ end
 type ScaledGradientDescent{T<:AbstractFloat} <: GradientDescent
     learning_rate::T
     max_norm::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
 end
 
 function Base.show(io::IO, opt::ScaledGradientDescent)
@@ -73,7 +73,7 @@ end
 type ClippedGradientDescent{T<:AbstractFloat} <: GradientDescent
     learning_rate::T
     clip::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
 end
 
 function Base.show(io::IO, opt::ClippedGradientDescent)
@@ -106,7 +106,7 @@ abstract Momentum <: Optimizer
 type PlainMomentum{T<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
 end
 
@@ -138,7 +138,7 @@ type ScaledMomentum{T<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
     max_norm::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
 end
 
@@ -175,7 +175,7 @@ type ClippedMomentum{T<:AbstractFloat} <: Momentum
     learning_rate::T
     momentum::T
     clip::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
 end
 
@@ -215,7 +215,7 @@ abstract Nesterov <: Optimizer
 type PlainNesterov{T<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
 end
 
@@ -249,7 +249,7 @@ type ScaledNesterov{T<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
     max_norm::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
 end
 
@@ -288,7 +288,7 @@ type ClippedNesterov{T<:AbstractFloat} <: Nesterov
     learning_rate::T
     momentum::T
     clip::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
 end
 
@@ -330,7 +330,7 @@ abstract RmsProp <: Optimizer
 type PlainRmsProp{T<:AbstractFloat} <: RmsProp
     learning_rate::T
     decay::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
 end
 
@@ -364,7 +364,7 @@ type ScaledRmsProp{T<:AbstractFloat} <: RmsProp
     learning_rate::T
     decay::T
     max_norm::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
 end
 
@@ -404,7 +404,7 @@ type ClippedRmsProp{T<:AbstractFloat} <: RmsProp
     learning_rate::T
     decay::T
     clip::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
 end
 
@@ -452,7 +452,7 @@ type PlainGraves{T<:AbstractFloat} <: Graves
     momentum::T
     decay::T
     epsilon::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
     m1vec::Vector{Matrix{FloatX}}
     m2vec::Vector{Matrix{FloatX}}
@@ -500,7 +500,7 @@ abstract AdaDelta <: Optimizer
 # Plain
 type PlainAdaDelta{T<:AbstractFloat} <: AdaDelta
     decay::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
     deltavec::Vector{Matrix{FloatX}}
 end
@@ -537,7 +537,7 @@ end
 type ScaledAdaDelta{T<:AbstractFloat} <: AdaDelta
     decay::T
     max_norm::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
     deltavec::Vector{Matrix{FloatX}}
 end
@@ -579,7 +579,7 @@ end
 type ClippedAdaDelta{T<:AbstractFloat} <: AdaDelta
     decay::T
     clip::T
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     cachevec::Vector{Matrix{FloatX}}
     deltavec::Vector{Matrix{FloatX}}
 end
@@ -629,7 +629,7 @@ type PlainAdam{T<:AbstractFloat} <: Adam
     moment2_decay::T
     epsilon::T
     timestep::Int
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     moment1_vec::Vector{Matrix{FloatX}}
     moment2_vec::Vector{Matrix{FloatX}}
 end
@@ -685,7 +685,7 @@ type ScaledAdam{T<:AbstractFloat} <: Adam
     epsilon::T
     max_norm::T
     timestep::Int
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     moment1_vec::Vector{Matrix{FloatX}}
     moment2_vec::Vector{Matrix{FloatX}}
 end
@@ -744,7 +744,7 @@ type ClippedAdam{T<:AbstractFloat} <: Adam
     epsilon::T
     clip::T
     timestep::Int
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     moment1_vec::Vector{Matrix{FloatX}}
     moment2_vec::Vector{Matrix{FloatX}}
 end

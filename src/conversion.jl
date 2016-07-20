@@ -1,11 +1,11 @@
 
 function Base.convert(::Type{Vector}, params::Component)
-    param_vector = GradVariable[]
+    param_vector = Variable[]
     for f in fieldnames(params)
         T = fieldtype(typeof(params), f)
-        if T <: GradVariable
+        if T <: Variable
             push!(param_vector, getfield(params, f))
-        elseif T <: AbstractArray && eltype(T) <: GradVariable
+        elseif T <: AbstractArray && eltype(T) <: Variable
             append!(param_vector, getfield(params, f)[:])
         elseif T <: Component
             append!(param_vector, convert(Vector, getfield(params, f)))
@@ -26,10 +26,10 @@ function Base.convert{C<:Component}(::Type{Dict}, params::C, prefix::ASCIIString
     param_dict = Dict{ASCIIString,Any}()
     for name in fieldnames(params)
         T = fieldtype(typeof(params), name)
-        if T <: GradVariable
+        if T <: Variable
             key = string(prefix, name)
             param_dict[key] = getfield(params, name)
-        elseif T <: AbstractArray && eltype(T) <: GradVariable
+        elseif T <: AbstractArray && eltype(T) <: Variable
             key = string(prefix, name)
             param_dict[key] = getfield(params, name)
         elseif T <: Component

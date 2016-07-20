@@ -103,7 +103,6 @@ function main()
     println("  max seq length   => ", max_len_test)
 
     for R in recurrent_layer_types
-        ds, gs = DataScope(), GradScope()
         params = Params(R, n_out, n_hid, n_in)
         opt = optimizer(GradientDescent, params, learning_rate=0.1, clip=1.0, clipping_type=:scale)
         n_params = sum(map(x -> prod(size(x)), convert(Vector, params)))
@@ -117,21 +116,22 @@ function main()
             nll = 0.0
             for i in indices
                 x, y = data_train[i]
-                nll += cost(gs, params, x, y)
-                backprop!(gs)
+                nll += @backprop cost(params, x, y)
                 update!(opt)
             end
             errors = 0
-            for (x, y) in data_valid
-                errors += count_errors(predict(ds, params, x), y)
+            for (x, y_true) in data_valid
+                y_pred = @run predict(params, x)
+                errors += count_errors(y_pred, y_true)
             end
             errors == 0 && break
         end
 
         stop_time = time()
         errors = 0
-        for (x, y) in data_test
-            errors += count_errors(predict(ds, params, x), y)
+        for (x, y_true) in data_test
+            y_pred = @run predict(params, x)
+            errors += count_errors(y_pred, y_true)
         end
 
         println("  wall time              => ", stop_time - start_time)

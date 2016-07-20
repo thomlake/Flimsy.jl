@@ -32,10 +32,10 @@ initial_state(scope::Scope, params::Lstm) = (params.h_init, params.c_init)
 function Base.step(scope::Scope, params::Lstm, x, state)
     htm1, ctm1 = state
     @with scope begin
-        i = sigmoid(plus(linear(params.wi, x), linear(params.ui, htm1), params.bi))
-        f = sigmoid(plus(linear(params.wf, x), linear(params.uf, htm1), params.bf))
-        o = sigmoid(plus(linear(params.wo, x), linear(params.uo, htm1), params.bo))
-        c = tanh(plus(linear(params.wc, x), linear(params.uc, htm1), params.bc))
+        i = sigmoid(plus(affine(params.wi, x, params.bi), linear(params.ui, htm1)))
+        f = sigmoid(plus(affine(params.wf, x, params.bf), linear(params.uf, htm1)))
+        o = sigmoid(plus(affine(params.wo, x, params.bo), linear(params.uo, htm1)))
+        c = tanh(plus(affine(params.wc, x, params.bc), linear(params.uc, htm1)))
         ct = plus(mult(i, c), mult(f, ctm1))
         ht = mult(o, tanh(ct))
     end
@@ -95,10 +95,10 @@ initial_state(scope::Scope, params::LstmGradNorm) = (params.h_init, params.c_ini
 function Base.step(scope::Scope, params::LstmGradNorm, x, state, gn::AbstractFloat=1.0)
     htm1, ctm1 = state
     @with scope begin
-        i = sigmoid(plus(linear(params.wi, x), linear(params.ui, htm1), params.bi))
-        f = sigmoid(plus(linear(params.wf, x), linear(params.uf, htm1), params.bf))
-        o = sigmoid(plus(linear(params.wo, x), linear(params.uo, htm1), params.bo))
-        c = tanh(plus(linear(params.wc, x), linear(params.uc, htm1), params.bc))
+        i = sigmoid(plus(affine(params.wi, x, params.bi), linear(params.ui, htm1)))
+        f = sigmoid(plus(affine(params.wf, x, params.bf), linear(params.uf, htm1)))
+        o = sigmoid(plus(affine(params.wo, x, params.bo), linear(params.uo, htm1)))
+        c = tanh(plus(affine(params.wc, x, params.bc), linear(params.uc, htm1)))
         ct = plus(mult(i, c), mult(f, ctm1))
         gradnorm(ct, gn)
         ht = mult(o, tanh(ct))

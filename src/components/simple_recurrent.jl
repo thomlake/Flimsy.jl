@@ -35,7 +35,7 @@ SimpleRecurrent{F<:Activation}(f::F, w, u, b, h) = SimpleRecurrent{F}(f, w, u, b
 initial_state(scope::Scope, params::SimpleRecurrent) = params.h_init
 
 Base.step(scope::Scope, p::SimpleRecurrent, x, h) = @with scope begin
-    activate(p.f, plus(linear(p.w, x), linear(p.u, h), p.b))
+    activate(p.f, plus(affine(p.w, x, p.b), linear(p.u, h)))
 end
 
 Base.step(scope::Scope, p::SimpleRecurrent, x) = @with scope step(p, x, initial_state(p))
@@ -78,7 +78,7 @@ initial_state(scope::Scope, p::SimpleRecurrentGradNorm) = p.h_init
 
 function Base.step(scope, p::SimpleRecurrentGradNorm, x, h, gn::AbstractFloat=1.0)
     @with scope begin
-        h = activate(p.f, plus(linear(p.w, x), linear(p.u, h), p.b))
+        h = activate(p.f, plus(affine(p.w, x, p.b), linear(p.u, h)))
         gradnorm(h, gn)
         return h
     end

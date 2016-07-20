@@ -5,10 +5,10 @@ the correct eltype.
 """
 function Sequence end
 
-Sequence(scope::Scope, n::Int) = Array(DataVariable, n)
+Sequence(scope::Scope, n::Int) = Array(Constant, n)
 
-Sequence(scope::GradScope, n::Int) = Array(GradVariable, n)
+Sequence(scope::GradScope, n::Int) = Array(Variable, n)
 
-NTupleSequence(scope::Scope, m::Int, n::Int) = Array(NTuple{m,DataVariable}, n)
+NTupleSequence(scope::Scope, m::Int, n::Int) = Array(NTuple{m,Constant}, n)
 
-NTupleSequence(scope::GradScope, m::Int, n::Int) = Array(NTuple{m,GradVariable}, n)
+NTupleSequence(scope::GradScope, m::Int, n::Int) = Array(NTuple{m,Variable}, n)

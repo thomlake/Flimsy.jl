@@ -72,7 +72,6 @@ function main()
     test_data = rand(xor_dist_test, n_train)
     indices = collect(1:n_train)
 
-    dscope, gscope = DataScope(), GradScope()
     params = Params(n_out, n_hid, n_in)
     opt = optimizer(GradientDescent, params, learning_rate=0.1, clip=1.0, clipping_type=:scale)
 
@@ -83,14 +82,14 @@ function main()
         nll = 0.0
         for i in indices
             x, y = train_data[i]
-            nll += cost(gscope, params, x, y)
-            backprop!(gscope)
+            nll += @backprop cost(params, x, y)
             update!(opt)
         end
         if n_epochs % print_freq == 0
             errors = 0
-            for (x, y) in train_data
-                errors += sequence_error_count(predict(dscope, params, x), y)
+            for (x, y_true) in train_data
+                y_pred = @run predict(params, x)
+                errors += sequence_error_count(y_pred, y_true)
             end
             println(n_epochs, ": nll => ", round(nll, 2), ", errors => ", errors)
             if errors < 1 
@@ -101,8 +100,9 @@ function main()
     end
     stop_time = time()
     errors = 0
-    for (x, y) in test_data
-        errors += sequence_error_count(predict(dscope, params, x), y)
+    for (x, y_true) in test_data
+        y_pred = @run predict(params, x)
+        errors += sequence_error_count(y_pred, y_true)
     end
     println("converged => ", converged)
     println("avg test error per sequence => ", errors / n_test)

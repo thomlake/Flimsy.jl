@@ -39,11 +39,11 @@ facts("ctc_with_scores") do
         @fact length(ys) --> less_than_or_equal(T)
 
         scale = 10
-        output = [DataVariable(scale .* randn(length(LANGUAGE), 1)) for t = 1:T]
+        output = [Constant(scale .* randn(length(LANGUAGE), 1)) for t = 1:T]
         lpmat = Ctc.make_lpmat(output)
 
         ll_bf = Ctc.bruteforce(xs, lpmat, LANGUAGE, BLANK)
-        nll_ctc = Cost.ctc_with_scores(DataScope(), output, xs, BLANK)
+        nll_ctc = Cost.ctc_with_scores(RunScope(), output, xs, BLANK)
         @fact -nll_ctc --> roughly(ll_bf, tol)
 
         fmat = Ctc.forward(ys, lpmat, BLANK)

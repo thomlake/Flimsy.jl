@@ -1,6 +1,6 @@
 
 type GradientNoise
-    paramvec::Vector{GradVariable}
+    paramvec::Vector{Variable}
     eta::Float64
     gamma::Float64
     timestep::Int

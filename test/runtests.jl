@@ -2,7 +2,7 @@ include("../src/Flimsy.jl")
 using Flimsy
 using FactCheck
 
-# FactCheck.setstyle(:compact)
+FactCheck.setstyle(:compact)
 
 tests = [
     "inplace.jl",
@@ -29,13 +29,11 @@ tests = [
     "ops/decat.jl",
     "ops/concat.jl",
     "ops/affine.jl",
-    # "ops/minus_scalar.jl",
-    # "ops/mult_scalar.jl",
-    # # "ops/dropout.jl",
-    # "mse.jl",
-    # "categorical_cross_entropy.jl",
-    # "categorical_cross_entropy_with_scores.jl",
-    # "ctc.jl",
+    # "ops/dropout.jl",
+    "mse.jl",
+    "categorical_cross_entropy.jl",
+    "categorical_cross_entropy_with_scores.jl",
+    "ctc.jl",
 ]
 
 srand(sum(map(Int, collect("Flimsy"))))

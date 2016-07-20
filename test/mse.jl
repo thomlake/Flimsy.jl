@@ -6,7 +6,7 @@ facts("mse") do
         target = if (m, n) == (1, 1)
             randn()
         elseif n == 1
-            randn(n)
+            randn(m)
         else
             randn(m, n)
         end

@@ -27,7 +27,7 @@ It aims to overcome what I see as the biggest interface drawbacks of popular lib
 Flimsy.jl sidesteps the need for an explict computational graph structure and the *special* control flow functions they bring with them, e.g., `scan`, by implicitly constructing a backward graph at runtime. This is done by pushing a closure (implemented as a type with a `call` method) onto a shared stack after each function application. Popping and calling the closures until the stack is empty implicitly carries out backpropagation.
 
 - **Lack of reuseable and composable sub-components**<br>
-Flimsy.jl defines an abstract `Component` type for coupling parameters and functionality. Using Julia's multiple dispatch and a common set of component names allows the creation of a library of `Components` which can easily be composed to form larger `Components`. See [`examples/rnn_comparison.jl`](https://github.com/thomlake/Flimsy.jl/blob/master/examples/rnn_comparison.jl) for a practical example.
+Flimsy.jl defines an abstract `Component` type for coupling parameters and functionality. Using Julia's multiple dispatch and a common set of function names allows the creation of a library of `Components` which can easily be composed to form larger `Components`. See [`examples/rnn_comparison.jl`](https://github.com/thomlake/Flimsy.jl/blob/master/examples/rnn_comparison.jl) for a practical example.
 
 - **Two Language Syndrome**<br>
 Flimsy.jl is written entirely in Julia, and Julia is fast. 

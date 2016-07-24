@@ -33,7 +33,7 @@ end
 function update!(opt::GradientDescent)
     lr = opt.learning_rate
     for param in opt.paramvec
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             param.data[i] -= lr * param.grad[i]
         end
         fill!(param.grad, 0)
@@ -62,7 +62,7 @@ function update!(opt::ScaledGradientDescent)
         lr *= opt.max_norm / gnorm
     end
     for param in opt.paramvec
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             param.data[i] -= lr * param.grad[i]
         end
         fill!(param.grad, 0)
@@ -89,7 +89,7 @@ function update!(opt::ClippedGradientDescent)
     ub = opt.clip
     lb = -opt.clip
     for param in opt.paramvec
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             param.data[i] -= lr * max(min(param.grad[i], ub), lb)
         end
         fill!(param.grad, 0)
@@ -125,7 +125,7 @@ function update!(opt::Momentum)
         param = opt.paramvec[k]
         cache = opt.cachevec[k]
         @assert size(param) == size(cache)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             cache[i] = mu * cache[i] - lr * param.grad[i]
             param.data[i] += cache[i]
         end
@@ -162,7 +162,7 @@ function update!(opt::ScaledMomentum)
         param = opt.paramvec[k]
         cache = opt.cachevec[k]
         @assert size(param) == size(cache)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             cache[i] = mu * cache[i] - lr * param.grad[i]
             param.data[i] += cache[i]
         end
@@ -197,7 +197,7 @@ function update!(opt::ClippedMomentum)
         param = opt.paramvec[k]
         cache = opt.cachevec[k]
         @assert size(param) == size(cache)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             cache[i] = mu * cache[i] - lr * max(min(param.grad[i], ub), lb)
             param.data[i] += cache[i]
         end
@@ -235,7 +235,7 @@ function update!(opt::Nesterov)
         param = opt.paramvec[k]
         cache = opt.cachevec[k]
         @assert size(param) == size(cache)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             prev = cache[i]
             cache[i] = mu * cache[i] - lr * param.grad[i]
             param.data[i] += -mu * prev + upmu * cache[i]
@@ -274,7 +274,7 @@ function update!(opt::ScaledNesterov)
         param = opt.paramvec[k]
         cache = opt.cachevec[k]
         @assert size(param) == size(cache)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             prev = cache[i]
             cache[i] = mu * cache[i] - lr * param.grad[i]
             param.data[i] += -mu * prev + upmu * cache[i]
@@ -311,7 +311,7 @@ function update!(opt::ClippedNesterov)
         param = opt.paramvec[k]
         cache = opt.cachevec[k]
         @assert size(param) == size(cache)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             prev = cache[i]
             cache[i] = mu * cache[i] - lr * max(min(param.grad[i], ub), lb)
             param.data[i] += -mu * prev + upmu * cache[i]
@@ -350,7 +350,7 @@ function update!(opt::RmsProp)
         param = opt.paramvec[k]
         cache = opt.cachevec[k]
         @assert size(param) == size(cache)
-        for i in eachindex(cache)
+        @flimsy_inbounds for i in eachindex(cache)
             cache[i] = decay * cache[i] + umdecay * param.grad[i] * param.grad[i]
             delta = param.grad[i] / sqrt(cache[i] + 1e-8)
             param.data[i] -= lr * delta
@@ -428,7 +428,7 @@ function update!(opt::ClippedRmsProp)
         param = opt.paramvec[k]
         cache = opt.cachevec[k]
         @assert size(param) == size(cache)
-        for i in eachindex(cache)
+        @flimsy_inbounds for i in eachindex(cache)
             grad = max(min(param.grad[i], ub), lb)
             cache[i] = decay * cache[i] + umdecay * grad * grad
             delta = grad / sqrt(cache[i] + 1e-8)
@@ -479,7 +479,7 @@ function update!(opt::PlainGraves)
         m1 = opt.m1vec[k]
         m2 = opt.m2vec[k]
         @assert size(param) == size(m1) == size(m2)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             g = param.grad[i]
             g2 = g * g
             m1[i] = decay * m1[i] + umdecay * g
@@ -520,7 +520,7 @@ function update!(opt::AdaDelta)
         g2_tm1 = opt.cachevec[i]
         d2_tm1 = opt.deltavec[i]
         @assert size(param) == size(g2_tm1) == size(d2_tm1)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             g = param.grad[i]
             g2_t = decay * g2_tm1[i] + umdecay * g * g
             delta = -sqrt((d2_tm1[i] + 1e-8) / (g2_t + 1e-8)) * g
@@ -562,7 +562,7 @@ function update!(opt::ScaledAdaDelta)
         g2_tm1 = opt.cachevec[i]
         d2_tm1 = opt.deltavec[i]
         @assert size(param) == size(g2_tm1) == size(d2_tm1)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             g = scale * param.grad[i]
             g2_t = decay * g2_tm1[i] + umdecay * g * g
             delta = -sqrt((d2_tm1[i] + 1e-8) / (g2_t + 1e-8)) * g
@@ -604,7 +604,7 @@ function update!(opt::ClippedAdaDelta)
         g2_tm1 = opt.cachevec[i]
         d2_tm1 = opt.deltavec[i]
         @assert size(param) == size(g2_tm1) == size(d2_tm1)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             g = max(min(param.grad[i], ub), lb)
             g2_t = decay * g2_tm1[i] + umdecay * g * g
             delta = -sqrt((d2_tm1[i] + 1e-8) / (g2_t + 1e-8)) * g
@@ -665,7 +665,7 @@ function update!(opt::Adam, increment::Bool=false)
         m1 = opt.moment1_vec[i]
         m2 = opt.moment2_vec[i]
         @assert size(param) == size(m1) == size(m2)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             g = param.grad[i]
             m1[i] = b1 * m1[i] + umb1 * g
             m2[i] = b2 * m2[i] + umb2 * g * g
@@ -724,7 +724,7 @@ function update!(opt::ScaledAdam, increment::Bool=false)
         m1 = opt.moment1_vec[i]
         m2 = opt.moment2_vec[i]
         @assert size(param) == size(m1) == size(m2)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             g = scale * param.grad[i]
             m1[i] = b1 * m1[i] + umb1 * g
             m2[i] = b2 * m2[i] + umb2 * g * g
@@ -783,7 +783,7 @@ function update!(opt::ClippedAdaDelta, increment::Bool=false)
         m1 = opt.moment1_vec[i]
         m2 = opt.moment2_vec[i]
         @assert size(param) == size(m1) == size(m2)
-        for i in eachindex(param)
+        @flimsy_inbounds for i in eachindex(param)
             g = max(min(param.grad[i], ub), lb)
             m1[i] = b1 * m1[i] + umb1 * g
             m2[i] = b2 * m2[i] + umb2 * g * g

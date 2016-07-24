@@ -22,14 +22,22 @@ function Base.read{C<:Component}(group::HDF5Group, ::Type{C})
         
         if T <: Variable
             data = read(group, string(name))
-            push!(args, GradVariable(data, zero(data)))
+            push!(args, Variable(data))
         
         elseif T <: Vector && eltype(T) <: Variable
             gvec = group[string(name)]
             len = read(attrs(gvec), "length")
             vals = [read(gvec, string(i)) for i = 1:len]
-            vars = GradVariable[GradVariable(data, zero(data)) for data in vals]
+            vars = Variable[Variable(data) for data in vals]
             push!(args, vars)
+
+        elseif T <: Matrix && eltype(T) <: Variable
+            gmat = group[string(name)]
+            n_rows = read(attrs(gmat), "n_rows")
+            n_cols = read(attrs(gmat), "n_cols")
+            dvec = [read(gmat, string(i)) for i = 1:n_rows * n_cols]
+            vvec = Variable[Variable(data) for data in dvec]
+            push!(args, reshape(vvec, n_rows, n_cols))
         
         elseif T <: Component
             gcomp = group[string(name)]
@@ -41,12 +49,23 @@ function Base.read{C<:Component}(group::HDF5Group, ::Type{C})
             len = read(attrs(gcompvec), "length")
             cvec = [read(gcompvec["$i"], read_type(gcompvec["$i"])) for i = 1:len]
             push!(args, cvec)
+
+        elseif T <: Matrix && eltype(T) <: Component
+            gcompmat = group[string(name)]
+            n_rows = read(attrs(gcompmat), "n_rows")
+            n_cols = read(attrs(gcompmat), "n_cols")
+            cvec = [read(gcompmat["$i"], read_type(gcompmat["$i"])) for i = 1:n_rows * n_cols]
+            push!(args, reshape(cvec, n_rows, n_cols))
         
         elseif T <: Activation
             activation_name = read(attrs(group), string(name))
             push!(args, ACTIVATION_LOOKUP[activation_name]())
 
         elseif T <: Real
+            val = read(attrs(group), string(name))
+            push!(args, val)
+
+        elseif T <: ASCIIString
             val = read(attrs(group), string(name))
             push!(args, val)
         
@@ -56,7 +75,7 @@ function Base.read{C<:Component}(group::HDF5Group, ::Type{C})
             push!(args, f)
         
         else
-            throw(ComponentIoError(string(C), "default reader does not support type => $name::$T"))
+            throw(IOError(string(C), "default reader does not support type => $name::$T"))
         end
     end
     return C(args...)
@@ -105,6 +124,15 @@ function Base.write{C<:Component}(group::HDF5Group, params::C)
                 gvec["$i"] = values[i].data
             end
 
+        elseif T <: Matrix && eltype(T) <: Variable
+            gmat = g_create(group, string(name))
+            values = getfield(params, name)
+            attrs(gmat)["n_rows"] = size(values, 1)
+            attrs(gmat)["n_cols"] = size(values, 2)
+            for i = 1:length(values)
+                gmat["$i"] = values[i].data
+            end
+
         elseif T <: Component
             gcomp = g_create(group, string(name))
             c = write(gcomp, getfield(params, name))
@@ -117,6 +145,16 @@ function Base.write{C<:Component}(group::HDF5Group, params::C)
                 gcomp = g_create(gcompvec, "$i")
                 write(gcomp, values[i])
             end
+
+        elseif T <: Matrix && eltype(T) <: Component
+            gcompmat = g_create(group, string(name))
+            values = getfield(params, name)
+            attrs(gcompmat)["n_rows"] = size(values, 1)
+            attrs(gcompmat)["n_cols"] = size(values, 2)
+            for i = 1:length(values)
+                gcomp = g_create(gcompmat, "$i")
+                write(gcomp, values[i])
+            end
         
         elseif T <: Activation
             attrs(group)[string(name)] = string(getfield(params, name))
@@ -124,11 +162,14 @@ function Base.write{C<:Component}(group::HDF5Group, params::C)
         elseif T <: Real
             attrs(group)[string(name)] = getfield(params, name)
         
+        elseif T <: ASCIIString
+            attrs(group)[string(name)] = getfield(params, name)
+
         elseif T <: Function
             attrs(group)[string(name)] = string(getfield(params, name))
         
         else
-            throw(ComponentIoError(string(C), "default writer does not support type => $name::$T"))
+            throw(IOError(string(C), "default writer does not support type => $name::$T"))
         end
     end
 end

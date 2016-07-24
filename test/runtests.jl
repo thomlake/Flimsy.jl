@@ -34,6 +34,7 @@ tests = [
     "categorical_cross_entropy.jl",
     "categorical_cross_entropy_with_scores.jl",
     "ctc.jl",
+    "io.jl",
 ]
 
 srand(sum(map(Int, collect("Flimsy"))))

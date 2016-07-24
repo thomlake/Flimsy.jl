@@ -9,7 +9,7 @@ function call(rop::ReverseLinearEmbed)
     y = rop.y
     w = rop.w
     x = rop.x
-    for k = 1:length(x)
+    @flimsy_inbounds for k = 1:length(x)
         for j in x[k]
             for i = 1:size(y, 1)
                 w.grad[i,j] += y.grad[i,k]
@@ -21,7 +21,7 @@ function call(rop::ReverseLinearEmbed)
 end
 
 function linear!(y::AbstractArray, w::AbstractArray, x::Vector{Vector{Int}})
-    for k = 1:length(x)
+    @flimsy_inbounds for k = 1:length(x)
         for j in x[k]
             for i = 1:size(w, 1)
                 y[i,k] += w[i,j]

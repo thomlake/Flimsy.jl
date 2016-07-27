@@ -45,7 +45,8 @@ c1 = C(
 path = tempname()
 c2 = try
     Flimsy.save(path, c1)
-    Flimsy.restore(path, verbose=false)
+    tmp = Flimsy.restore(path, verbose=false)
+    rm(path)
 catch err
     println(err)
 end
